@@ -1,0 +1,9 @@
+{
+  "domain": "eud4xr",
+  "name": "EUD4XR Project",
+  "codeowners": ["@carca.ale"],
+  "dependencies": [],
+  "documentation": "",
+  "requirements": [],
+  "config_flow": false
+}

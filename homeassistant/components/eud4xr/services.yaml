@@ -1,0 +1,60 @@
+send_update_to_server_unity:
+  description: "Send an update to Unity"
+  fields:
+    subject:
+      description: "An entity within the platform"
+      example: "player1"
+    verb:
+      description: "The action to perform"
+      example: "moves_to"
+    parameters:
+      description: "Action's parameters"
+      example: "{'newPos': {'x':0,'y':1,'z':0}}"
+
+receive_update_from_unity:
+  description: "Receive an update from Unity"
+  fields:
+    updates:
+      example: >
+        [
+          {
+            "game_object": "player1",
+            "attribute": "health",
+            "value": 100
+          },
+          {
+            "game_object": "player2",
+            "attribute": "score",
+            "value": 500
+          }
+        ]
+      required: true
+      selector:
+        object:
+          fields:
+            game_object:
+              required: true
+              selector:
+                text:
+            attribute:
+              required: true
+              selector:
+                text:
+            value:
+              required: true
+              selector:
+                text:
+
+add_sensor:
+  description: "Add a new entity"
+  fields:
+    eca_script:
+      example: "player1"
+    game_object:
+      example: "moves_to"
+    unity_id:
+      example: "moves_to"
+    name:
+      example: "moves_to"
+    attributes:
+      example: "moves_to"
