@@ -1112,11 +1112,11 @@ class Character(ECAEntity):
         }
 
     @eca_script_action(verb = "interacts with")
-    async def async_interacts_with(self, o: Interactable) -> None:
+    async def async_interacts_with(self, o: ECAObject) -> None:
         _LOGGER.info(f"Performed interacts_with action - {o}")
 
     @eca_script_action(verb = "stops-interacting with")
-    async def async_stops_interacting_with(self, o: Interactable) -> None:
+    async def async_stops_interacting_with(self, o: ECAObject) -> None:
         _LOGGER.info(f"Performed stops_interacting_with action - {o}")
 
     @eca_script_action(verb = "jumps to")
@@ -1124,7 +1124,7 @@ class Character(ECAEntity):
         _LOGGER.info(f"Performed jumps_to action - {p}")
 
     @eca_script_action(verb = "jumps on")
-    async def async_jumps_on(self, p: List[ECAPosition]) -> None:
+    async def async_jumps_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed jumps_on action - {p}")
 
     @eca_script_action(verb = "starts-animation")
@@ -1168,7 +1168,7 @@ class AquaticAnimal(ECAEntity):
         _LOGGER.info(f"Performed swims_to action - {p}")
 
     @eca_script_action(verb = "swims on")
-    async def async_swims_on(self, p: List[ECAPosition]) -> None:
+    async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
 
@@ -1190,7 +1190,7 @@ class Creature(ECAEntity):
         _LOGGER.info(f"Performed flies_to action - {p}")
 
     @eca_script_action(verb = "flies on")
-    async def async_flies_on(self, p: List[ECAPosition]) -> None:
+    async def async_flies_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed flies_on action - {p}")
 
     @eca_script_action(verb = "runs to")
@@ -1198,7 +1198,7 @@ class Creature(ECAEntity):
         _LOGGER.info(f"Performed runs_to action - {p}")
 
     @eca_script_action(verb = "runs on")
-    async def async_runs_on(self, p: List[ECAPosition]) -> None:
+    async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
     @eca_script_action(verb = "swims to")
@@ -1206,7 +1206,7 @@ class Creature(ECAEntity):
         _LOGGER.info(f"Performed swims_to action - {p}")
 
     @eca_script_action(verb = "swims on")
-    async def async_swims_on(self, p: List[ECAPosition]) -> None:
+    async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
     @eca_script_action(verb = "walks to")
@@ -1214,7 +1214,7 @@ class Creature(ECAEntity):
         _LOGGER.info(f"Performed walks_to action - {p}")
 
     @eca_script_action(verb = "walks on")
-    async def async_walks_on(self, p: List[ECAPosition]) -> None:
+    async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
@@ -1236,7 +1236,7 @@ class FlyingAnimal(ECAEntity):
         _LOGGER.info(f"Performed flies_to action - {p}")
 
     @eca_script_action(verb = "flies on")
-    async def async_flies_on(self, p: List[ECAPosition]) -> None:
+    async def async_flies_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed flies_on action - {p}")
 
     @eca_script_action(verb = "walks to")
@@ -1244,7 +1244,7 @@ class FlyingAnimal(ECAEntity):
         _LOGGER.info(f"Performed walks_to action - {p}")
 
     @eca_script_action(verb = "walks on")
-    async def async_walks_on(self, p: List[ECAPosition]) -> None:
+    async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
@@ -1266,7 +1266,7 @@ class Human(ECAEntity):
         _LOGGER.info(f"Performed runs_to action - {p}")
 
     @eca_script_action(verb = "runs on")
-    async def async_runs_on(self, p: List[ECAPosition]) -> None:
+    async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
     @eca_script_action(verb = "swims to")
@@ -1274,7 +1274,7 @@ class Human(ECAEntity):
         _LOGGER.info(f"Performed swims_to action - {p}")
 
     @eca_script_action(verb = "swims on")
-    async def async_swims_on(self, p: List[ECAPosition]) -> None:
+    async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
     @eca_script_action(verb = "walks to")
@@ -1282,7 +1282,7 @@ class Human(ECAEntity):
         _LOGGER.info(f"Performed walks_to action - {p}")
 
     @eca_script_action(verb = "walks on")
-    async def async_walks_on(self, p: List[ECAPosition]) -> None:
+    async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
@@ -1318,7 +1318,7 @@ class Robot(ECAEntity):
         _LOGGER.info(f"Performed runs_to action - {p}")
 
     @eca_script_action(verb = "runs on")
-    async def async_runs_on(self, p: List[ECAPosition]) -> None:
+    async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
     @eca_script_action(verb = "swims to")
@@ -1326,7 +1326,7 @@ class Robot(ECAEntity):
         _LOGGER.info(f"Performed swims_to action - {p}")
 
     @eca_script_action(verb = "swims on")
-    async def async_swims_on(self, p: List[ECAPosition]) -> None:
+    async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
     @eca_script_action(verb = "walks to")
@@ -1334,7 +1334,7 @@ class Robot(ECAEntity):
         _LOGGER.info(f"Performed walks_to action - {p}")
 
     @eca_script_action(verb = "walks on")
-    async def async_walks_on(self, p: List[ECAPosition]) -> None:
+    async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
@@ -1356,7 +1356,7 @@ class TerrestrialAnimal(ECAEntity):
         _LOGGER.info(f"Performed runs_to action - {p}")
 
     @eca_script_action(verb = "runs on")
-    async def async_runs_on(self, p: List[ECAPosition]) -> None:
+    async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
     @eca_script_action(verb = "walks to")
@@ -1364,7 +1364,7 @@ class TerrestrialAnimal(ECAEntity):
         _LOGGER.info(f"Performed walks_to action - {p}")
 
     @eca_script_action(verb = "walks on")
-    async def async_walks_on(self, p: List[ECAPosition]) -> None:
+    async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
