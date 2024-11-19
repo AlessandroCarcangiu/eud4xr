@@ -55,11 +55,8 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
             # Check if:
             # 0) The entity is a sensor and its state == "active"
             # 1) It has the attribute device_class == eca_entity
-            # - potentially removable 1) It has the attribute "friendly_name"
-            # - potentially removable 2) The attribute "friendly_name" is a string
-            # - potentially removable 3) The attribute "friendly_name" is something like Name@Type
-            # 4) @Type is equal to "ECAObject"
-            # 5) The attribute "isInsideCamera" is "yes"
+            # 2) @Type is equal to "ECAObject"
+            # 3) The attribute "isInsideCamera" is "yes"
             # If all the conditions are met, return True. Otherwise, return False
             #print(f"\nsensor: {s}\n")
 
@@ -71,61 +68,21 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
             if not s.attributes or s.attributes.get("device_class") != "eca_entity":
                 return False
 
-            # # 1) It has the attribute "friendly_name"
-            # if "friendly_name" not in s.attributes:
-            #     return False
-
-            # # 2) The attribute "friendly_name" is a string
-            # ecatype_value = s.attributes["friendly_name"]
-            # ecatype_value__type = type(ecatype_value)
-            # if ecatype_value__type is not str:
-            #     msg = (f"Error with {s.entity_id}! Attribute 'friendly_name' (value={ecatype_value}) "
-            #            f"should be a string and not {ecatype_value__type}!")
-            #     _LOGGER.warning(msg)
-            #     return False
-
-            # # 3) The attribute "friendly_name" is something like Name@Type
-            # ecatype_value__split = ecatype_value.split("@")
-            # if len(ecatype_value__split) != 2:
-            #     msg = (f"Error with {s.entity_id}! Attribute 'friendly_name' (value={ecatype_value}) "
-            #            f"should be a string with the format Name@Type!")
-            #     _LOGGER.warning(msg)
-            #     return False
-
-            # 4) @Type is equal to "ECAObject"
+            # 2) @Type is equal to "ECAObject"
             friendly_name = s.attributes["friendly_name"]
             ecatype = friendly_name.split("@")
             if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
                 return False
 
-            print(s.attributes)
-
-            # 5) The attribute "isInsideCamera" is "yes"
+            # 3) The attribute "isInsideCamera" is "yes"
             if s.attributes["isInsideCamera"] != "yes":
                 return False
 
             # If all the conditions are met, return True
-            # print(f"Sensor {s.entity_id} is an ECA Object")
             return True
 
         # Get the list of sensors in Home Assistant
         states = self.hass.states.async_all()
-
-        if DO_PRINT := False:
-            print(f"AAAAAA STATES {states!s}")
-            print(f"BBBBBB STATES[0] {states[0]!s}")
-            print(f"CCCCCC TYPE STATES {type(states)!s}")
-            print(f"DDDDDD TYPES STATES[0] {type(states[0])!s}")
-            state: State = states[0]
-            print(f"{type(state.attributes)} | {state.attributes}")
-            print(f"{type(state.context)} | {state.context}")
-            print(f"{type(state.domain)} | {state.domain}")
-            print(f"{type(state.state)} | {state.state}")
-            print(f"{type(state.as_dict())} | {state.as_dict()}")
-            print(f"{type(state.as_dict_json)} | {state.as_dict_json}")
-            print(f"{type(state.entity_id)} | {state.entity_id}")
-            print(f"{type(state.last_changed)} | {state.last_changed}")
-            print("EEEEEE")
 
         states = list(filter(filter_sensors, states))
 
