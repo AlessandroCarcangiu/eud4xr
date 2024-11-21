@@ -1,18 +1,24 @@
+import json
 import logging
-
 from homeassistant.components import HomeAssistant
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import State
-
 from .automations import async_list_automations
-from .const import SERVICE_GET_AUTOMATIONS, SERVICE_GET_VIRTUAL_DEVICES
+from .const import (
+    API_GET_AUTOMATIONS,
+    API_GET_VIRTUAL_DEVICES,
+    API_GET_ECA_CAPABILITIES
+)
+from .sensor import CURRENT_MODULE
+from .utils import MappedClasses
+
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class ListAutomationsView(HomeAssistantView):
-    url = f"/api/eud4xr/{SERVICE_GET_AUTOMATIONS}"
-    name = f"api:{SERVICE_GET_AUTOMATIONS}"
+    url = f"/api/eud4xr/{API_GET_AUTOMATIONS}"
+    name = f"api:{API_GET_AUTOMATIONS}"
     methods = ["GET"]
 
     def __init__(self, hass: HomeAssistant) -> None:
@@ -43,8 +49,8 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
     as_dict_json    bytes   e.g.    b'{"entity_id":"person.giagobox","state":"unknown","attributes":{"editable":true,"id":"giagobox","device_trackers":[],"user_id":"5fa37f398b5648eb955ca701f38ab210","friendly_name":"Giagobox"},"last_changed":"2024-11-14T15:59:51.742010+00:00","last_reported":"2024-11-14T15:59:53.029074+00:00","last_updated":"2024-11-14T15:59:53.029074+00:00","context":{"id":"01JCNPE265RWHYC4BXDVG69W88","parent_id":null,"user_id":null}}'
     """
 
-    url = f"/api/eud4xr/{SERVICE_GET_VIRTUAL_DEVICES}"
-    name = f"api:{SERVICE_GET_VIRTUAL_DEVICES}"
+    url = f"/api/eud4xr/{API_GET_VIRTUAL_DEVICES}"
+    name = f"api:{API_GET_VIRTUAL_DEVICES}"
     methods = ["GET"]
 
     def __init__(self, hass: HomeAssistant) -> None:
@@ -88,3 +94,18 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
 
         # Filter sensors only ECAObject with isInsideCamera = true
         return self.json(states)
+
+
+class ListECACapabilitiesView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_GET_ECA_CAPABILITIES}"
+    name = f"api:{API_GET_ECA_CAPABILITIES}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        ECA_SCRIPTS = MappedClasses.mapping_classes(CURRENT_MODULE, self.hass)
+        data = {k: v.to_dict() for k,v in ECA_SCRIPTS.items()}
+        print(data)
+        return self.json({"capabilities": data})

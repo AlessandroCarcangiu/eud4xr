@@ -236,8 +236,6 @@ class Behaviour(ECAEntity):
         return {**super_extra_attributes}
 
 
-
-
 class Vehicle(ECAEntity):
 
     def __init__(self, speed: float, on: ECABoolean, **kwargs: dict) -> None:

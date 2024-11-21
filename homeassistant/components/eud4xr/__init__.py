@@ -1,8 +1,6 @@
 import logging
-
 import aiohttp
 import voluptuous as vol
-
 from homeassistant.components.group import Group, expand_entity_ids
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import (
@@ -12,7 +10,6 @@ from homeassistant.helpers import (
 )
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.typing import ConfigType
-
 from .automations import (
     RECEIVED_AUTOMATION_SCHEMA,
     REMOVE_AUTOMATION_SCHEMA,
@@ -25,7 +22,7 @@ from .sensor import (
     SERVICE_UPDATE_FROM_UNITY,
     UPDATES_FROM_UNITY_SCHEMA,
 )
-from .views import ListAutomationsView, ListFramedVirtualDevicesView
+from .views import ListAutomationsView, ListFramedVirtualDevicesView, ListECACapabilitiesView
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -249,8 +246,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         handle_remove_automation,
         schema=REMOVE_AUTOMATION_SCHEMA,
     )
+
+    # views
     hass.http.register_view(ListAutomationsView(hass))
     hass.http.register_view(ListFramedVirtualDevicesView(hass))
+    hass.http.register_view(ListECACapabilitiesView(hass))
     return True
 
 
@@ -263,8 +263,6 @@ def find_sensor(hass, sensor_id: str):
     entity_registry = er.async_get(hass)
     entity_entry = entity_registry.async_get(sensor_id)
     sensor_component = hass.data.get("sensor")
-
-    print(f"list_sensors: {sensor_component.entities}")
 
     return (
         (
