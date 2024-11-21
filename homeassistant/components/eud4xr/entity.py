@@ -73,16 +73,16 @@ class ECAEntity(Entity):
     def generate_payload(
         self,
         verb: str,
-        variable: str = "",
-        modifier: str = "",
+        variable_name: str = "",
+        modifier_string: str = "",
         on_event: bool = False,
         **kwargs,
     ) -> dict:
         data = {CONF_SERVICE_UPDATE_FROM_UNITY_VERB: verb}
-        if variable:
-            data[CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE] = variable.lower()
-        if modifier:
-            data[CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER] = modifier.lower()
+        if variable_name:
+            data[CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE] = variable_name.lower()
+        if modifier_string:
+            data[CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER] = modifier_string.lower()
         data[CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT] = (
             self.game_object.lower().split("@")[0] if on_event else self.game_object
         )
@@ -104,6 +104,7 @@ class ECAEntity(Entity):
                     parameters[k] = value
         if parameters:
             data[CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS] = parameters
+
         return data
 
     async def action(self, **kwargs) -> None:
