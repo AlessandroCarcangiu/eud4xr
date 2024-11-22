@@ -203,7 +203,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                             )
                         return
         _LOGGER.error(
-            f"Received a new update from unity - Error on handling update {update}"
+            f"Received a new update from unity - Error on handling update {update} - group: {group}"
         )
 
     ## Add or update an automation
