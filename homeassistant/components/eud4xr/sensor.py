@@ -148,20 +148,24 @@ class ECAObject(ECAEntity):
     Attributes:
     - position (ECAPosition): p is the position of the object.
     - rotation (ECARotation): r is the rotation of the object.
+    - scale (Scale): r is the scale of the object.
     - visible (ECABoolean): isVisible is a boolean that indicates if the object is visible.
             If the object is invisible, it will not be rendered but it will still collide with other objects.
     - active (ECABoolean): isActive is a boolean that indicates if the object is active and visible.
             If the object is inactive, it will not be rendered and it will not collide with other objects.
+    - isInsideCamera (ECABoolean): isInsideCamera is a boolean that indicates if the object is within the camera's field of view.
 
     """
 
-    def __init__(self, position: ECAPosition, rotation: ECARotation, visible: ECABoolean, active: ECABoolean,
-                 **kwargs: dict) -> None:
+    def __init__(self, position: ECAPosition, rotation: ECARotation, scale: ECAScale, visible: ECABoolean,
+                 active: ECABoolean, isInsideCamera: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._position = position
         self._rotation = rotation
+        self._scale = scale
         self._visible = visible
         self._active = active
+        self._isInsideCamera = isInsideCamera
         self._attr_should_poll = False
 
     @property
@@ -173,6 +177,10 @@ class ECAObject(ECAEntity):
         return self._rotation
 
     @property
+    def scale(self) -> ECAScale:
+        return self._scale
+
+    @property
     def visible(self) -> ECABoolean:
         return self._visible
 
@@ -181,13 +189,19 @@ class ECAObject(ECAEntity):
         return self._active
 
     @property
+    def isInsideCamera(self) -> ECABoolean:
+        return self._isInsideCamera
+
+    @property
     def extra_state_attributes(self) -> dict:
         super_extra_attributes = super().extra_state_attributes
         return {
             "position": self.position,
             "rotation": self.rotation,
+            "scale": self.scale,
             "visible": self.visible,
             "active": self.active,
+            "isInsideCamera": self.isInsideCamera,
             **super_extra_attributes
         }
 
@@ -206,6 +220,14 @@ class ECAObject(ECAEntity):
     @eca_script_action(verb="looks at")
     async def async_looks_at(self, o: object) -> None:
         _LOGGER.info(f"Performed looks_at action - {o}")
+
+    @eca_script_action(verb="scales to")
+    async def async_scales_to(self, newScale: ECAScale) -> None:
+        _LOGGER.info(f"Performed scales_to action - {newScale}")
+
+    @eca_script_action(verb="restores original settings")
+    async def async_restores_original_settings(self) -> None:
+        _LOGGER.info(f"Performed restores_original_settings action")
 
     @eca_script_action(verb="shows")
     async def async_shows(self) -> None:
@@ -975,45 +997,6 @@ class ECALight(ECAEntity):
         _LOGGER.info(f"Performed changes action - {inputColor}")
 
 
-class ECAText(ECAEntity):
-    """
-
-
-    Attributes:
-    - content (str):
-
-    """
-
-    def __init__(self, content: str, **kwargs: dict) -> None:
-        super().__init__(**kwargs)
-        self._content = content
-        self._attr_should_poll = False
-
-    @property
-    def content(self) -> str:
-        return self._content
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            "content": self.content,
-            **super_extra_attributes
-        }
-
-    @eca_script_action(verb="changes", variable_name="content", modifier_string="to")
-    async def async_changes(self, c: str) -> None:
-        _LOGGER.info(f"Performed changes action - {c}")
-
-    @eca_script_action(verb="appends")
-    async def async_appends(self, t: str) -> None:
-        _LOGGER.info(f"Performed appends action - {t}")
-
-    @eca_script_action(verb="deletes")
-    async def async_deletes(self, t: str) -> None:
-        _LOGGER.info(f"Performed deletes action - {t}")
-
-
 class ECAVideo(ECAEntity):
     """
     ECAVideo is an  that represents a video player.
@@ -1355,12 +1338,20 @@ class Character(ECAEntity):
         }
 
     @eca_script_action(verb="interacts with")
-    async def async_interacts_with(self, o: "Interactable") -> None:
+    async def async_interacts_with(self, o: ECAObject) -> None:
         _LOGGER.info(f"Performed interacts_with action - {o}")
 
     @eca_script_action(verb="stops-interacting with")
-    async def async_stops_interacting_with(self, o: "Interactable") -> None:
+    async def async_stops_interacting_with(self, o: ECAObject) -> None:
         _LOGGER.info(f"Performed stops_interacting_with action - {o}")
+
+    @eca_script_action(verb="points to")
+    async def async_points_to(self, o: ECAObject) -> None:
+        _LOGGER.info(f"Performed points_to action - {o}")
+
+    @eca_script_action(verb="stops-pointing to")
+    async def async_stops_pointing_to(self, o: ECAObject) -> None:
+        _LOGGER.info(f"Performed stops_pointing_to action - {o}")
 
     @eca_script_action(verb="jumps to")
     async def async_jumps_to(self, p: ECAPosition) -> None:
@@ -2074,10 +2065,6 @@ class Sound(ECAEntity):
     @eca_script_action(verb="changes", variable_name="volume", modifier_string="to")
     async def async_changes(self, v: float) -> None:
         _LOGGER.info(f"Performed changes action - {v}")
-
-    @eca_script_action(verb="changes", variable_name="current-time", modifier_string="to")
-    async def async_changes(self, c: float) -> None:
-        _LOGGER.info(f"Performed changes action - {c}")
 
     @eca_script_action(verb="changes", variable_name="source", modifier_string="to")
     async def async_changes(self, newSource: str) -> None:

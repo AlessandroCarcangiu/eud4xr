@@ -1,4 +1,5 @@
 import inspect
+import textwrap
 import voluptuous as vol
 from functools import wraps
 from typing import Tuple, TypedDict
@@ -49,9 +50,10 @@ class Service:
 
 
 class MappedClass:
-    def __init__(self, cls: callable, properties: list, description_services: list, services: list[Service]) -> None:
+    def __init__(self, cls: callable, properties: list, description_services: list, services: list[Service], description: str) -> None:
         self._cls = cls
         self._properties = properties
+        self._description = description
         self._description_services = description_services
         self._services = services
 
@@ -71,13 +73,18 @@ class MappedClass:
     def services(self) -> list[Service]:
         return self._services
 
+    @property
+    def description(self) -> str:
+        return self._description
+
     def __str__(self) -> str:
         return f"{self.cls} - {self.service_definitions}"
 
     def to_dict(self) -> dict:
         return {
+            "description": self.description,
+            #"properties": self.properties,
             "services": [i.to_dict() for i in self.services],
-            "properties": self.properties
         }
 
 class MappedClasses:
@@ -95,7 +102,10 @@ class MappedClasses:
             properties = cls.__mapping_properties(clazz)
             # get class' services
             description_services, list_services = cls.__mapping_methods(clazz, hass)
-            results[name] = MappedClass(clazz, properties, description_services, list_services)
+
+            docstring = inspect.getdoc(clazz)
+
+            results[name] = MappedClass(clazz, properties, description_services, list_services, docstring)
         MappedClasses.ECA_SCRIPTS = results
         return MappedClasses.ECA_SCRIPTS
 
@@ -105,6 +115,7 @@ class MappedClasses:
 
     @staticmethod
     def __is_entity_class(type_class: callable) -> bool:
+        print(type_class)
         return type_class == ECAEntity or issubclass(type_class, ECAEntity)
 
     @classmethod
