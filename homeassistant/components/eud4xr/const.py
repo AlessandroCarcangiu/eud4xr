@@ -1,4 +1,9 @@
+IS_DEBUG = False
+
 AUTOMATION_PATH = "automations.yaml"
+
+TIMESTAMP_MIN_UPDATE = 10000 # time limit for retaining failed updates due to an unregistered sensor
+MAX_LENGTH_CIRCULAR_LIST = 15 # circular queue's length.
 
 # custom component
 DOMAIN = "eud4xr"
@@ -9,11 +14,19 @@ SERVICE_SEND_REQUEST = "send_update_to_server_unity"
 SERVICE_ADD_SENSOR = "add_sensor"
 SERVICE_ADD_VIRTUAL_OBJECT = "add_virtual_object"
 SERVICE_UPDATE_FROM_UNITY = "receive_update_from_unity"
-API_GET_AUTOMATIONS = "list_automations"
-API_GET_VIRTUAL_DEVICES = "list_virtual_framed_devices"
-API_GET_ECA_CAPABILITIES = "list_eca_capabilities"
 SERVICE_ADD_UPDATE_AUTOMATION = "add_update_automation"
 SERVICE_REMOVE_AUTOMATION = "remove_automation"
+
+# endpoints
+API_GET_AUTOMATIONS = "automations"
+API_GET_VIRTUAL_DEVICES = "list_virtual_framed_devices"
+API_GET_ECA_CAPABILITIES = "list_eca_capabilities"
+API_GET_CONTEXT_OBJECTS = "context_objects"
+API_GET_VIRTUAL_OBJECTS = "virtual_objects"
+
+# unity services
+API_NOTIFY_UPDATE = "/api/external_updates/"
+API_NOTIFY_AUTOMATIONS = "/api/automations/"
 
 # CONF domain
 CONF_SERVER_UNITY_URL = "server_unity_url"

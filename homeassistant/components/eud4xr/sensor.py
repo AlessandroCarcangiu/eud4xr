@@ -1,17 +1,24 @@
+import inspect
 import logging
 import sys
-
 import voluptuous as vol
-
+from collections import deque
 from homeassistant.const import CONF_SENSORS
 from homeassistant.helpers import config_validation as cv, entity_platform
-
 from .const import *
 from .eca_classes import ECABoolean, ECAColor, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
-from .utils import MappedClasses, eca_script_action
+from .utils import MappedClasses, eca_script_action, update_deque
 
 _LOGGER = logging.getLogger(__name__)
+
+
+DEQUE_FRAMED_OBJECTS = deque([], maxlen=MAX_LENGTH_CIRCULAR_LIST)
+
+DEQUE_POINTED_OBJECTS = deque([], maxlen=MAX_LENGTH_CIRCULAR_LIST)
+
+DEQUE_INTERACTED_OBJECTS = deque([], maxlen=MAX_LENGTH_CIRCULAR_LIST)
+
 
 # PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 #     vol.Required(CONF_PLATFORM_ECA_SCRIPT): cv.string,
@@ -91,7 +98,7 @@ async def async_setup_platform(
 ) -> None:
     ECA_SCRIPTS = MappedClasses.get_eca_scripts()
     if ECA_SCRIPTS is None:
-        ECA_SCRIPTS = MappedClasses.mapping_classes(CURRENT_MODULE, hass)
+        ECA_SCRIPTS = MappedClasses.mapping_classes(hass)
 
     if discovery_info is None:
         print("discovery_info is none")
@@ -117,6 +124,16 @@ async def async_setup_platform(
     platform = entity_platform.async_get_current_platform()
     for service_def in eca_class.service_definitions:
         platform.async_register_entity_service(*service_def)
+
+
+def get_classes_subclassing(to_string: bool = False) -> list[any]:
+    current_module = inspect.getmodule(inspect.currentframe())
+    classes = inspect.getmembers(current_module, inspect.isclass)
+    subclass_names = [
+        cls if not to_string else name.lower() for name, cls in classes
+        if issubclass(cls, ECAEntity) and cls is not ECAEntity
+    ]
+    return subclass_names
 
 
 class Behaviour(ECAEntity):
@@ -191,6 +208,11 @@ class ECAObject(ECAEntity):
     @property
     def isInsideCamera(self) -> ECABoolean:
         return self._isInsideCamera
+
+    @isInsideCamera.setter
+    @update_deque(DEQUE_FRAMED_OBJECTS)
+    def isInsideCamera(self, v: ECABoolean) -> None:
+        self._isInsideCamera = v
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -596,58 +618,6 @@ class Electronic(ECAEntity):
     @eca_script_action(verb="turns")
     async def async_turns(self, on: ECABoolean) -> None:
         _LOGGER.info(f"Performed turns action - {on}")
-
-
-class Food(ECAEntity):
-    """
-    Food is a class that represents something that can be eaten.
-
-    Attributes:
-    - weight (float): Weight: is the weight of the food.
-    - expiration (str): Expiration: is the expiration date of the food.
-    - description (str): Description: is the description of the food.
-    - eaten (ECABoolean): Eaten: is true if the food has been eaten.
-
-    """
-
-    def __init__(self, weight: float, expiration: str, description: str, eaten: ECABoolean, **kwargs: dict) -> None:
-        super().__init__(**kwargs)
-        self._weight = weight
-        self._expiration = expiration
-        self._description = description
-        self._eaten = eaten
-        self._attr_should_poll = False
-
-    @property
-    def weight(self) -> float:
-        return self._weight
-
-    @property
-    def expiration(self) -> str:
-        return self._expiration
-
-    @property
-    def description(self) -> str:
-        return self._description
-
-    @property
-    def eaten(self) -> ECABoolean:
-        return self._eaten
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            "weight": self.weight,
-            "expiration": self.expiration,
-            "description": self.description,
-            "eaten": self.eaten,
-            **super_extra_attributes
-        }
-
-    @eca_script_action(verb="eats")
-    async def async_eats(self, c: object) -> None:
-        _LOGGER.info(f"Performed eats action - {c}")
 
 
 class Weapon(ECAEntity):
@@ -1366,6 +1336,58 @@ class Character(ECAEntity):
         _LOGGER.info(f"Performed starts_animation action - {s}")
 
 
+class Food(ECAEntity):
+    """
+    Food is a class that represents something that can be eaten.
+
+    Attributes:
+    - weight (float): Weight: is the weight of the food.
+    - expiration (str): Expiration: is the expiration date of the food.
+    - description (str): Description: is the description of the food.
+    - eaten (ECABoolean): Eaten: is true if the food has been eaten.
+
+    """
+
+    def __init__(self, weight: float, expiration: str, description: str, eaten: ECABoolean, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._weight = weight
+        self._expiration = expiration
+        self._description = description
+        self._eaten = eaten
+        self._attr_should_poll = False
+
+    @property
+    def weight(self) -> float:
+        return self._weight
+
+    @property
+    def expiration(self) -> str:
+        return self._expiration
+
+    @property
+    def description(self) -> str:
+        return self._description
+
+    @property
+    def eaten(self) -> ECABoolean:
+        return self._eaten
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "weight": self.weight,
+            "expiration": self.expiration,
+            "description": self.description,
+            "eaten": self.eaten,
+            **super_extra_attributes
+        }
+
+    @eca_script_action(verb="eats", is_passive=True)
+    async def async_eats(self, c: Character) -> None:
+        _LOGGER.info(f"Performed eats action - {c}")
+
+
 class Animal(ECAEntity):
     """
     Animal is a subclass of Character. It is used to represent the animals character.
@@ -1979,7 +2001,6 @@ class Sound(ECAEntity):
     - source (str): Source is the audio source that will be used to play the audio.
     - volume (float): Volume is the volume of the audio.
     - maxVolume (float): MaxVolume is the maximum volume the audio can reach.
-    - duration (float): duration is the duration of the audio.
     - currentTime (float): currentTime is the current time of the audio.
     - playing (ECABoolean): isPlaying is a boolean that indicates if the audio is playing.
     - paused (ECABoolean): Paused  is a boolean that indicates if the audio is paused.
@@ -1987,13 +2008,12 @@ class Sound(ECAEntity):
 
     """
 
-    def __init__(self, source: str, volume: float, maxVolume: float, duration: float, currentTime: float,
+    def __init__(self, source: str, volume: float, maxVolume: float, currentTime: float,
                  playing: ECABoolean, paused: ECABoolean, stopped: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._source = source
         self._volume = volume
         self._maxVolume = maxVolume
-        self._duration = duration
         self._currentTime = currentTime
         self._playing = playing
         self._paused = paused
@@ -2011,10 +2031,6 @@ class Sound(ECAEntity):
     @property
     def maxVolume(self) -> float:
         return self._maxVolume
-
-    @property
-    def duration(self) -> float:
-        return self._duration
 
     @property
     def currentTime(self) -> float:
@@ -2039,7 +2055,6 @@ class Sound(ECAEntity):
             "source": self.source,
             "volume": self.volume,
             "maxVolume": self.maxVolume,
-            "duration": self.duration,
             "currentTime": self.currentTime,
             "playing": self.playing,
             "paused": self.paused,
@@ -2063,11 +2078,11 @@ class Sound(ECAEntity):
         _LOGGER.info(f"Performed stops action")
 
     @eca_script_action(verb="changes", variable_name="volume", modifier_string="to")
-    async def async_changes(self, v: float) -> None:
+    async def async_changes_volume(self, v: float) -> None:
         _LOGGER.info(f"Performed changes action - {v}")
 
     @eca_script_action(verb="changes", variable_name="source", modifier_string="to")
-    async def async_changes(self, newSource: str) -> None:
+    async def async_changes_source(self, newSource: str) -> None:
         _LOGGER.info(f"Performed changes action - {newSource}")
 
 
@@ -2265,6 +2280,103 @@ class POV(ECAEntity):
     def extra_state_attributes(self) -> dict:
         super_extra_attributes = super().extra_state_attributes
         return {
+            **super_extra_attributes
+        }
+
+
+class ECAText(ECAEntity):
+    """
+    ECAText is an Interaction subclass that represents a text element.
+
+    Attributes:
+
+    """
+    def __init__(self, content: str, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._content = content
+        self._attr_should_poll = False
+
+    @property
+    def content(self) -> str:
+        return self._content
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "content": self.content,
+            **super_extra_attributes
+        }
+
+    @eca_script_action(verb="changes", variable_name="content", modifier_string="to")
+    async def async_changes_content(self, c: str) -> None:
+        _LOGGER.info(f"Performed changes content to action - {c}")
+
+    @eca_script_action(verb="appends")
+    async def async_appends(self, t: str) -> None:
+        _LOGGER.info(f"Performed appends action - {t}")
+
+    @eca_script_action(verb="deletes")
+    async def async_deletes(self, t: str) -> None:
+        _LOGGER.info(f"Performed deletes action - {t}")
+
+
+class ECAXRPointer(ECAEntity):
+    """
+    ECAXRPointer is a Behaviour subclass that represents a pointable element.
+
+    Attributes:
+
+    """
+    def __init__(self, isPointed: ECABoolean, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._isPointed = isPointed
+        self._attr_should_poll = False
+
+    @property
+    def isPointed(self) -> bool:
+        return self._isPointed
+
+    @isPointed.setter
+    @update_deque(DEQUE_POINTED_OBJECTS)
+    def isPointed(self, v: ECABoolean) -> None:
+        self._isPointed = v
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "isPointed": self.isPointed,
+            **super_extra_attributes
+        }
+
+
+class ECAXRInteractable(ECAEntity):
+    """
+    ECAXRInteractable is a Behaviour subclass that represents an interactable XR element.
+
+    Attributes:
+
+    """
+    def __init__(self, isInteracted: ECABoolean, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._isInteracted = isInteracted
+        self._attr_should_poll = False
+
+    @property
+    def isInteracted(self) -> bool:
+        return self._isInteracted
+
+    @isInteracted.setter
+    @update_deque(DEQUE_INTERACTED_OBJECTS)
+    def isInteracted(self, v: ECABoolean) -> None:
+        self._isInteracted = v
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "isInteracted": self.isInteracted,
             **super_extra_attributes
         }
 

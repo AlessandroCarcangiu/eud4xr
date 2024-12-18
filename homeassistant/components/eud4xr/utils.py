@@ -1,16 +1,19 @@
 import inspect
 import textwrap
 import voluptuous as vol
+from collections import deque
 from functools import wraps
-from typing import Tuple, TypedDict
-from homeassistant.helpers import config_validation as cv
+from typing import Tuple
+from homeassistant.helpers import config_validation as cv, entity_registry as er
 from .config_validation import get_unity_entity
 from .eca_classes import ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
 
 
-def eca_script_action(verb: str, variable_name: str = "", modifier_string: str = ""):
+def eca_script_action(verb: str, variable_name: str = "", modifier_string: str = "", is_passive: bool = False):
     def decorator(func):
+        setattr(func, "kwargs", {"verb": verb, "variable_name":variable_name, "modifier_string": modifier_string})
+        setattr(func, "is_passive", is_passive)
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
             result = await func(self, *args, **kwargs)
@@ -27,10 +30,21 @@ def eca_script_action(verb: str, variable_name: str = "", modifier_string: str =
                 **kwargs,
             )
             return result
-
         wrapper._is_eca_script_action = True
         return wrapper
+    return decorator
 
+
+def update_deque(circular_list: deque):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, value: any):
+            game_object_name = self.game_object.split("@")[0]
+            if game_object_name in circular_list:
+                circular_list.remove(game_object_name)
+            circular_list.append(game_object_name)
+            return func(self, value)
+        return wrapper
     return decorator
 
 
@@ -84,8 +98,9 @@ class MappedClass:
         return {
             "description": self.description,
             #"properties": self.properties,
-            "services": [i.to_dict() for i in self.services],
+            "services": self.services,
         }
+
 
 class MappedClasses:
     ECA_SCRIPTS = None
@@ -95,17 +110,12 @@ class MappedClasses:
         return MappedClasses.ECA_SCRIPTS
 
     @classmethod
-    def mapping_classes(cls, module, hass) -> dict:
+    def mapping_classes(cls, hass) -> dict:
+        from .sensor import CURRENT_MODULE
+
         results = dict()
-        for name, clazz in inspect.getmembers(module, inspect.isclass):
-            # get class' properties
-            properties = cls.__mapping_properties(clazz)
-            # get class' services
-            description_services, list_services = cls.__mapping_methods(clazz, hass)
-
-            docstring = inspect.getdoc(clazz)
-
-            results[name] = MappedClass(clazz, properties, description_services, list_services, docstring)
+        for name, clazz in inspect.getmembers(CURRENT_MODULE, inspect.isclass):
+            results[name] = cls.__mapping_class(hass, clazz)
         MappedClasses.ECA_SCRIPTS = results
         return MappedClasses.ECA_SCRIPTS
 
@@ -115,8 +125,16 @@ class MappedClasses:
 
     @staticmethod
     def __is_entity_class(type_class: callable) -> bool:
-        print(type_class)
         return type_class == ECAEntity or issubclass(type_class, ECAEntity)
+
+    @classmethod
+    def __mapping_class(cls, hass, clazz: callable) -> MappedClass:
+        # get class' properties
+        properties = cls.__mapping_properties(clazz)
+        # get class' services
+        description_services, list_services = cls.__mapping_methods(clazz, hass)
+        docstring = inspect.getdoc(clazz)
+        return MappedClass(clazz, properties, description_services, list_services, docstring)
 
     @classmethod
     def __mapping_parameter(cls, name: str, param, hass) -> any:
@@ -169,7 +187,7 @@ class MappedClasses:
             description_params = dict()
             for param_name, param in list(filter(lambda x: x[0] != "self", signature)):
                 value = cls.__mapping_parameter(param_name, param, hass)
-                service_params[param_name] = str(param.annotation)
+                service_params[param_name] = str(param.annotation.__name__)
                 description_params[param_name] = value
 
             # description methods
@@ -187,8 +205,8 @@ class MappedClasses:
                 Service(
                     eca_action=f"eud4xr.{name.replace('async_','')}",
                     params=service_params,
-                    description=inspect.getdoc(method),
-                )
+                    description=inspect.getdoc(method)
+                ).to_dict()
             )
 
         return list_methods, list_services

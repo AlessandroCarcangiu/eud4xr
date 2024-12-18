@@ -1,28 +1,36 @@
-import logging
 import aiohttp
+import copy
+import inspect
+import logging
 import voluptuous as vol
+from datetime import datetime, timedelta
 from homeassistant.components.group import Group, expand_entity_ids
-from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.core import HomeAssistant, ServiceCall, callback, Event
 from homeassistant.helpers import (
     config_validation as cv,
     discovery,
-    entity_registry as er,
 )
 from homeassistant.helpers.entity_component import EntityComponent
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import ConfigType
 from .automations import (
-    RECEIVED_AUTOMATION_SCHEMA,
-    REMOVE_AUTOMATION_SCHEMA,
-    async_add_update_automation,
-    async_remove_automation,
+    async_list_automations
 )
 from .const import *
+from .models import Automation
 from .sensor import (
     GAMEOBJECT_ECASCRIPT_SCHEMA,
     SERVICE_UPDATE_FROM_UNITY,
     UPDATES_FROM_UNITY_SCHEMA,
 )
-from .views import ListAutomationsView, ListFramedVirtualDevicesView, ListECACapabilitiesView
+from .hass_utils import find_group, find_sensor
+from .views import (
+    AutomationsView,
+    ListFramedVirtualDevicesView,
+    ListECACapabilitiesView,
+    ContextObjectsView,
+    VirtualObjectsView
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,11 +55,14 @@ REGISTER_VIRTUAL_OBJECT_SCHEMA = vol.Schema(
 )
 
 
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     conf = config[DOMAIN]
     server_unity_url = conf.get(CONF_SERVER_UNITY_URL)
     server_unity_token = conf.get(CONF_SERVER_UNITY_TOKEN)
     sensors = conf.get(CONF_UNITY_ENTITIES)
+
+    failed_updates = list()
 
     # get data from configuration and create entities
     hass.data[DOMAIN] = {}
@@ -80,7 +91,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post(
-                    f"{server_unity_url}/api/external_updates/", json=payload
+                    f"{server_unity_url}{API_NOTIFY_UPDATE}", json=payload
                 ) as response:
                     if response.status == 200:
                         _LOGGER.info("Update successfully sent")
@@ -123,6 +134,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             if entity_name is None:
                 entity_name = new_entity_name.replace("@", "_")
                 group_name = new_entity_name.split("@")[0]
+            hass.bus.async_fire("event_sensor_registered")
+            _LOGGER.info(f"Registered a new sensor - {new_entity_name}")
 
         # create or update group: check if exists a group for this pair game_object_name@name_component
         # No -> create a new Group
@@ -158,18 +171,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                         },
                     )
                 await hass.add_job(async_update_group)
-        _LOGGER.info("Registered a new object")
+
+        _LOGGER.info("Registered a new object - {entity_name}")
 
     ## Update from Unity
     async def handle_update_from_unity(call) -> None:
         await async_update_from_unity(hass, call.data)
 
-    async def async_update_from_unity(hass, update):
-        _LOGGER.info(f"Received a new update from unity: {update}")
+    async def async_update_from_unity(hass, update, is_retry: bool = False):
+        message = f"Received a new update from unity: {update}" if not is_retry else f"Received an old update from unity: {update}"
+        _LOGGER.info(message)
         # update state #
-        data = update.get(CONF_SERVICE_UPDATE_FROM_UNITY_UPDATE)
+        data = copy.deepcopy(update.get(CONF_SERVICE_UPDATE_FROM_UNITY_UPDATE))
         group_id = data.pop("unity_id").split("@")[0]
         group = find_group(hass, group_id)
+        sensor = None
+        entity = None
         if group:
             sensors_ids = group.attributes.get("entity_id", [])
             attribute = data.get("attribute")
@@ -179,7 +196,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     # on action #
                     if CONF_SERVICE_UPDATE_FROM_UNITY_ATTRIBUTE not in data:
                         sensor.on_action(**data)
-                        return
+                        return True
                     # update a sensor's attribute
                     attributes = dict(entity.attributes)
                     if attribute and attribute in attributes:
@@ -188,33 +205,77 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                             or sensor.last_updates[attribute]
                             < update[CONF_SERVICE_UPDATE_FROM_UNITY_TIMESTAMP]
                         ):
+                            # update value
                             new_value = data.get("new_value")
                             attributes[attribute] = new_value
                             hass.states.async_set(sensor_id, entity.state, attributes)
                             sensor.last_updates[attribute] = update[
                                 CONF_SERVICE_UPDATE_FROM_UNITY_TIMESTAMP
                             ]
+
+                            # if sensor defines a setter for this property -> update deque list
+                            attr = getattr(sensor.__class__, attribute)
+                            if isinstance(attr, property) and attr.fset is not None:
+                                attr.fset(sensor, new_value)
+
                             _LOGGER.info(
                                 f"Attribute {attribute} of Entity {sensor} updated!"
                             )
+
                         else:
                             _LOGGER.warning(
                                 f"Received an old {update} for the Entity {sensor} - {sensor.last_updates[attribute]}"
                             )
-                        return
-        _LOGGER.error(
-            f"Received a new update from unity - Error on handling update {update} - group: {group}"
-        )
+                        return True
+                else:
+                    _LOGGER.warning(
+                            f"Sensor {sensor} or entity {entity} not found - Sensor_id: {sensor_id}"
+                        )
+        if not is_retry:
+            ts = int(datetime.now().timestamp() * 1000)
+            failed_updates.append((ts, update))
+            _LOGGER.error(
+                f"Received a new update from unity - Error on handling update {update}\n"+
+                f"Possibly causes: group: {group} or sensor {sensor} or entity {entity} not found"
+            )
+        return False
 
-    ## Add or update an automation
-    async def handle_add_update_automation(call) -> None:
-        data = call.data[CONF_SERVICE_ADD_UPDATE_AUTOMATION_DATA]
-        await async_add_update_automation(hass, data)
+    # the system registered a new sensor -> check on the failed update list
+    async def handle_failed_update_list(event):
+        for ts, update in failed_updates.copy():
+            now = datetime.now().timestamp() * 1000
+            if now-ts > TIMESTAMP_MIN_UPDATE:
+                _LOGGER.info(
+                    f"Deleted an old update {update}"
+                )
+                failed_updates.remove((ts, update))
+            else:
+                res = await async_update_from_unity(hass, update, is_retry=True)
+                if res:
+                    _LOGGER.info(
+                        f"Handled an old update {update}"
+                    )
+                    failed_updates.remove((ts, update))
 
-    ## Remove an automation
-    async def handle_remove_automation(call) -> None:
-        automation_id = call.data[CONF_SERVICE_REMOVE_AUTOMATION_ID]
-        await async_remove_automation(hass, automation_id)
+    # listener update automation file
+    @callback
+    async def handle_automation_reloaded(event):
+        print("Automation reloaded detected. Calling external service...")
+        await notify_automations(hass)
+
+    async def notify_automations(hass: HomeAssistant):
+        async with aiohttp.ClientSession() as session:
+            try:
+                automations = [Automation.from_yaml(hass, a).to_dict() for a in await async_list_automations(hass)]
+                async with session.post(
+                        f"{server_unity_url}{API_NOTIFY_AUTOMATIONS}", json=automations
+                    ) as response:
+                        if response.status == 200:
+                            _LOGGER.info("Update successfully sent")
+                        else:
+                            _LOGGER.error(f"Error on notifying automations to Unity: {response.status}")
+            except Exception as e:
+                _LOGGER.error(f"Error on conctating Unity while notifying automations: {e}")
 
     hass.services.async_register(
         DOMAIN,
@@ -234,48 +295,21 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         handle_update_from_unity,
         schema=UPDATES_FROM_UNITY_SCHEMA,
     )
-    hass.services.async_register(
-        DOMAIN,
-        SERVICE_ADD_UPDATE_AUTOMATION,
-        handle_add_update_automation,
-        schema=RECEIVED_AUTOMATION_SCHEMA,
-    )
-    hass.services.async_register(
-        DOMAIN,
-        SERVICE_REMOVE_AUTOMATION,
-        handle_remove_automation,
-        schema=REMOVE_AUTOMATION_SCHEMA,
-    )
+    hass.bus.async_listen("event_automation_reloaded", handle_automation_reloaded)
+    hass.bus.async_listen("event_sensor_registered", handle_failed_update_list)
+    # async_track_time_interval(
+    #     hass,
+    #     handle_failed_update_list,
+    #     timedelta(seconds=10)
+    # )
 
     # views
-    hass.http.register_view(ListAutomationsView(hass))
-    hass.http.register_view(ListFramedVirtualDevicesView(hass))
+    hass.http.register_view(AutomationsView(hass))
+    #hass.http.register_view(ListFramedVirtualDevicesView(hass))
     hass.http.register_view(ListECACapabilitiesView(hass))
+    hass.http.register_view(ContextObjectsView(hass))
+    hass.http.register_view(VirtualObjectsView(hass))
     return True
 
 
-def find_group(hass, group_id: str):
-    return hass.states.get(f"group.{group_id}")
 
-
-def find_sensor(hass, sensor_id: str):
-    entity = hass.states.get(sensor_id)
-    entity_registry = er.async_get(hass)
-    entity_entry = entity_registry.async_get(sensor_id)
-    sensor_component = hass.data.get("sensor")
-
-    return (
-        (
-            next(
-                (
-                    entity
-                    for entity in sensor_component.entities
-                    if entity.entity_id == sensor_id
-                ),
-                None,
-            ),
-            entity,
-        )
-        if entity and entity_entry and sensor_component
-        else (None, None)
-    )

@@ -1,14 +1,22 @@
-import json
 import logging
+from aiohttp.web import Response
 from homeassistant.components import HomeAssistant
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import State
-from .automations import async_list_automations
+from .automations import (
+    async_list_automations,
+    async_add_update_automation,
+    async_get_automation,
+    async_remove_automation
+)
 from .const import (
     API_GET_AUTOMATIONS,
     API_GET_VIRTUAL_DEVICES,
-    API_GET_ECA_CAPABILITIES
+    API_GET_ECA_CAPABILITIES,
+    API_GET_CONTEXT_OBJECTS,
+    API_GET_VIRTUAL_OBJECTS
 )
+from .models import Automation
 from .sensor import CURRENT_MODULE
 from .utils import MappedClasses
 
@@ -16,17 +24,42 @@ from .utils import MappedClasses
 _LOGGER = logging.getLogger(__name__)
 
 
-class ListAutomationsView(HomeAssistantView):
+class AutomationsView(HomeAssistantView):
     url = f"/api/eud4xr/{API_GET_AUTOMATIONS}"
     name = f"api:{API_GET_AUTOMATIONS}"
-    methods = ["GET"]
+    methods = ["POST", "GET", "DELETE"]
 
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
 
+    async def post(self, request):
+        # get the json defintion of an automation, convert it to yaml format and save it
+        data = await request.json()
+        print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
+        if isinstance(data, dict):
+            yaml_code = [Automation.from_dict(data).to_yaml(self.hass)]
+        else:
+            yaml_code = [Automation.from_dict(d).to_yaml(self.hass) for d in data]
+
+        await async_add_update_automation(self.hass, yaml_code)
+        return Response(status=200)
+
     async def get(self, request):
-        result = await async_list_automations(self.hass)
-        return self.json({"automations": result})
+        # automation_id = request.match_info.get("id")
+        # # retrieve
+        # if automation_id:
+        #     automation = async_get_automation(self.hass, automation_id).from_yaml(self.hass).to_dict()
+        #     return self.json({"automations": [automation]})
+        # list
+        automations = [Automation.from_yaml(self.hass, a).to_dict() for a in await async_list_automations(self.hass)]
+        return self.json({"automations": automations})
+
+    async def delete(self, request):
+        automation_id = request.match_info.get("id")
+        if automation_id:
+            await async_remove_automation(self.hass, automation_id)
+            return Response(status=200)
+        _LOGGER.error(f"The request must specify an id in the url")
 
 
 class ListFramedVirtualDevicesView(HomeAssistantView):
@@ -105,7 +138,46 @@ class ListECACapabilitiesView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request):
-        ECA_SCRIPTS = MappedClasses.mapping_classes(CURRENT_MODULE, self.hass)
+        ECA_SCRIPTS = MappedClasses.mapping_classes(self.hass)
         data = {k: v.to_dict() for k,v in ECA_SCRIPTS.items()}
-        print(data)
         return self.json({"capabilities": data})
+
+
+class ContextObjectsView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_GET_CONTEXT_OBJECTS}"
+    name = f"api:{API_GET_CONTEXT_OBJECTS}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        from .sensor import DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS
+        return self.json({
+            "framed_objects": list(DEQUE_FRAMED_OBJECTS),
+            "pointed_objects": list(DEQUE_POINTED_OBJECTS),
+            "interacted_with_objects": list(DEQUE_INTERACTED_OBJECTS)
+        })
+
+
+class VirtualObjectsView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_GET_VIRTUAL_OBJECTS}"
+    name = f"api:{API_GET_VIRTUAL_OBJECTS}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        objects = list()
+        for state in filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all()):
+            new_group = dict()
+            new_group["name"] = state.entity_id.split(".")[-1]
+            components = list()
+            for i in state.attributes["entity_id"]:
+                components.append(self.hass.states.get(i))
+            new_group["components"] = components
+            objects.append(new_group)
+        return self.json({
+            "objects": objects
+        })
