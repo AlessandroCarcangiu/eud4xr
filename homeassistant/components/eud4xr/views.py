@@ -34,6 +34,7 @@ class AutomationsView(HomeAssistantView):
 
     async def post(self, request):
         # get the json defintion of an automation, convert it to yaml format and save it
+        print(request)
         data = await request.json()
         print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
         if isinstance(data, dict):
@@ -138,8 +139,21 @@ class ListECACapabilitiesView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request):
+        all = request.query.get("all", False)
+
         ECA_SCRIPTS = MappedClasses.mapping_classes(self.hass)
         data = {k: v.to_dict() for k,v in ECA_SCRIPTS.items()}
+
+        if not all:
+            filtered_data = dict()
+            registered_groups = filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all())
+            for state in registered_groups:
+                for sensor_id in state.attributes["entity_id"]:
+                    sensor_class = self.hass.states.get(sensor_id).attributes.get("friendly_name").split("@")[-1]
+                    if not sensor_class in filtered_data:
+                        filtered_data[sensor_class] = data[sensor_class]
+            data = filtered_data
+
         return self.json({"capabilities": data})
 
 
@@ -169,15 +183,22 @@ class VirtualObjectsView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request):
+        only_objects = request.query.get("only_objects", False)
         objects = list()
-        for state in filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all()):
-            new_group = dict()
-            new_group["name"] = state.entity_id.split(".")[-1]
-            components = list()
-            for i in state.attributes["entity_id"]:
-                components.append(self.hass.states.get(i))
-            new_group["components"] = components
-            objects.append(new_group)
+        registered_groups = filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all())
+
+        if only_objects:
+           objects = [state.entity_id.split(".")[-1] for state in registered_groups]
+        else:
+            for state in registered_groups:
+                new_group = dict()
+                new_group["name"] = state.entity_id.split(".")[-1]
+                if not only_objects:
+                    components = list()
+                    for i in state.attributes["entity_id"]:
+                        components.append(self.hass.states.get(i))
+                    new_group["components"] = components
+                    objects.append(new_group)
         return self.json({
             "objects": objects
         })
