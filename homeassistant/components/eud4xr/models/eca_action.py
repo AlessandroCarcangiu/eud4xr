@@ -19,67 +19,56 @@ from ..hass_utils import (
 from ..sensor import ECAObject, get_classes_subclassing
 
 
-class Action:
+class ECAAction:
 
-    def __init__(self, verb: str, subject: str, variable_name: object=None, obj: object=None, modifier_string: str=None, value: str=None,
-                 parameters: dict = None) -> None:
+    def __init__(self, verb: str, subject: str, obj: object=None, variable: object=None, modifier: str=None, value: str=None) -> None:
         self.verb = verb
         self.subject = subject
-        self.modifier_string = modifier_string
-        self.value = value
-        self.variable_name = variable_name
-        self.parameters = parameters
         self.obj = obj
-        self.__signature = None
-        self.__method = None
+        self.variable = variable
+        self.modifier = modifier
+        self.value = value
 
     def to_dict(self, to_lower: bool = False, remove_nullable: bool = False) -> dict:
         if to_lower:
-            for i in ["verb", "subject", "variable_name", "modifier_string", "obj", "value"]:
+            for i in ["verb", "subject", "variable", "modifier", "obj", "value"]:
                 v = getattr(self, i)
                 if isinstance(v, str):
                     setattr(self, i, v.lower())
         data = {
             "verb": self.verb,
             "subject": self.subject,
-            "variable_name": self.variable_name,
-            "modifier_string": self.modifier_string,
             "obj": self.obj,
-            "parameters": self.parameters,
-            "value": self.value,
+            "variable": self.variable,
+            "modifier": self.modifier,
+            "value": self.value
         }
-        if remove_nullable:
-            for k in list(data.keys()):
-                if not data[k]:
-                    data.pop(k)
+        for k in list(data.keys()):
+            if not data[k]:
+                data.pop(k)
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Action':
+    def from_dict(cls, data: dict) -> 'ECAAction':
         return cls(
             verb=data.get("verb"),
             subject=data.get("subject"),
             obj=data.get("obj"),
-            variable_name=data.get("variable_name"),
-            modifier_string=data.get("modifier_string"),
-            parameters = data.get("parameters"),
+            variable=data.get("variable"),
+            modifier=data.get("modifier"),
             value=data.get("value"),
         )
 
     @classmethod
-    def from_yaml(cls, hass: HomeAssistant, data: dict, is_trigger: bool = False) -> 'Action':
+    def from_yaml(cls, hass: HomeAssistant, data: dict, is_trigger: bool = False) -> 'ECAAction':
         '''
             It converts eca actions from hass format to natural language:
                 verb: {verb in natural language},
                 subject: {game_object_name@eca_script},
-                parameters: {dictionary of argument: value}
+                obj:
                 variable_name: {variable_name},
                 modifier_string: {modifier_string}
         '''
-        if IS_DEBUG:
-            print("------------start ACTION from_yaml------------")
-            print(f"data:{data}")
-            print("------------end ACTION from_yaml------------\n")
         # an eca action expressed as trigger is an event very similar to the ECARules4All's action definition (it contains verb, subject, ecc.)
         # consequently, we just extract the event_data and send it to Unity
         if is_trigger:
@@ -102,14 +91,19 @@ class Action:
             if method:
                 # get method's kwargs
                 other_params = getattr(method, "kwargs")
-                params = dict()
-                for param_name, param in sig.parameters.items():
-                    if param_name != "self":
-                        params[param_name] = data["data"][param_name]
+                params = sig.parameters.items()
                 if params:
-                    kwargs = {**kwargs, ** other_params, "params":params}
+                    v = None
+                    for param_name, param in sig.parameters.items():
+                        if param_name != "self":
+                            v = data["data"][param_name]
+                    if v:
+                        if kwargs.get("variable", None):
+                            kwargs["value"] = v
+                        else:
+                            kwargs["obj"] = v
             else:
-                kwargs["variable_name"] = cls.convert_variable_to_unity(hass, kwargs["variable_name"])
+                kwargs["variable"] = cls.convert_variable_to_unity(hass, kwargs["variable"])
             return cls(
                 **kwargs
             )
@@ -119,34 +113,17 @@ class Action:
         service_name = data["action"].split(".")[-1]
         subject = convert_subject_to_unity(hass, subject_name)
         method, sig = cls.get_service_method(hass, subject_name, service_name)
-        # kwargs = {
-        #     "subject":subject,
-        # }
         # populate params
-        params = None
-        modifier_string = None
-        variable_name = None
+        v = None
+        modifier = None
+        variable = None
         if method:
-            # # other action parameters
-            # other_params = getattr(method, "kwargs")
-            # verb = other_params["verb"]
-            # variable_name = other_params["variable_name"]
-            # modifier_string = other_params["modifier_string"]
-            # if sig:
-            #     params = dict()
-            #     for param_name, param in sig.parameters.items():
-            #         if param_name != "self":
-            #             params[param_name] = data["data"][param_name]
-            #     # param = next(
-            #     #     (param for name, param in sig.parameters.items() if name != "self"),
-            #     #     None
-            #     # )
             other_params = getattr(method, "kwargs")
             is_passive = getattr(method, "is_passive")
             # passive action
             if is_passive:
                 param_name = next(k for k,v in sig.parameters.items() if k != "self")
-                variable_name = subject
+                variable = subject
                 verb = other_params["verb"]
                 subject = convert_subject_to_unity(hass, data["data"][param_name])
             # active action
@@ -154,17 +131,14 @@ class Action:
                 # other action parameters
                 other_params = getattr(method, "kwargs")
                 verb = other_params["verb"]
-                variable_name = other_params["variable_name"]
-                modifier_string = other_params["modifier_string"]
+                variable = other_params["variable_name"]
+                modifier = other_params["modifier_string"]
                 if sig:
-                    params = dict()
+                    params = sig.parameters.items()
+                if params:
                     for param_name, param in sig.parameters.items():
                         if param_name != "self":
-                            params[param_name] = data["data"][param_name]
-                # param = next(
-                #     (param for name, param in sig.parameters.items() if name != "self"),
-                #     None
-                # )
+                            v = data["data"][param_name]
         else:
             verb = service_name.replace("_", " ")
         # define kwargs
@@ -172,18 +146,15 @@ class Action:
             "subject":subject,
             "verb": verb
         }
-        # print("-------------------")
-        # print(f"method: {method}")
-        # print(f"sig: {sig.parameters.items()}")
-        # print(f"param: {param}")
-        # print("-------------------")
-        if variable_name:
-            kwargs["variable_name"] = variable_name
-        if modifier_string:
-            #kwargs["variable_name"] = variable_name
-            kwargs["modifier_string"] = modifier_string
-        if params:
-            kwargs["parameters"] = params
+        if variable:
+            kwargs["variable"] = variable
+        if modifier:
+            kwargs["modifier"] = modifier
+        if v:
+            if variable and modifier:
+                kwargs["value"] = v
+            else:
+                kwargs["obj"] = v
         return cls(**kwargs)
 
     @staticmethod

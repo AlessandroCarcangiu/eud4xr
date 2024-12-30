@@ -34,7 +34,6 @@ class AutomationsView(HomeAssistantView):
 
     async def post(self, request):
         # get the json defintion of an automation, convert it to yaml format and save it
-        print(request)
         data = await request.json()
         print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
         if isinstance(data, dict):
@@ -46,13 +45,18 @@ class AutomationsView(HomeAssistantView):
         return Response(status=200)
 
     async def get(self, request):
-        # automation_id = request.match_info.get("id")
-        # # retrieve
-        # if automation_id:
-        #     automation = async_get_automation(self.hass, automation_id).from_yaml(self.hass).to_dict()
-        #     return self.json({"automations": [automation]})
-        # list
-        automations = [Automation.from_yaml(self.hass, a).to_dict() for a in await async_list_automations(self.hass)]
+        # type
+        eca = request.query.get("eca", False)
+
+        automation_id = request.match_info.get("id")
+        # retrieve
+        if automation_id:
+            automation = await async_get_automation(self.hass, automation_id)
+            automations = [Automation.from_yaml(self.hass, automation, eca).to_dict()]
+        else:
+            # list
+            automations = [Automation.from_yaml(self.hass, a, eca).to_dict() for a in await async_list_automations(self.hass)]
+
         return self.json({"automations": automations})
 
     async def delete(self, request):

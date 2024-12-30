@@ -4,6 +4,7 @@ import yaml
 from homeassistant.core import HomeAssistant
 from .action import Action
 from .yaml_action import YAMLAction
+from .eca_action import ECAAction
 from ..const import IS_DEBUG
 from .condition import Condition, SimpleCondition, CompositeCondition, get_condition
 
@@ -13,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class Automation:
 
-    def __init__(self, trigger: Action, conditions: list[Condition], actions: list[Action],
+    def __init__(self, trigger: Action | ECAAction, conditions: list[Condition], actions: list[Action | ECAAction],
                  alias: str = "", description: str = "", id: str = None) -> None:
         self.id = id if id else datetime.now().strftime("%Y%m%d%H%M%S")
         self.trigger = trigger
@@ -69,9 +70,11 @@ class Automation:
         return automation_yaml
 
     @classmethod
-    def from_yaml(cls, hass: HomeAssistant, data: dict) -> 'Automation':
-        trigger = Action.from_yaml(hass, data.get("trigger"), is_trigger=True)
-        actions = [Action.from_yaml(hass, a) for a in data.get("action")]
+    def from_yaml(cls, hass: HomeAssistant, data: dict, eca: bool = False) -> 'Automation':
+        ActionClass = Action if not eca else ECAAction
+
+        trigger = ActionClass.from_yaml(hass, data.get("trigger"), is_trigger=True)
+        actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]
         data_conditions = data.get("condition")
         conditions = [
             SimpleCondition.from_yaml(hass, c) if c["condition"] == "template" else CompositeCondition.from_yaml(hass, c)

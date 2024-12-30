@@ -21,6 +21,8 @@ class SimpleCondition(Condition):
         self.component = component
         self.property = property
         self.symbol = symbol
+        if self.symbol == "=":
+            self.symbol += "="
         self.compareWith = compareWith
 
     def to_dict(self) -> dict:
@@ -156,8 +158,10 @@ def get_condition(data: dict | list) -> Condition | list[Condition]:
     def convert(i) -> Condition:
         return CompositeCondition.from_dict(i) if "operator" in i else SimpleCondition.from_dict(i)
     if isinstance(data, list):
-        conditions = [convert(c) for c in conditions]
+        conditions = [convert(c) for c in data]
     else:
         conditions = convert(data)
-    print(conditions)
+
+    if isinstance(conditions, list) and len(conditions) == 1:
+        conditions = conditions[0]
     return conditions
