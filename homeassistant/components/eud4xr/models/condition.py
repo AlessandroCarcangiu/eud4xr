@@ -21,8 +21,6 @@ class SimpleCondition(Condition):
         self.component = component
         self.property = property
         self.symbol = symbol
-        if self.symbol == "=":
-            self.symbol += "="
         self.compareWith = compareWith
 
     def to_dict(self) -> dict:

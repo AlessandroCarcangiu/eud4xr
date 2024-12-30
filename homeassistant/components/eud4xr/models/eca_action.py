@@ -44,7 +44,7 @@ class ECAAction:
             "value": self.value
         }
         for k in list(data.keys()):
-            if not data[k]:
+            if data[k] is None:
                 data.pop(k)
         return data
 
@@ -103,7 +103,13 @@ class ECAAction:
                         else:
                             kwargs["obj"] = v
             else:
-                kwargs["variable"] = cls.convert_variable_to_unity(hass, kwargs["variable"])
+                kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["variable_name"])
+                kwargs.pop("variable_name")
+
+            if kwargs.get("modifier_string", None):
+                kwargs["modifier"] = kwargs["modifier_string"]
+                kwargs.pop("modifier_string")
+
             return cls(
                 **kwargs
             )
@@ -123,7 +129,7 @@ class ECAAction:
             # passive action
             if is_passive:
                 param_name = next(k for k,v in sig.parameters.items() if k != "self")
-                variable = subject
+                v = subject
                 verb = other_params["verb"]
                 subject = convert_subject_to_unity(hass, data["data"][param_name])
             # active action
@@ -150,7 +156,7 @@ class ECAAction:
             kwargs["variable"] = variable
         if modifier:
             kwargs["modifier"] = modifier
-        if v:
+        if v is not None:
             if variable and modifier:
                 kwargs["value"] = v
             else:
