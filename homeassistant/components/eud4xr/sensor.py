@@ -50,13 +50,23 @@ GAMEOBJECT_ECASCRIPT_SCHEMA = vol.Schema(
     }
 )
 
+# NOTIFICATION_ACTION_FROM_UNITY_SCHEMA = vol.Schema(
+#     {
+#         vol.Required(CONF_PLATFORM_UNITY_ID): cv.string,
+#         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_VERB): cv.string,
+#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE): cv.string,
+#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER): cv.string,
+#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS): dict,
+#     }
+# )
 NOTIFICATION_ACTION_FROM_UNITY_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_PLATFORM_UNITY_ID): cv.string,
         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_VERB): cv.string,
-        vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE): cv.string,
-        vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER): cv.string,
-        vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS): dict,
+        vol.Optional("obj"): object,
+        vol.Optional("variable"): cv.string,
+        vol.Optional("modifier"): cv.string,
+        vol.Optional("value"): object,
     }
 )
 
@@ -271,11 +281,11 @@ class ECAObject(ECAEntity):
         """Deactivates makes the object inactive. It makes it inactive if it is not already."""
         _LOGGER.info(f"Performed deactivates action")
 
-    @eca_script_action(verb="changes", variable_name="visible", modifier_string="to")
+    @eca_script_action(verb="changes", variable="visible", modifier="to")
     async def async_changes(self, yesNo: ECABoolean) -> None:
         _LOGGER.info(f"Performed changes action - {yesNo}")
 
-    @eca_script_action(verb="changes", variable_name="active", modifier_string="to")
+    @eca_script_action(verb="changes", variable="active", modifier="to")
     async def async_changes(self, yesNo: ECABoolean) -> None:
         _LOGGER.info(f"Performed changes action - {yesNo}")
 
@@ -893,7 +903,7 @@ class ECACamera(ECAEntity):
     async def async_zooms_out(self, amount: float) -> None:
         _LOGGER.info(f"Performed zooms_out action - {amount}")
 
-    @eca_script_action(verb="changes", variable_name="POV", modifier_string="to")
+    @eca_script_action(verb="changes", variable="POV", modifier="to")
     async def async_changes(self, pov: str) -> None:
         _LOGGER.info(f"Performed changes action - {pov}")
 
@@ -950,19 +960,19 @@ class ECALight(ECAEntity):
     async def async_turns(self, newStatus: ECABoolean) -> None:
         _LOGGER.info(f"Performed turns action - {newStatus}")
 
-    @eca_script_action(verb="increases", variable_name="intensity", modifier_string="by")
+    @eca_script_action(verb="increases", variable="intensity", modifier="by")
     async def async_increases(self, amount: float) -> None:
         _LOGGER.info(f"Performed increases action - {amount}")
 
-    @eca_script_action(verb="decreases", variable_name="intensity", modifier_string="by")
+    @eca_script_action(verb="decreases", variable="intensity", modifier="by")
     async def async_decreases(self, amount: float) -> None:
         _LOGGER.info(f"Performed decreases action - {amount}")
 
-    @eca_script_action(verb="sets", variable_name="intensity", modifier_string="to")
+    @eca_script_action(verb="sets", variable="intensity", modifier="to")
     async def async_sets(self, i: float) -> None:
         _LOGGER.info(f"Performed sets action - {i}")
 
-    @eca_script_action(verb="changes", variable_name="color", modifier_string="to")
+    @eca_script_action(verb="changes", variable="color", modifier="to")
     async def async_changes(self, inputColor: ECAColor) -> None:
         _LOGGER.info(f"Performed changes action - {inputColor}")
 
@@ -983,14 +993,12 @@ class ECAVideo(ECAEntity):
 
     """
 
-    def __init__(self, source: str, volume: float, maxVolume: float, duration: float, current_time: float,
+    def __init__(self, source: str, volume: float, maxVolume: float,
                  playing: ECABoolean, paused: ECABoolean, stopped: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._source = source
         self._volume = volume
         self._maxVolume = maxVolume
-        self._duration = duration
-        self._current_time = current_time
         self._playing = playing
         self._paused = paused
         self._stopped = stopped
@@ -1007,14 +1015,6 @@ class ECAVideo(ECAEntity):
     @property
     def maxVolume(self) -> float:
         return self._maxVolume
-
-    @property
-    def duration(self) -> float:
-        return self._duration
-
-    @property
-    def current_time(self) -> float:
-        return self._current_time
 
     @property
     def playing(self) -> ECABoolean:
@@ -1035,8 +1035,6 @@ class ECAVideo(ECAEntity):
             "source": self.source,
             "volume": self.volume,
             "maxVolume": self.maxVolume,
-            "duration": self.duration,
-            "current_time": self.current_time,
             "playing": self.playing,
             "paused": self.paused,
             "stopped": self.stopped,
@@ -1058,15 +1056,11 @@ class ECAVideo(ECAEntity):
         """Stops stops the video."""
         _LOGGER.info(f"Performed stops action")
 
-    @eca_script_action(verb="changes", variable_name="volume", modifier_string="to")
+    @eca_script_action(verb="changes", variable="volume", modifier="to")
     async def async_changes(self, v: float) -> None:
         _LOGGER.info(f"Performed changes action - {v}")
 
-    @eca_script_action(verb="changes", variable_name="current-time", modifier_string="to")
-    async def async_changes(self, c: float) -> None:
-        _LOGGER.info(f"Performed changes action - {c}")
-
-    @eca_script_action(verb="changes", variable_name="source", modifier_string="to")
+    @eca_script_action(verb="changes", variable="source", modifier="to")
     async def async_changes(self, newSource: str) -> None:
         _LOGGER.info(f"Performed changes action - {newSource}")
 
@@ -1776,7 +1770,7 @@ class Counter(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable_name="count", modifier_string="to")
+    @eca_script_action(verb="changes", variable="count", modifier="to")
     async def async_changes(self, amount: float) -> None:
         _LOGGER.info(f"Performed changes action - {amount}")
 
@@ -1814,7 +1808,7 @@ class Highlight(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable_name="color", modifier_string="to")
+    @eca_script_action(verb="changes", variable="color", modifier="to")
     async def async_changes(self, c: dict) -> None:
         _LOGGER.info(f"Performed changes action - {c}")
 
@@ -1988,7 +1982,7 @@ class Placeholder(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable_name="mesh", modifier_string="to")
+    @eca_script_action(verb="changes", variable="mesh", modifier="to")
     async def async_changes(self, meshName: str) -> None:
         _LOGGER.info(f"Performed changes action - {meshName}")
 
@@ -2077,11 +2071,11 @@ class Sound(ECAEntity):
         """Stops stops the audio."""
         _LOGGER.info(f"Performed stops action")
 
-    @eca_script_action(verb="changes", variable_name="volume", modifier_string="to")
+    @eca_script_action(verb="changes", variable="volume", modifier="to")
     async def async_changes_volume(self, v: float) -> None:
         _LOGGER.info(f"Performed changes action - {v}")
 
-    @eca_script_action(verb="changes", variable_name="source", modifier_string="to")
+    @eca_script_action(verb="changes", variable="source", modifier="to")
     async def async_changes_source(self, newSource: str) -> None:
         _LOGGER.info(f"Performed changes action - {newSource}")
 
@@ -2151,11 +2145,11 @@ class Timer(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable_name="duration", modifier_string="to")
+    @eca_script_action(verb="changes", variable="duration", modifier="to")
     async def async_changes(self, amount: float) -> None:
         _LOGGER.info(f"Performed changes action - {amount}")
 
-    @eca_script_action(verb="changes", variable_name="current-time", modifier_string="to")
+    @eca_script_action(verb="changes", variable="current-time", modifier="to")
     async def async_changes(self, amount: float) -> None:
         _LOGGER.info(f"Performed changes action - {amount}")
 
@@ -2308,7 +2302,7 @@ class ECAText(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable_name="content", modifier_string="to")
+    @eca_script_action(verb="changes", variable="content", modifier="to")
     async def async_changes_content(self, c: str) -> None:
         _LOGGER.info(f"Performed changes content to action - {c}")
 

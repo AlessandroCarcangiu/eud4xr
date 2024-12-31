@@ -70,41 +70,85 @@ class ECAEntity(Entity):
         """Return the state of the game object."""
         return self._state
 
+    # def generate_payload(
+    #     self,
+    #     verb: str,
+    #     variable_name: str = "",
+    #     modifier_string: str = "",
+    #     on_event: bool = False,
+    #     **kwargs,
+    # ) -> dict:
+    #     data = {CONF_SERVICE_UPDATE_FROM_UNITY_VERB: verb}
+    #     if variable:
+    #         data["CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE"] = variable_name.lower()
+    #     if modifier_string:
+    #         data[CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER] = modifier_string.lower()
+    #     data[CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT] = (
+    #         self.game_object.lower().split("@")[0] if on_event else self.game_object
+    #     )
+    #     parameters = dict()
+    #     for k, v in kwargs.items():
+    #         if v:
+    #             if isinstance(v, RegistryEntry):
+    #                 parameters[k] = (
+    #                     str(v.original_name.split("@")).lower()
+    #                     if on_event
+    #                     else str(v.game_object)
+    #                 )
+    #             else:
+    #                 value = (
+    #                     ", ".join([str(i).lower() for i in v])
+    #                     if isinstance(v, list)
+    #                     else str(v).lower()
+    #                 )
+    #                 parameters[k] = value
+    #     if parameters:
+    #         data[CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS] = parameters
+
+    #     return data
     def generate_payload(
         self,
         verb: str,
-        variable_name: str = "",
-        modifier_string: str = "",
+        variable: str = "",
+        modifier: str = "",
         on_event: bool = False,
         **kwargs,
     ) -> dict:
         data = {CONF_SERVICE_UPDATE_FROM_UNITY_VERB: verb}
-        if variable_name:
-            data[CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE] = variable_name.lower()
-        if modifier_string:
-            data[CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER] = modifier_string.lower()
+        if variable:
+            data["variable"] = variable.lower()
+        if modifier:
+            data["modifier"] = modifier.lower()
+
         data[CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT] = (
             self.game_object.lower().split("@")[0] if on_event else self.game_object
         )
-        parameters = dict()
+        paramater_to_send = None
         for k, v in kwargs.items():
             if v:
                 if isinstance(v, RegistryEntry):
-                    parameters[k] = (
+                    paramater_to_send = (
                         str(v.original_name.split("@")).lower()
                         if on_event
                         else str(v.game_object)
                     )
                 else:
-                    value = (
+                    if isinstance(v, str):
+                        v = v.lower()
+
+                    value_to_string = (
                         ", ".join([str(i).lower() for i in v])
                         if isinstance(v, list)
                         else str(v).lower()
                     )
-                    parameters[k] = value
-        if parameters:
-            data[CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS] = parameters
-
+                    if on_event:
+                        print(f"v: {v} - {hasattr(v, 'to_value')}")
+                    paramater_to_send = v.to_value() if hasattr(v, "to_value") else v if on_event else value_to_string
+        if paramater_to_send:
+            if variable and modifier:
+                data["value"] = paramater_to_send
+            else:
+                data["obj"] = paramater_to_send
         return data
 
     async def action(self, **kwargs) -> None:

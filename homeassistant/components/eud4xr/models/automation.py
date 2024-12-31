@@ -71,7 +71,7 @@ class Automation:
 
     @classmethod
     def from_yaml(cls, hass: HomeAssistant, data: dict, eca: bool = False) -> 'Automation':
-        ActionClass = Action if not eca else ECAAction
+        ActionClass = ECAAction# Action if not eca else ECAAction
 
         trigger = ActionClass.from_yaml(hass, data.get("trigger"), is_trigger=True)
         actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]

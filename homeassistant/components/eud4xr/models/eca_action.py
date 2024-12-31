@@ -66,8 +66,9 @@ class ECAAction:
                 verb: {verb in natural language},
                 subject: {game_object_name@eca_script},
                 obj:
-                variable_name: {variable_name},
-                modifier_string: {modifier_string}
+                variable: {variable},
+                modifier: {modifier}
+                value
         '''
         # an eca action expressed as trigger is an event very similar to the ECARules4All's action definition (it contains verb, subject, ecc.)
         # consequently, we just extract the event_data and send it to Unity
@@ -79,6 +80,7 @@ class ECAAction:
                 # active action - get subject and service
                 entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['subject'], kwargs['verb'])
                 kwargs["subject"] = convert_subject_to_unity(hass, entity_id)
+                kwargs["verb"] = kwargs["verb"].replace(" ", "_")
                 method, sig = cls.get_service_method(hass, entity_id, kwargs["verb"])
             except:
                 # passive action
@@ -88,6 +90,29 @@ class ECAAction:
                 entity_id = get_entity_id_by_game_object_and_eca_script(hass, kwargs['subject'], param.annotation.__name__.lower())
                 kwargs["subject"] = entity_id
 
+            # if method:
+            #     # get method's kwargs
+            #     other_params = getattr(method, "kwargs")
+            #     params = sig.parameters.items()
+            #     if params:
+            #         v = None
+            #         for param_name, param in sig.parameters.items():
+            #             if param_name != "self":
+            #                 v = data["data"][param_name]
+            #         if v:
+            #             if kwargs.get("variable", None):
+            #                 kwargs["value"] = v
+            #             else:
+            #                 kwargs["obj"] = v
+            # else:
+            #     kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["variable_name"])
+            #     kwargs.pop("variable_name")
+
+            # if kwargs.get("modifier_string", None):
+            #     kwargs["modifier"] = kwargs["modifier_string"]
+            #     kwargs.pop("modifier_string")
+
+            ### new 31/12
             if method:
                 # get method's kwargs
                 other_params = getattr(method, "kwargs")
@@ -96,19 +121,15 @@ class ECAAction:
                     v = None
                     for param_name, param in sig.parameters.items():
                         if param_name != "self":
-                            v = data["data"][param_name]
+                            v = kwargs["value"] if kwargs.get("variable", None) else kwargs["obj"]  #data["data"][param_name]
                     if v:
                         if kwargs.get("variable", None):
                             kwargs["value"] = v
                         else:
                             kwargs["obj"] = v
             else:
-                kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["variable_name"])
-                kwargs.pop("variable_name")
-
-            if kwargs.get("modifier_string", None):
-                kwargs["modifier"] = kwargs["modifier_string"]
-                kwargs.pop("modifier_string")
+                kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["obj"])
+            ###
 
             return cls(
                 **kwargs
@@ -137,8 +158,8 @@ class ECAAction:
                 # other action parameters
                 other_params = getattr(method, "kwargs")
                 verb = other_params["verb"]
-                variable = other_params["variable_name"]
-                modifier = other_params["modifier_string"]
+                variable = other_params["variable"]
+                modifier = other_params["modifier"]
                 if sig:
                     params = sig.parameters.items()
                 if params:

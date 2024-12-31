@@ -64,8 +64,10 @@ class YAMLAction:
                 event_data:
                     verb: {verb} (name of the service without 'async'),
                     subject: {game_object_name},
-                    variable_name: {game_object_name} or a {value},
-                    modifier_string: {modifier_string}
+                    obj: {game_object_name} or a {value},
+                    variable: {variable}
+                    modifier: {modifier}
+                    value: {value}
             Action as service:
                 action: eud4xr.{name_service}
                 data:
@@ -81,9 +83,13 @@ class YAMLAction:
                 print(f"to_dict: {self.to_dict()}")
                 print("------------end YAMLAction - AS EVENT - to_yaml------------\n")
             data = self.to_dict()
-            if data.get("obj",None):
-                data["variable_name"] = data["obj"]
-                data.pop("obj")
+
+            ### 31/12
+            # if data.get("obj",None):
+            #     data["variable_name"] = data["obj"]
+            #     data.pop("obj")
+            ###
+
             return {
                 "platform": "event",
                 "event_type": DOMAIN,
@@ -105,29 +111,6 @@ class YAMLAction:
             hass, self.obj, self.verb, self.variable, self.modifier)
             if not method_name:
                 raise Exception(f"Service {self.verb} isnot supported")
-            ####
-        #     self.subject = f"sensor.{self.subject}_ecaobject".lower()
-        #     self.obj = f"sensor.{self.obj}_ecaobject".lower()
-        #     data["obj"] = self.obj
-        # # active action
-        # else:
-            # # subject
-            # self.subject = f"{entity_instance.entity_id}"
-            # self.verb = method_name.replace("async_", "")
-            # if sig.parameters.items():
-            #     for param_name, param in sig.parameters.items():
-            #         if param_name != 'self':
-            #             param_type = param.annotation.__name__.lower()
-            #             v = None
-            #             if self.value:
-            #                 v = self.value
-            #             else:
-            #                 v = self.obj
-            #             # a ref to a sensor or a value?
-            #             if param_type in get_classes_subclassing(to_string=True):
-            #                 data[param_name] = f"sensor.{v}_{param_type}".lower()
-            #             else:
-            #                 data[param_name] = v
 
         self.verb = method_name.replace("async_", "")
         if sig.parameters.items():

@@ -29,6 +29,9 @@ class ECABoolean:
     def __str__(self) -> str:
         return f"{self.choice}"
 
+    def to_value(self) -> str:
+        return self.choice.value
+
     @staticmethod
     def validate(value: str):
         if not isinstance(value, str):
@@ -45,6 +48,13 @@ class ECAPosition:
 
     def __str__(self) -> str:
         return "{" + f"'x': {self.x}, 'y': {self.y}, 'z': {self.z}" + "}"
+
+    def to_value(self) -> dict:
+        return {
+            "x": self.x,
+            "y": self.y,
+            "z": self.z
+        }
 
     @classmethod
     def from_dict(cls, data):

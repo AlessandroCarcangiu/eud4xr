@@ -10,23 +10,23 @@ from .eca_classes import ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
 
 
-def eca_script_action(verb: str, variable_name: str = "", modifier_string: str = "", is_passive: bool = False):
+def eca_script_action(verb: str, variable: str = "", modifier: str = "", is_passive: bool = False):
     def decorator(func):
-        setattr(func, "kwargs", {"verb": verb, "variable_name":variable_name, "modifier_string": modifier_string})
+        setattr(func, "kwargs", {"verb": verb, "variable":variable, "modifier": modifier})
         setattr(func, "is_passive", is_passive)
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
             result = await func(self, *args, **kwargs)
             await self.action(
                 verb=verb,
-                variable_name=variable_name,
-                modifier_string=modifier_string,
+                variable=variable,
+                modifier=modifier,
                 **kwargs,
             )
             self.on_action(
                 verb=verb,
-                variable_name=variable_name,
-                modifier_string=modifier_string,
+                variable=variable,
+                modifier=modifier,
                 **kwargs,
             )
             return result

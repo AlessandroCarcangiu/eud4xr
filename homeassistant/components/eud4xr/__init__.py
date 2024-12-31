@@ -36,13 +36,24 @@ _LOGGER = logging.getLogger(__name__)
 
 group_locks = {}
 
+# SERVICE_SEND_REQUEST_SCHEMA = vol.Schema(
+#     {
+#         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT): cv.string,
+#         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_VERB): cv.string,
+#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE): cv.string,
+#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER): cv.string,
+#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS, default={}): dict,
+#     }
+# )
+#31/12
 SERVICE_SEND_REQUEST_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT): cv.string,
         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_VERB): cv.string,
-        vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE): cv.string,
-        vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER): cv.string,
-        vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS, default={}): dict,
+        vol.Optional("obj"): object,
+        vol.Optional("variable"): cv.string,
+        vol.Optional("modifier"): cv.string,
+        vol.Optional("value"): object,
     }
 )
 
@@ -265,6 +276,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     async def notify_automations(hass: HomeAssistant):
         async with aiohttp.ClientSession() as session:
+            automations = [Automation.from_yaml(hass, a).to_dict() for a in await async_list_automations(hass)]
+            async with session.post(
+                    f"{server_unity_url}{API_NOTIFY_AUTOMATIONS}", json=automations
+                ) as response:
+                    if response.status == 200:
+                        _LOGGER.info("Update successfully sent")
+                    else:
+                        _LOGGER.error(f"Error on notifying automations to Unity: {response.status}")
+
             try:
                 automations = [Automation.from_yaml(hass, a).to_dict() for a in await async_list_automations(hass)]
                 async with session.post(
