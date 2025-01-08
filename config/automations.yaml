@@ -1,0 +1,15 @@
+- action:
+  - action: eud4xr.hides
+    data:
+      entity_id: sensor.t_shirt_test_ecaobject
+  alias: Regola Interazione Maglietta
+  condition: []
+  description: Quando l'utente interagisce con la maglietta, la maglietta scompare.
+  id: '20250108143000000'
+  trigger:
+  - event_data:
+      obj: t_shirt_test
+      subject: player
+      verb: interacts with
+    event_type: eud4xr
+    platform: event

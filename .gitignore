@@ -1,4 +1,6 @@
-/config
+/config/*
+!/config/configuration.yaml
+!/config/automations.yaml
 config2/*
 
 tests/testing_config/deps

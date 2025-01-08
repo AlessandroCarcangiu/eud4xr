@@ -1,0 +1,193 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+logger:
+  default: info
+  logs:
+    homeassistant.components.cloud: debug
+    custom_components.eud4xr: debug
+
+# debugpy:
+#   start: true
+  #wait: true
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.17.0.1
+
+eud4xr:
+  server_unity_url: "https://fly-powerful-slug.ngrok-free.app" # change with your unity server url
+  #server_unity_url: "http://192.168.1.123:5000"
+  server_unity_token: "token"
+  unity_entities:
+    - eca_script: "Sound"
+      game_object: "Cube1@Sound"
+      unity_id: "Cube1@Sound"
+      attributes: {
+        "source": "test.mp3",
+        "volume": 0,
+        "maxVolume": 0,
+        "currentTime": 0,
+        "playing": "false",
+        "paused": "false",
+        "stopped": "true"
+      }
+    - eca_script: "ECAObject"
+      game_object: "Cube1@ECAObject"
+      unity_id: "Cube1@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes"
+      }
+    - eca_script: "Interactable"
+      game_object: "Cube1@Interactable"
+      unity_id: "Cube1@Interactable"
+    - eca_script: "Character"
+      game_object: "Cube1@Character"
+      unity_id: "Cube1@Character"
+      attributes: {
+        "life": 10,
+        "playing": "yes"
+      }
+
+    - eca_script: "ECAObject"
+      game_object: "Cube2@ECAObject"
+      unity_id: "Cube2@ECAObject"
+      attributes: {
+        "position": {'x': 0, 'y': 0, 'z': 0},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes"
+      }
+    - eca_script: "Interactable"
+      game_object: "Cube2@Interactable"
+      unity_id: "Cube2@Interactable"
+    - eca_script: "Food"
+      game_object: "Cube2@Food"
+      unity_id: "Cube2@Food"
+      attributes: {
+        "weight": 10,
+        "expiration": "",
+        "description": "",
+        "eaten": "no"
+      }
+
+    - eca_script: "Button"
+      game_object: "pulsante@Button"
+      unity_id: "pulsante@Button"
+
+    - eca_script: "ECALight"
+      game_object: "luce@ECALight"
+      unity_id: "luce@ECALight"
+      attributes: {
+        "intensity": "1",
+        "color": {
+          "r": "0",
+          "g": "0",
+          "b": "0",
+          "a": "1f"
+        },
+        "maxIntensity": 0,
+        "on": 0
+      }
+
+    - eca_script: "ECAObject"
+      game_object: "T_Shirt_Test@ECAObject"
+      unity_id: "12048"
+      attributes: {
+        "position": {'x': 5, 'y': -2, 'z': 0},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 0, 'y': 0.1, 'z': 0},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera" : "no"
+      }
+    - eca_script: "Prop"
+      game_object: "T_Shirt_Test@Prop"
+      unity_id: "12049"
+      attributes: {
+        "price": 0
+      }
+    - eca_script: "Clothing"
+      game_object: "T_Shirt_Test@Clothing"
+      unity_id: "T_Shirt_Test@Clothing"
+      attributes: {
+        "brand": "My new Brand",
+        "color": {'r': 0, 'g': 0, 'b': 0, 'a': 0},
+        "size": "M",
+        "weared": "no"
+      }
+    - eca_script: "Interactable"
+      game_object: "T_Shirt_Test@Interactable"
+      unity_id: "T_Shirt_Test@Interactable"
+
+    - eca_script: "ECAObject"
+      game_object: "Player@ECAObject"
+      unity_id: "Player@ECAObject"
+      attributes: {
+        "position": {'x': 5, 'y': -2, 'z': 0},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes"
+      }
+    - eca_script: "Character"
+      game_object: "Player@Character"
+      unity_id: "Player@Character"
+      attributes: {
+        "life": 100,
+        "playing": "yes"
+      }
+
+
+group:
+  cube1:
+   name: "cube1"
+   entities:
+    - sensor.cube1_ecaobject
+    - sensor.cube1_interactable
+    - sensor.cube1_character
+    - sensor.cube1_sound
+  cube2:
+   name: "cube2"
+   entities:
+    - sensor.cube2_ecaobject
+    - sensor.cube2_interactable
+    - sensor.cube2_food
+  pulsante:
+   name: "pulsante"
+   entities:
+    - sensor.pulsante_button
+  luce:
+   name: "luce"
+   entities:
+    - sensor.luce_ecalight
+  player:
+    name: "player"
+    entities:
+      - sensor.player_ecaobject
+      - sensor.player_character
+  t_shirt_test:
+    name: "t_shirt_test"
+    entities:
+    - sensor.t_shirt_test_ecaobject
+    - sensor.t_shirt_test_clothing
+    - sensor.t_shirt_test_prop
+    - sensor.t_shirt_test_interactable
