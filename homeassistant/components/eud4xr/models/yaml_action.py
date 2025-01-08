@@ -102,6 +102,11 @@ class YAMLAction:
             hass, self.subject, self.verb, self.variable, self.modifier)
 
         # active or passive action
+        print("--------------")
+        print(f"subject: {self.subject}")
+        print(f"verb: {self.verb}")
+        print(f"variable: {self.variable}")
+        print(f"modifier: {self.modifier}")
         if not method_name:
             # new #
             passive_instance, method_name, _, sig = get_entity_instance_and_method_signature_by_structured_language(

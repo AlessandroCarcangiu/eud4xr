@@ -92,7 +92,7 @@ def get_entity_instance_and_method_signature_by_structured_language(
                 m = d_kwargs.get("modifier", None)
                 if (not var and v == verb) or (v==verb and var==variable and m == modifier):
                     return entity_instance, name, method, inspect.signature(method)
-    return None, None, None
+    return None, None, None, None
 
 
 def get_method_by_eca_script_name(eca_script: str, verb: str) -> any:
