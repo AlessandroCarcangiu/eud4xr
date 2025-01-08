@@ -5,6 +5,8 @@ import voluptuous as vol
 from collections import deque
 from homeassistant.const import CONF_SENSORS
 from homeassistant.helpers import config_validation as cv, entity_platform
+from typing import Union
+from numbers import Number
 from .const import *
 from .eca_classes import ECABoolean, ECAColor, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
@@ -147,14 +149,16 @@ def get_classes_subclassing(to_string: bool = False) -> list[any]:
 
 
 class Behaviour(ECAEntity):
+
     """
-    Behaviour is a Component that does not derive from the ECAObject family, it's possible to apply more than one
-            in order to define extra behaviours
+    Behaviour serves as a foundational component required for all behavior implementations within the automation framework.
+            While only one instance of  is attached to a GameObject, it enables and supports specific behaviors such as Toggle or Switch,
+            which inherit from this class and define unique functionality.
+            This class does not contain any specific functionality, but rather serves as a base class for all behavior implementations.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -168,24 +172,24 @@ class Behaviour(ECAEntity):
 
 
 class ECAObject(ECAEntity):
+
     """
-    ECAObject is the base class for all objects that can be used in the rule engine.
+    ECAObject is the base class for all virtual objects that can be used in the automations.
             All the other classes in this package inherit from this class or one of its subclasses.
+            It supports properties such as position, rotation, scale, visibility, and activity, and provides methods for moving, rotating, scaling, and controlling visibility.
 
     Attributes:
-    - position (ECAPosition): p is the position of the object.
-    - rotation (ECARotation): r is the rotation of the object.
-    - scale (Scale): r is the scale of the object.
-    - visible (ECABoolean): isVisible is a boolean that indicates if the object is visible.
-            If the object is invisible, it will not be rendered but it will still collide with other objects.
-    - active (ECABoolean): isActive is a boolean that indicates if the object is active and visible.
-            If the object is inactive, it will not be rendered and it will not collide with other objects.
-    - isInsideCamera (ECABoolean): isInsideCamera is a boolean that indicates if the object is within the camera's field of view.
+    - position (ECAPosition): p represents the position of the virtual object in the 3D space. It's a vector with three components: x, y, and z.
+    - rotation (ECARotation): r represents the rotation of the object in the 3D space. It's a vector with three components: x, y, and z (euler angles).
+    - scale (ECAScale): r represents the scale of the object in the 3D space.
+    - visible (ECABoolean): visible indicates whether the object is visible. The allowed values are either "yes" or "no".
+            If invisible, the object is not rendered but remains interactive for collisions.
+    - active (ECABoolean): active indicates whether the object is active. The allowed values are either "yes" or "no".
+            When inactive, the object is not rendered and does not interact with other objects.
+    - isInsideCamera (ECABoolean): isInsideCamera indicates whether the object is currently within the camera's field of view. This property is automatically updated at runtime.
 
     """
-
-    def __init__(self, position: ECAPosition, rotation: ECARotation, scale: ECAScale, visible: ECABoolean,
-                 active: ECABoolean, isInsideCamera: ECABoolean, **kwargs: dict) -> None:
+    def __init__(self, position: ECAPosition, rotation: ECARotation, scale: ECAScale, visible: ECABoolean, active: ECABoolean, isInsideCamera: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._position = position
         self._rotation = rotation
@@ -237,60 +241,62 @@ class ECAObject(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="moves to")
+    @eca_script_action(verb = "moves to")
     async def async_moves_to(self, newPos: ECAPosition) -> None:
         _LOGGER.info(f"Performed moves_to action - {newPos}")
 
-    @eca_script_action(verb="moves on")
+    @eca_script_action(verb = "moves on")
     async def async_moves_on(self, path: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed moves_on action - {path}")
 
-    @eca_script_action(verb="rotates around")
+    @eca_script_action(verb = "rotates around")
     async def async_rotates_around(self, newRot: ECARotation) -> None:
         _LOGGER.info(f"Performed rotates_around action - {newRot}")
 
-    @eca_script_action(verb="looks at")
+    @eca_script_action(verb = "looks at")
     async def async_looks_at(self, o: object) -> None:
         _LOGGER.info(f"Performed looks_at action - {o}")
 
-    @eca_script_action(verb="scales to")
+    @eca_script_action(verb = "scales to")
     async def async_scales_to(self, newScale: ECAScale) -> None:
         _LOGGER.info(f"Performed scales_to action - {newScale}")
 
-    @eca_script_action(verb="restores original settings")
+    @eca_script_action(verb = "restores original settings")
     async def async_restores_original_settings(self) -> None:
+        """Restores the object's original position, rotation, and scale to their initial values."""
         _LOGGER.info(f"Performed restores_original_settings action")
 
-    @eca_script_action(verb="shows")
+    @eca_script_action(verb = "shows")
     async def async_shows(self) -> None:
-        """Shows makes the object visible. It makes it visible if it is not already."""
+        """Shows maakes the object visible if it is not already."""
         _LOGGER.info(f"Performed shows action")
 
-    @eca_script_action(verb="hides")
+    @eca_script_action(verb = "hides")
     async def async_hides(self) -> None:
-        """Hides makes the object invisible. It makes it invisible if it is not already."""
+        """Hides makes the object invisible if it is not already."""
         _LOGGER.info(f"Performed hides action")
 
-    @eca_script_action(verb="activates")
+    @eca_script_action(verb = "activates")
     async def async_activates(self) -> None:
-        """Activates makes the object active. It makes it active if it is not already."""
+        """Activates makes the object both interactable and visible."""
         _LOGGER.info(f"Performed activates action")
 
-    @eca_script_action(verb="deactivates")
+    @eca_script_action(verb = "deactivates")
     async def async_deactivates(self) -> None:
-        """Deactivates makes the object inactive. It makes it inactive if it is not already."""
+        """Deactivates makes the object invisible and non-interactable."""
         _LOGGER.info(f"Performed deactivates action")
 
-    @eca_script_action(verb="changes", variable="visible", modifier="to")
-    async def async_changes(self, yesNo: ECABoolean) -> None:
-        _LOGGER.info(f"Performed changes action - {yesNo}")
+    @eca_script_action(verb = "changes", variable = "visible", modifier = "to")
+    async def async_changes_visible(self, yesNo: ECABoolean) -> None:
+        _LOGGER.info(f"Performed changes_visible action - {yesNo}")
 
-    @eca_script_action(verb="changes", variable="active", modifier="to")
-    async def async_changes(self, yesNo: ECABoolean) -> None:
-        _LOGGER.info(f"Performed changes action - {yesNo}")
+    @eca_script_action(verb = "changes", variable = "active", modifier = "to")
+    async def async_changes_active(self, yesNo: ECABoolean) -> None:
+        _LOGGER.info(f"Performed changes_active action - {yesNo}")
 
 
 class Vehicle(ECAEntity):
+
     """
 
 
@@ -299,7 +305,6 @@ class Vehicle(ECAEntity):
     - on (ECABoolean):
 
     """
-
     def __init__(self, speed: float, on: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._speed = speed
@@ -323,35 +328,35 @@ class Vehicle(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="starts")
+    @eca_script_action(verb = "starts")
     async def async_starts(self) -> None:
         _LOGGER.info(f"Performed starts action")
 
-    @eca_script_action(verb="steers-at")
+    @eca_script_action(verb = "steers-at")
     async def async_steers_at(self, angle: float) -> None:
         _LOGGER.info(f"Performed steers_at action - {angle}")
 
-    @eca_script_action(verb="accelerates-by")
+    @eca_script_action(verb = "accelerates-by")
     async def async_accelerates_by(self, f: float) -> None:
         _LOGGER.info(f"Performed accelerates_by action - {f}")
 
-    @eca_script_action(verb="slows-by")
+    @eca_script_action(verb = "slows-by")
     async def async_slows_by(self, f: float) -> None:
         _LOGGER.info(f"Performed slows_by action - {f}")
 
-    @eca_script_action(verb="stops")
+    @eca_script_action(verb = "stops")
     async def async_stops(self) -> None:
         _LOGGER.info(f"Performed stops action")
 
 
 class AirVehicle(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -363,23 +368,23 @@ class AirVehicle(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="takes-off")
+    @eca_script_action(verb = "takes-off")
     async def async_takes_off(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed takes_off action - {p}")
 
-    @eca_script_action(verb="lands")
+    @eca_script_action(verb = "lands")
     async def async_lands(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed lands action - {p}")
 
 
 class LandVehicle(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -393,13 +398,13 @@ class LandVehicle(ECAEntity):
 
 
 class SeaVehicle(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -413,6 +418,7 @@ class SeaVehicle(ECAEntity):
 
 
 class SpaceVehicle(ECAEntity):
+
     """
 
 
@@ -421,7 +427,6 @@ class SpaceVehicle(ECAEntity):
     - gravity (float):
 
     """
-
     def __init__(self, oxygen: float, gravity: float, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._oxygen = oxygen
@@ -445,16 +450,17 @@ class SpaceVehicle(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="takes-off")
+    @eca_script_action(verb = "takes-off")
     async def async_takes_off(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed takes_off action - {p}")
 
-    @eca_script_action(verb="lands")
+    @eca_script_action(verb = "lands")
     async def async_lands(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed lands action - {p}")
 
 
 class Scene(ECAEntity):
+
     """
 
 
@@ -463,7 +469,6 @@ class Scene(ECAEntity):
     - position (ECAPosition):
 
     """
-
     def __init__(self, name: str, position: ECAPosition, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._name = name
@@ -487,12 +492,13 @@ class Scene(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="teleports to")
+    @eca_script_action(verb = "teleports to")
     async def async_teleports_to(self) -> None:
         _LOGGER.info(f"Performed teleports_to action")
 
 
 class Prop(ECAEntity):
+
     """
     In Prop category we represent generic objects that can be placed in a scene and manipulated by characters.
             The possible sub-categories are, in this case, several; we can have passive actions, such as wear in Clothing
@@ -502,7 +508,6 @@ class Prop(ECAEntity):
     - price (float): Price: The price of the prop object.
 
     """
-
     def __init__(self, price: float, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._price = price
@@ -522,6 +527,7 @@ class Prop(ECAEntity):
 
 
 class Clothing(ECAEntity):
+
     """
     Clothing: This class is used to define the clothing properties of the objects.
 
@@ -532,7 +538,6 @@ class Clothing(ECAEntity):
     - weared (ECABoolean): Weared: This property is used to define if the clothing is weared or not.
 
     """
-
     def __init__(self, brand: str, color: dict, size: str, weared: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._brand = brand
@@ -568,24 +573,25 @@ class Clothing(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="wears")
-    async def async_wears(self, m: 'Mannequin') -> None:
-        _LOGGER.info(f"Performed wears action - {m}")
+    @eca_script_action(verb = "wears")
+    async def async_wears_(self, m: 'Mannequin') -> None:
+        _LOGGER.info(f"Performed wears_ action - {m}")
 
-    @eca_script_action(verb="unwears")
-    async def async_unwears(self, m: 'Mannequin') -> None:
-        _LOGGER.info(f"Performed unwears action - {m}")
+    @eca_script_action(verb = "unwears")
+    async def async_unwears_(self, m: 'Mannequin') -> None:
+        _LOGGER.info(f"Performed unwears_ action - {m}")
 
-    @eca_script_action(verb="wears")
-    async def async_wears(self, c: object) -> None:
-        _LOGGER.info(f"Performed wears action - {c}")
+    @eca_script_action(verb = "wears")
+    async def async_wears_(self, c: object) -> None:
+        _LOGGER.info(f"Performed wears_ action - {c}")
 
-    @eca_script_action(verb="unwears")
-    async def async_unwears(self, c: object) -> None:
-        _LOGGER.info(f"Performed unwears action - {c}")
+    @eca_script_action(verb = "unwears")
+    async def async_unwears_(self, c: object) -> None:
+        _LOGGER.info(f"Performed unwears_ action - {c}")
 
 
 class Electronic(ECAEntity):
+
     """
     Electronic class is used to create and manage electronics objects, which are used to interact with the game.
 
@@ -595,7 +601,6 @@ class Electronic(ECAEntity):
     - on (ECABoolean): On is the state of the electronic.
 
     """
-
     def __init__(self, brand: str, model: str, on: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._brand = brand
@@ -625,12 +630,65 @@ class Electronic(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="turns")
+    @eca_script_action(verb = "turns")
     async def async_turns(self, on: ECABoolean) -> None:
         _LOGGER.info(f"Performed turns action - {on}")
 
 
+class Food(ECAEntity):
+
+    """
+    Food is a class that represents something that can be eaten.
+
+    Attributes:
+    - weight (float): Weight: is the weight of the food.
+    - expiration (str): Expiration: is the expiration date of the food.
+    - description (str): Description: is the description of the food.
+    - eaten (ECABoolean): Eaten: is true if the food has been eaten.
+
+    """
+    def __init__(self, weight: float, expiration: str, description: str, eaten: ECABoolean, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._weight = weight
+        self._expiration = expiration
+        self._description = description
+        self._eaten = eaten
+        self._attr_should_poll = False
+
+    @property
+    def weight(self) -> float:
+        return self._weight
+
+    @property
+    def expiration(self) -> str:
+        return self._expiration
+
+    @property
+    def description(self) -> str:
+        return self._description
+
+    @property
+    def eaten(self) -> ECABoolean:
+        return self._eaten
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "weight": self.weight,
+            "expiration": self.expiration,
+            "description": self.description,
+            "eaten": self.eaten,
+            **super_extra_attributes
+        }
+
+    @eca_script_action(verb = "eats")
+    async def async_eats(self, c: object) -> None:
+        _LOGGER.info(f"Performed eats action - {c}")
+
+
 class Weapon(ECAEntity):
+
     """
     The Weapon class is a base class for all weapons.
 
@@ -638,7 +696,6 @@ class Weapon(ECAEntity):
     - power (float): Power: a float value that represents the power of the weapon.
 
     """
-
     def __init__(self, power: float, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._power = power
@@ -658,6 +715,7 @@ class Weapon(ECAEntity):
 
 
 class Bullet(ECAEntity):
+
     """
     Bullet: this class it is a type of  that is usually expelled from another object in the scene, usually a  object
 
@@ -665,7 +723,6 @@ class Bullet(ECAEntity):
     - speed (float): Speed: this is the speed of the bullet
 
     """
-
     def __init__(self, speed: float, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._speed = speed
@@ -685,13 +742,13 @@ class Bullet(ECAEntity):
 
 
 class EdgedWeapon(ECAEntity):
+
     """
     The EdgedWeapon class is a Weapon that has a sharp edge.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -703,16 +760,17 @@ class EdgedWeapon(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="stabs")
+    @eca_script_action(verb = "stabs")
     async def async_stabs(self, obj: ECAObject) -> None:
         _LOGGER.info(f"Performed stabs action - {obj}")
 
-    @eca_script_action(verb="slices")
+    @eca_script_action(verb = "slices")
     async def async_slices(self, obj: ECAObject) -> None:
         _LOGGER.info(f"Performed slices action - {obj}")
 
 
 class Firearm(ECAEntity):
+
     """
     Firearm is a class that represents a firearm, a firearm can expel bullets.
 
@@ -720,7 +778,6 @@ class Firearm(ECAEntity):
     - charge (int): Charge is the current charge of the firearm.
 
     """
-
     def __init__(self, charge: int, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._charge = charge
@@ -738,27 +795,27 @@ class Firearm(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="recharges")
+    @eca_script_action(verb = "recharges")
     async def async_recharges(self, charge: int) -> None:
         _LOGGER.info(f"Performed recharges action - {charge}")
 
-    @eca_script_action(verb="fires")
+    @eca_script_action(verb = "fires")
     async def async_fires(self, obj: ECAObject) -> None:
         _LOGGER.info(f"Performed fires action - {obj}")
 
-    @eca_script_action(verb="aims")
+    @eca_script_action(verb = "aims")
     async def async_aims(self, obj: ECAObject) -> None:
         _LOGGER.info(f"Performed aims action - {obj}")
 
 
 class Shield(ECAEntity):
+
     """
     Shield class allows to create a shield for defending from a .
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -770,22 +827,22 @@ class Shield(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="blocks")
+    @eca_script_action(verb = "blocks")
     async def async_blocks(self, weapon: Weapon) -> None:
         _LOGGER.info(f"Performed blocks action - {weapon}")
 
 
 class Interaction(ECAEntity):
+
     """
-    Interaction contains all the elements allowing some interaction with the scene and its objects.
-            The difference between interactions and Behaviours  is that interactions
-            are the ones that a typical user would perceive as physical entities of their own, which would exists
-            independently from other objects.
+    Interaction represents entities in the scene that facilitate interaction with other objects or the environment.
+            Unlike Behaviours, which define object-based rules and logic,
+            Interaction focuses on physical entities that are perceived as independent objects by the user.
+            These entities exist as standalone components within the environment, enhancing user engagement and interaction.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -798,38 +855,8 @@ class Interaction(ECAEntity):
         }
 
 
-class Bounds(ECAEntity):
-    """
-    Bounds is an  subclass that represents the scene bounds.
-
-    Attributes:
-    - scale (float): Scale is the scale of the scene bounds.
-
-    """
-
-    def __init__(self, scale: float, **kwargs: dict) -> None:
-        super().__init__(**kwargs)
-        self._scale = scale
-        self._attr_should_poll = False
-
-    @property
-    def scale(self) -> float:
-        return self._scale
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            "scale": self.scale,
-            **super_extra_attributes
-        }
-
-    @eca_script_action(verb="scales-to")
-    async def async_scales_to(self, newScale: float) -> None:
-        _LOGGER.info(f"Performed scales_to action - {newScale}")
-
-
 class Button(ECAEntity):
+
     """
     Button is an  subclass that represents a button.
             When a  is pressed, it will trigger an event defined by the End User Developer.
@@ -837,7 +864,6 @@ class Button(ECAEntity):
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -849,12 +875,13 @@ class Button(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="pushes")
+    @eca_script_action(verb = "pushes")
     async def async_pushes(self, c: object) -> None:
         _LOGGER.info(f"Performed pushes action - {c}")
 
 
 class ECACamera(ECAEntity):
+
     """
     ECACamera is an  subclass that allows the user to interact with the camera the
             script is attached to.
@@ -865,7 +892,6 @@ class ECACamera(ECAEntity):
     - playing (ECABoolean): Playing is a boolean that indicates whether the camera is currently playing.
 
     """
-
     def __init__(self, pov: str, zoomLevel: float, playing: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._pov = pov
@@ -895,32 +921,60 @@ class ECACamera(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="zooms-in")
+    @eca_script_action(verb = "zooms-in")
     async def async_zooms_in(self, amount: float) -> None:
         _LOGGER.info(f"Performed zooms_in action - {amount}")
 
-    @eca_script_action(verb="zooms-out")
+    @eca_script_action(verb = "zooms-out")
     async def async_zooms_out(self, amount: float) -> None:
         _LOGGER.info(f"Performed zooms_out action - {amount}")
 
-    @eca_script_action(verb="changes", variable="POV", modifier="to")
+    @eca_script_action(verb = "changes", variable = "POV", modifier = "to")
     async def async_changes(self, pov: str) -> None:
         _LOGGER.info(f"Performed changes action - {pov}")
 
 
-class ECALight(ECAEntity):
+class ECADoor(ECAEntity):
+
     """
-    ECALight is an  subclass that represents a light source. It can control a light source
-            referenced inside this class.
+    ECADoor: This class is used to define a door beviour.
 
     Attributes:
-    - intensity (float): Intensity  is the intensity of the light source.
-    - maxIntensity (float): MaxIntensity  is the maximum intensity of the light source.
-    - color (dict): Color  is the color of the light source.
-    - on (ECABoolean): On is a boolean that represents the state of the light source.
 
     """
+    def __init__(self, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._attr_should_poll = False
 
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            **super_extra_attributes
+        }
+
+    @eca_script_action(verb = "opens")
+    async def async_opens(self) -> None:
+        _LOGGER.info(f"Performed opens action")
+
+    @eca_script_action(verb = "closes")
+    async def async_closes(self) -> None:
+        _LOGGER.info(f"Performed closes action")
+
+
+class ECALight(ECAEntity):
+
+    """
+    ECALight represents a controllable light source in the environment.
+            The ECALight class extends  to manage light properties such as intensity, color, and if it's on.
+
+    Attributes:
+    - intensity (float): intensity represents the brightness level of the light source. It cannot exceed the maximum intensity value.
+    - maxIntensity (float): maxIntensity specifies the upper limit for the light's brightness. It ensures that the light's intensity does not exceed a predefined threshold.
+    - color (dict): color represents the color of the light source. The value is a string that represents the color name (e.g., "red", "blue", "green").
+    - on (ECABoolean): on indicates whether the light source is currently active or inactive. The accepted values are "on" or "off".
+
+    """
     def __init__(self, intensity: float, maxIntensity: float, color: dict, on: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._intensity = intensity
@@ -956,28 +1010,29 @@ class ECALight(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="turns")
+    @eca_script_action(verb = "turns")
     async def async_turns(self, newStatus: ECABoolean) -> None:
         _LOGGER.info(f"Performed turns action - {newStatus}")
 
-    @eca_script_action(verb="increases", variable="intensity", modifier="by")
+    @eca_script_action(verb = "increases", variable = "intensity", modifier = "by")
     async def async_increases(self, amount: float) -> None:
         _LOGGER.info(f"Performed increases action - {amount}")
 
-    @eca_script_action(verb="decreases", variable="intensity", modifier="by")
+    @eca_script_action(verb = "decreases", variable = "intensity", modifier = "by")
     async def async_decreases(self, amount: float) -> None:
         _LOGGER.info(f"Performed decreases action - {amount}")
 
-    @eca_script_action(verb="sets", variable="intensity", modifier="to")
+    @eca_script_action(verb = "sets", variable = "intensity", modifier = "to")
     async def async_sets(self, i: float) -> None:
         _LOGGER.info(f"Performed sets action - {i}")
 
-    @eca_script_action(verb="changes", variable="color", modifier="to")
+    @eca_script_action(verb = "changes", variable = "color", modifier = "to")
     async def async_changes(self, inputColor: ECAColor) -> None:
         _LOGGER.info(f"Performed changes action - {inputColor}")
 
 
 class ECAVideo(ECAEntity):
+
     """
     ECAVideo is an  that represents a video player.
 
@@ -985,16 +1040,12 @@ class ECAVideo(ECAEntity):
     - source (str): Source is the video source.
     - volume (float): Volume is the video volume.
     - maxVolume (float): MaxVolume is the video max volume.
-    - duration (float): Duration is the video duration.
-    - current_time (float): CurrentTime is the video current time.
     - playing (ECABoolean): Playing defines whether the video is playing.
     - paused (ECABoolean): Paused defines whether the video is paused.
     - stopped (ECABoolean): Stopped defines whether the video is stopped.
 
     """
-
-    def __init__(self, source: str, volume: float, maxVolume: float,
-                 playing: ECABoolean, paused: ECABoolean, stopped: ECABoolean, **kwargs: dict) -> None:
+    def __init__(self, source: str, volume: float, maxVolume: float, playing: ECABoolean, paused: ECABoolean, stopped: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._source = source
         self._volume = volume
@@ -1041,38 +1092,38 @@ class ECAVideo(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="plays")
+    @eca_script_action(verb = "plays")
     async def async_plays(self) -> None:
         """Plays starts the video."""
         _LOGGER.info(f"Performed plays action")
 
-    @eca_script_action(verb="pauses")
+    @eca_script_action(verb = "pauses")
     async def async_pauses(self) -> None:
         """Pauses pauses the video."""
         _LOGGER.info(f"Performed pauses action")
 
-    @eca_script_action(verb="stops")
+    @eca_script_action(verb = "stops")
     async def async_stops(self) -> None:
         """Stops stops the video."""
         _LOGGER.info(f"Performed stops action")
 
-    @eca_script_action(verb="changes", variable="volume", modifier="to")
-    async def async_changes(self, v: float) -> None:
-        _LOGGER.info(f"Performed changes action - {v}")
+    @eca_script_action(verb = "changes", variable = "volume", modifier = "to")
+    async def async_changes_volume(self, v: float) -> None:
+        _LOGGER.info(f"Performed changes_volume action - {v}")
 
-    @eca_script_action(verb="changes", variable="source", modifier="to")
-    async def async_changes(self, newSource: str) -> None:
-        _LOGGER.info(f"Performed changes action - {newSource}")
+    @eca_script_action(verb = "changes", variable = "source", modifier = "to")
+    async def async_changes_source(self, newSource: str) -> None:
+        _LOGGER.info(f"Performed changes_source action - {newSource}")
 
 
 class Environment(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1086,16 +1137,17 @@ class Environment(ECAEntity):
 
 
 class Artwork(ECAEntity):
-    """
 
+    """
+    Artwork represents an artwork in the environment.
+            The Artwork class defines properties such as the author, price, and creation year of the artwork.
 
     Attributes:
-    - author (str):
-    - price (float):
-    - year (int):
+    - author (str): author specifies the name of the artist of the artwork.
+    - price (float): price represents the monetary value of the artwork.
+    - year (int): year denotes the year in which the artwork was created.
 
     """
-
     def __init__(self, author: str, price: float, year: int, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._author = author
@@ -1127,13 +1179,13 @@ class Artwork(ECAEntity):
 
 
 class Building(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1147,13 +1199,13 @@ class Building(ECAEntity):
 
 
 class Exterior(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1167,6 +1219,7 @@ class Exterior(ECAEntity):
 
 
 class Furniture(ECAEntity):
+
     """
 
 
@@ -1176,7 +1229,6 @@ class Furniture(ECAEntity):
     - dimension (float):
 
     """
-
     def __init__(self, price: float, color: dict, dimension: float, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._price = price
@@ -1208,13 +1260,13 @@ class Furniture(ECAEntity):
 
 
 class Terrain(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1228,13 +1280,13 @@ class Terrain(ECAEntity):
 
 
 class Vegetation(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1248,13 +1300,13 @@ class Vegetation(ECAEntity):
 
 
 class Sky(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1265,131 +1317,18 @@ class Sky(ECAEntity):
         return {
             **super_extra_attributes
         }
-
-
-class Character(ECAEntity):
-    """
-    A Character is a type of ECAObject, it represents an animal, a humanoid, a robot or a generic creature.
-            A Character can be autonomous or controlled by the player.
-
-    Attributes:
-    - life (float): life is the life of the character.
-    - playing (ECABoolean): playing to identify whether it is player-controlled or not.
-
-    """
-
-    def __init__(self, life: float, playing: ECABoolean, **kwargs: dict) -> None:
-        super().__init__(**kwargs)
-        self._life = life
-        self._playing = playing
-        self._attr_should_poll = False
-
-    @property
-    def life(self) -> float:
-        return self._life
-
-    @property
-    def playing(self) -> ECABoolean:
-        return self._playing
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            "life": self.life,
-            "playing": self.playing,
-            **super_extra_attributes
-        }
-
-    @eca_script_action(verb="interacts with")
-    async def async_interacts_with(self, o: ECAObject) -> None:
-        _LOGGER.info(f"Performed interacts_with action - {o}")
-
-    @eca_script_action(verb="stops-interacting with")
-    async def async_stops_interacting_with(self, o: ECAObject) -> None:
-        _LOGGER.info(f"Performed stops_interacting_with action - {o}")
-
-    @eca_script_action(verb="points to")
-    async def async_points_to(self, o: ECAObject) -> None:
-        _LOGGER.info(f"Performed points_to action - {o}")
-
-    @eca_script_action(verb="stops-pointing to")
-    async def async_stops_pointing_to(self, o: ECAObject) -> None:
-        _LOGGER.info(f"Performed stops_pointing_to action - {o}")
-
-    @eca_script_action(verb="jumps to")
-    async def async_jumps_to(self, p: ECAPosition) -> None:
-        _LOGGER.info(f"Performed jumps_to action - {p}")
-
-    @eca_script_action(verb="jumps on")
-    async def async_jumps_on(self, p: list[ECAPosition]) -> None:
-        _LOGGER.info(f"Performed jumps_on action - {p}")
-
-    @eca_script_action(verb="starts-animation")
-    async def async_starts_animation(self, s: str) -> None:
-        _LOGGER.info(f"Performed starts_animation action - {s}")
-
-
-class Food(ECAEntity):
-    """
-    Food is a class that represents something that can be eaten.
-
-    Attributes:
-    - weight (float): Weight: is the weight of the food.
-    - expiration (str): Expiration: is the expiration date of the food.
-    - description (str): Description: is the description of the food.
-    - eaten (ECABoolean): Eaten: is true if the food has been eaten.
-
-    """
-
-    def __init__(self, weight: float, expiration: str, description: str, eaten: ECABoolean, **kwargs: dict) -> None:
-        super().__init__(**kwargs)
-        self._weight = weight
-        self._expiration = expiration
-        self._description = description
-        self._eaten = eaten
-        self._attr_should_poll = False
-
-    @property
-    def weight(self) -> float:
-        return self._weight
-
-    @property
-    def expiration(self) -> str:
-        return self._expiration
-
-    @property
-    def description(self) -> str:
-        return self._description
-
-    @property
-    def eaten(self) -> ECABoolean:
-        return self._eaten
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            "weight": self.weight,
-            "expiration": self.expiration,
-            "description": self.description,
-            "eaten": self.eaten,
-            **super_extra_attributes
-        }
-
-    @eca_script_action(verb="eats", is_passive=True)
-    async def async_eats(self, c: Character) -> None:
-        _LOGGER.info(f"Performed eats action - {c}")
 
 
 class Animal(ECAEntity):
+
     """
-    Animal is a subclass of Character. It is used to represent the animals character.
+    Represents an animal character within the ECA rules framework.
+            An Animal is a specialized subclass of  that embodies animal-like traits
+            and behaviors, enabling interactions and actions unique to animal entities.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1401,19 +1340,21 @@ class Animal(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="speaks")
+    @eca_script_action(verb = "speaks")
     async def async_speaks(self, s: str) -> None:
         _LOGGER.info(f"Performed speaks action - {s}")
 
 
 class AquaticAnimal(ECAEntity):
+
     """
-    This class represents an animal that can swim.
+    The AquaticAnimal class represents an aquatic animal.
+            An AquaticAnimal can swim to specific positions or follow predefined paths, with animations for both swimming and idling states.
+            This class extends the functionality of  to include aquatic-specific behaviors.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1425,23 +1366,25 @@ class AquaticAnimal(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="swims to")
+    @eca_script_action(verb = "swims to")
     async def async_swims_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed swims_to action - {p}")
 
-    @eca_script_action(verb="swims on")
+    @eca_script_action(verb = "swims on")
     async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
 
 class Creature(ECAEntity):
+
     """
-    This class represents a generic creature
+    The Creature class represents a generic creature.
+            A Creature can perform various movements such as running, walking, and swimming, each with a specific animation.
+            This class extends the functionality of  to include creature-specific behaviors.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1453,47 +1396,49 @@ class Creature(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="flies to")
+    @eca_script_action(verb = "flies to")
     async def async_flies_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed flies_to action - {p}")
 
-    @eca_script_action(verb="flies on")
+    @eca_script_action(verb = "flies on")
     async def async_flies_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed flies_on action - {p}")
 
-    @eca_script_action(verb="runs to")
+    @eca_script_action(verb = "runs to")
     async def async_runs_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed runs_to action - {p}")
 
-    @eca_script_action(verb="runs on")
+    @eca_script_action(verb = "runs on")
     async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
-    @eca_script_action(verb="swims to")
+    @eca_script_action(verb = "swims to")
     async def async_swims_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed swims_to action - {p}")
 
-    @eca_script_action(verb="swims on")
+    @eca_script_action(verb = "swims on")
     async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
-    @eca_script_action(verb="walks to")
+    @eca_script_action(verb = "walks to")
     async def async_walks_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed walks_to action - {p}")
 
-    @eca_script_action(verb="walks on")
+    @eca_script_action(verb = "walks on")
     async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
 class FlyingAnimal(ECAEntity):
+
     """
-    This class represents an animal that can fly.
+    The FlyingAnimal class represents a flying animal.
+            An FlyingAnimal can move using flying or walking animations and supports navigation to specific positions or along predefined paths.
+            This class extends the functionality of  to include flying-specific behaviors.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1505,32 +1450,33 @@ class FlyingAnimal(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="flies to")
+    @eca_script_action(verb = "flies to")
     async def async_flies_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed flies_to action - {p}")
 
-    @eca_script_action(verb="flies on")
+    @eca_script_action(verb = "flies on")
     async def async_flies_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed flies_on action - {p}")
 
-    @eca_script_action(verb="walks to")
+    @eca_script_action(verb = "walks to")
     async def async_walks_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed walks_to action - {p}")
 
-    @eca_script_action(verb="walks on")
+    @eca_script_action(verb = "walks on")
     async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
 class Human(ECAEntity):
+
     """
-    The Human class is used to represent a human character.
-            A human can run, walk and swim.
+    The Human class represents a human character.
+            A Human can perform various movements such as running, walking, and swimming, each with a specific animation.
+            This class extends the functionality of  to include human-specific behaviors.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1542,44 +1488,44 @@ class Human(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="runs to")
+    @eca_script_action(verb = "runs to")
     async def async_runs_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed runs_to action - {p}")
 
-    @eca_script_action(verb="runs on")
+    @eca_script_action(verb = "runs on")
     async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
-    @eca_script_action(verb="swims to")
+    @eca_script_action(verb = "swims to")
     async def async_swims_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed swims_to action - {p}")
 
-    @eca_script_action(verb="swims on")
+    @eca_script_action(verb = "swims on")
     async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
-    @eca_script_action(verb="walks to")
+    @eca_script_action(verb = "walks to")
     async def async_walks_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed walks_to action - {p}")
 
-    @eca_script_action(verb="walks on")
+    @eca_script_action(verb = "walks on")
     async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
 class Mannequin(ECAEntity):
+
     """
     The Mannequin class provides a way to include a character in the scene to wear 3D models of clothes that do not
             have rigging skeletons. Since the mannequin is supposed to stay still in the environment, the implementation contains
             for automatically positioning it on top of the mannequin according to the specified position (e.g., head, torso,
             left or right leg, arm, etc.). Provided that the distinction between a mannequin and a not-playable human is
-            technical, it is up to the TB to decide which object offers the best configuration options considering the
+            technical, it is up to the Unity developer to decide which object offers the best configuration options considering the
             template under development.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1593,14 +1539,15 @@ class Mannequin(ECAEntity):
 
 
 class Robot(ECAEntity):
+
     """
-    The Robot class derives from Character, it represents the the non-animal counterpart of human.
-            A robot can run, walk and swim.
+    The Robot class represents a robot character (non-animal counterpart of a human).
+            A Robot can perform various movements such as running, walking, and swimming, each with a specific animation.
+            This class extends the functionality of  to include robot-specific behaviors.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1612,40 +1559,41 @@ class Robot(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="runs to")
+    @eca_script_action(verb = "runs to")
     async def async_runs_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed runs_to action - {p}")
 
-    @eca_script_action(verb="runs on")
+    @eca_script_action(verb = "runs on")
     async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
-    @eca_script_action(verb="swims to")
+    @eca_script_action(verb = "swims to")
     async def async_swims_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed swims_to action - {p}")
 
-    @eca_script_action(verb="swims on")
+    @eca_script_action(verb = "swims on")
     async def async_swims_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed swims_on action - {p}")
 
-    @eca_script_action(verb="walks to")
+    @eca_script_action(verb = "walks to")
     async def async_walks_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed walks_to action - {p}")
 
-    @eca_script_action(verb="walks on")
+    @eca_script_action(verb = "walks on")
     async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
 class TerrestrialAnimal(ECAEntity):
+
     """
-    The Terrestrial animal class is a subclass of the  class.
-            It represents a generic terrestrial animal.
+    The TerrestrialAnimal class represents a terrestrial animal.
+            A TerrestrialAnimal can perform actions like running and walking, with corresponding animations for movement to specific positions or along paths.
+            This class extends the functionality of  to include terrestrial-specific behaviors.
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1657,24 +1605,25 @@ class TerrestrialAnimal(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="runs to")
+    @eca_script_action(verb = "runs to")
     async def async_runs_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed runs_to action - {p}")
 
-    @eca_script_action(verb="runs on")
+    @eca_script_action(verb = "runs on")
     async def async_runs_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed runs_on action - {p}")
 
-    @eca_script_action(verb="walks to")
+    @eca_script_action(verb = "walks to")
     async def async_walks_to(self, p: ECAPosition) -> None:
         _LOGGER.info(f"Performed walks_to action - {p}")
 
-    @eca_script_action(verb="walks on")
+    @eca_script_action(verb = "walks on")
     async def async_walks_on(self, p: list[ECAPosition]) -> None:
         _LOGGER.info(f"Performed walks_on action - {p}")
 
 
 class Collectable(ECAEntity):
+
     """
     Collectable is a Behaviour that lets an object to be taken inside a player/object owned inventory, or instantly used
             for interacting with other objects in the scene
@@ -1683,7 +1632,6 @@ class Collectable(ECAEntity):
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1697,6 +1645,7 @@ class Collectable(ECAEntity):
 
 
 class Container(ECAEntity):
+
     """
     Container is a Behaviour that enables the object to hold other objects.
 
@@ -1705,7 +1654,6 @@ class Container(ECAEntity):
     - objectsCount (int): objectsCount is the number of objects that are currently held by the container.
 
     """
-
     def __init__(self, capacity: int, objectsCount: int, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._capacity = capacity
@@ -1729,21 +1677,22 @@ class Container(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="inserts")
+    @eca_script_action(verb = "inserts")
     async def async_inserts(self, o: object) -> None:
         _LOGGER.info(f"Performed inserts action - {o}")
 
-    @eca_script_action(verb="removes")
+    @eca_script_action(verb = "removes")
     async def async_removes(self, o: object) -> None:
         _LOGGER.info(f"Performed removes action - {o}")
 
-    @eca_script_action(verb="empties")
+    @eca_script_action(verb = "empties")
     async def async_empties(self) -> None:
         """Empties empties the container."""
         _LOGGER.info(f"Performed empties action")
 
 
 class Counter(ECAEntity):
+
     """
     Counter is a Behaviour that enables the object to keep track of countable events
              Player steps, interaction count
@@ -1752,7 +1701,6 @@ class Counter(ECAEntity):
     - count (float): count is the current count of the counter
 
     """
-
     def __init__(self, count: float, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._count = count
@@ -1770,12 +1718,13 @@ class Counter(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable="count", modifier="to")
+    @eca_script_action(verb = "changes", variable = "count", modifier = "to")
     async def async_changes(self, amount: float) -> None:
         _LOGGER.info(f"Performed changes action - {amount}")
 
 
 class Highlight(ECAEntity):
+
     """
     Highlight is a Behaviour that is used to highlight the objects that are in the scene.
 
@@ -1784,7 +1733,6 @@ class Highlight(ECAEntity):
     - on (ECABoolean): On is a boolean that tells if the highlight is on or off.
 
     """
-
     def __init__(self, color: dict, on: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._color = color
@@ -1808,16 +1756,17 @@ class Highlight(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable="color", modifier="to")
+    @eca_script_action(verb = "changes", variable = "color", modifier = "to")
     async def async_changes(self, c: dict) -> None:
         _LOGGER.info(f"Performed changes action - {c}")
 
-    @eca_script_action(verb="turns")
+    @eca_script_action(verb = "turns")
     async def async_turns(self, on: ECABoolean) -> None:
         _LOGGER.info(f"Performed turns action - {on}")
 
 
 class Interactable(ECAEntity):
+
     """
     Interactable is a Behaviour that can be attached to an object in order to make it
             interactable with the player collison. If the action is not player initiated, then refer to
@@ -1825,7 +1774,6 @@ class Interactable(ECAEntity):
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -1838,7 +1786,73 @@ class Interactable(ECAEntity):
         }
 
 
+class Character(ECAEntity):
+
+    """
+    Represents a versatile character within the ECA rules framework.
+            A Character can embody various forms, including animals, humanoids, robots, or generic creatures.
+            It can operate autonomously or be controlled by the player, supporting a range of actions and state attributes
+            to interact dynamically with the environment
+
+    Attributes:
+    - life (float): life is the current life of the character, represented as a float number.
+    - playing (ECABoolean): playing indicates whether the character is controlled by the player ("yes") or operating autonomously ("no").
+
+    """
+    def __init__(self, life: float, playing: ECABoolean, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._life = life
+        self._playing = playing
+        self._attr_should_poll = False
+
+    @property
+    def life(self) -> float:
+        return self._life
+
+    @property
+    def playing(self) -> ECABoolean:
+        return self._playing
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "life": self.life,
+            "playing": self.playing,
+            **super_extra_attributes
+        }
+
+    @eca_script_action(verb = "interacts with")
+    async def async_interacts_with(self, o: Interactable) -> None:
+        _LOGGER.info(f"Performed interacts_with action - {o}")
+
+    @eca_script_action(verb = "stops-interacting with")
+    async def async_stops_interacting_with(self, o: Interactable) -> None:
+        _LOGGER.info(f"Performed stops_interacting_with action - {o}")
+
+    @eca_script_action(verb = "points to")
+    async def async_points_to(self, o: ECAObject) -> None:
+        _LOGGER.info(f"Performed points_to action - {o}")
+
+    @eca_script_action(verb = "stops-pointing to")
+    async def async_stops_pointing_to(self, o: ECAObject) -> None:
+        _LOGGER.info(f"Performed stops_pointing_to action - {o}")
+
+    @eca_script_action(verb = "jumps to")
+    async def async_jumps_to(self, p: ECAPosition) -> None:
+        _LOGGER.info(f"Performed jumps_to action - {p}")
+
+    @eca_script_action(verb = "jumps on")
+    async def async_jumps_on(self, p: list[ECAPosition]) -> None:
+        _LOGGER.info(f"Performed jumps_on action - {p}")
+
+    @eca_script_action(verb = "starts-animation")
+    async def async_starts_animation(self, s: str) -> None:
+        _LOGGER.info(f"Performed starts_animation action - {s}")
+
+
 class Keypad(ECAEntity):
+
     """
     Keypad is a  that lets an object to receive codes and trigger
             actions when the code is correct.
@@ -1848,7 +1862,6 @@ class Keypad(ECAEntity):
     - input (str): Input is the input that the keypad is currently holding.
 
     """
-
     def __init__(self, keycode: str, input: str, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._keycode = keycode
@@ -1872,21 +1885,22 @@ class Keypad(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="inserts")
+    @eca_script_action(verb = "inserts")
     async def async_inserts(self, input: str) -> None:
         _LOGGER.info(f"Performed inserts action - {input}")
 
-    @eca_script_action(verb="adds")
+    @eca_script_action(verb = "adds")
     async def async_adds(self, input: str) -> None:
         _LOGGER.info(f"Performed adds action - {input}")
 
-    @eca_script_action(verb="resets")
+    @eca_script_action(verb = "resets")
     async def async_resets(self) -> None:
         """Resets clears the  variable."""
         _LOGGER.info(f"Performed resets action")
 
 
 class Lock(ECAEntity):
+
     """
     Lock is a  that locks the  it is attached to.
             It works in a similar way to the  behaviour, but it needs to by unlock by other means (like a key).
@@ -1895,7 +1909,6 @@ class Lock(ECAEntity):
     - locked (ECABoolean): locked defines whether the lock is open or not.
 
     """
-
     def __init__(self, locked: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._locked = locked
@@ -1913,18 +1926,19 @@ class Lock(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="opens")
+    @eca_script_action(verb = "opens")
     async def async_opens(self) -> None:
         """Opens sets the lock to open."""
         _LOGGER.info(f"Performed opens action")
 
-    @eca_script_action(verb="closes")
+    @eca_script_action(verb = "closes")
     async def async_closes(self) -> None:
         """Closes sets the lock to closed."""
         _LOGGER.info(f"Performed closes action")
 
 
 class Particle(ECAEntity):
+
     """
     Particle is a  that lets the object emit particles.
 
@@ -1932,7 +1946,6 @@ class Particle(ECAEntity):
     - on (ECABoolean): On is a boolean that indicates if the particle system is active.
 
     """
-
     def __init__(self, on: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._on = on
@@ -1950,12 +1963,13 @@ class Particle(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="turns")
+    @eca_script_action(verb = "turns")
     async def async_turns(self, on: ECABoolean) -> None:
         _LOGGER.info(f"Performed turns action - {on}")
 
 
 class Placeholder(ECAEntity):
+
     """
     Placeholder is a  that is used to represent a placeholder in the scene. It will be
             used by the End User Developers in order to import and use custom mesh models.
@@ -1964,7 +1978,6 @@ class Placeholder(ECAEntity):
     - mesh (dict): newMesh is the mesh model that the object will use.
 
     """
-
     def __init__(self, mesh: dict, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._mesh = mesh
@@ -1982,28 +1995,29 @@ class Placeholder(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable="mesh", modifier="to")
+    @eca_script_action(verb = "changes", variable = "mesh", modifier = "to")
     async def async_changes(self, meshName: str) -> None:
         _LOGGER.info(f"Performed changes action - {meshName}")
 
 
 class Sound(ECAEntity):
+
     """
-    ECASound is a  that works like a media player, and it is specific to audio files.
+
 
     Attributes:
-    - source (str): Source is the audio source that will be used to play the audio.
-    - volume (float): Volume is the volume of the audio.
-    - maxVolume (float): MaxVolume is the maximum volume the audio can reach.
-    - currentTime (float): currentTime is the current time of the audio.
-    - playing (ECABoolean): isPlaying is a boolean that indicates if the audio is playing.
-    - paused (ECABoolean): Paused  is a boolean that indicates if the audio is paused.
-    - stopped (ECABoolean): Stopped  is a boolean that indicates if the audio is stopped.
+    - source (str): Source is the audio filename that serves as the source for playback.
+    - volume (float): Volume is the current volume level of the audio.
+            Accepts values between 0 and the maximum volume, defined by .
+    - maxVolume (float): MaxVolume is the maximum volume level the audio can reach.
+    - currentTime (float): currentTime is the current playback position in seconds.
+            Tracks the progression of the audio clip.
+    - playing (ECABoolean): playing indicates whether the audio is currently playing. The value is either "yes" or "no". If paused or stopped are "yes", playing will be "no".
+    - paused (ECABoolean): paused indicates whether the audio playback is paused. The value is either "yes" or "no". When playing again, the audio will resume from the paused time.
+    - stopped (ECABoolean): Stopped  indicates whether the audio playback is stopped. The value is either "yes" or "no". When playing again, the audio will start from the beginning.
 
     """
-
-    def __init__(self, source: str, volume: float, maxVolume: float, currentTime: float,
-                 playing: ECABoolean, paused: ECABoolean, stopped: ECABoolean, **kwargs: dict) -> None:
+    def __init__(self, source: str, volume: float, maxVolume: float, currentTime: float, playing: ECABoolean, paused: ECABoolean, stopped: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._source = source
         self._volume = volume
@@ -2056,31 +2070,34 @@ class Sound(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="plays")
+    @eca_script_action(verb = "plays")
     async def async_plays(self) -> None:
-        """Plays starts the audio."""
+        """Plays starts the audio playback.
+            Updates the state variables playing, stopped, and paused to reflect that playback is active."""
         _LOGGER.info(f"Performed plays action")
 
-    @eca_script_action(verb="pauses")
+    @eca_script_action(verb = "pauses")
     async def async_pauses(self) -> None:
-        """Pauses pauses the audio."""
+        """Pauses pauses the audio playback.
+            Maintains the current playback time (currentTime) for resuming later (by calling Plays)."""
         _LOGGER.info(f"Performed pauses action")
 
-    @eca_script_action(verb="stops")
+    @eca_script_action(verb = "stops")
     async def async_stops(self) -> None:
-        """Stops stops the audio."""
+        """Stops stops the audio playback and resets the playback time (currentTime) to the beginning."""
         _LOGGER.info(f"Performed stops action")
 
-    @eca_script_action(verb="changes", variable="volume", modifier="to")
+    @eca_script_action(verb = "changes", variable = "volume", modifier = "to")
     async def async_changes_volume(self, v: float) -> None:
-        _LOGGER.info(f"Performed changes action - {v}")
+        _LOGGER.info(f"Performed changes_volume action - {v}")
 
-    @eca_script_action(verb="changes", variable="source", modifier="to")
+    @eca_script_action(verb = "changes", variable = "source", modifier = "to")
     async def async_changes_source(self, newSource: str) -> None:
-        _LOGGER.info(f"Performed changes action - {newSource}")
+        _LOGGER.info(f"Performed changes_source action - {newSource}")
 
 
 class Switch(ECAEntity):
+
     """
     Switch is a  that can be use to let an object have an on/off state, useful for
             objects like lights, doors, etc.
@@ -2089,7 +2106,6 @@ class Switch(ECAEntity):
     - on (ECABoolean): On is the state of the switch.
 
     """
-
     def __init__(self, on: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._on = on
@@ -2107,21 +2123,22 @@ class Switch(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="turns")
+    @eca_script_action(verb = "turns")
     async def async_turns(self, on: ECABoolean) -> None:
         _LOGGER.info(f"Performed turns action - {on}")
 
 
 class Timer(ECAEntity):
+
     """
-    Timer is a  that can be used to trigger an action after a certain amount of time.
+    Represents a time-based  that helps triggering actions after specified durations.
+            The Timer class provides functionality to configure, start, pause, stop, and reset a timer, as well as to emit events when specific time milestones are reached or elapsed.
 
     Attributes:
-    - duration (float): Duration is the maximum time the timer will run for.
-    - current_time (float): Current is the current time the timer has been running for.
+    - duration (float): Duration specifies the total duration for which the timer will run.
+    - current_time (float): Current represents the current time of the timer, meaning the elapsed time from the start. It dynamically updates as the timer counts down.
 
     """
-
     def __init__(self, duration: float, current_time: float, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._duration = duration
@@ -2145,44 +2162,41 @@ class Timer(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="changes", variable="duration", modifier="to")
-    async def async_changes(self, amount: float) -> None:
-        _LOGGER.info(f"Performed changes action - {amount}")
+    @eca_script_action(verb = "changes", variable = "duration", modifier = "to")
+    async def async_changes_duration(self, amount: float) -> None:
+        _LOGGER.info(f"Performed changes_duration action - {amount}")
 
-    @eca_script_action(verb="changes", variable="current-time", modifier="to")
-    async def async_changes(self, amount: float) -> None:
-        _LOGGER.info(f"Performed changes action - {amount}")
+    @eca_script_action(verb = "changes", variable = "current-time", modifier = "to")
+    async def async_changes_current_time(self, amount: float) -> None:
+        _LOGGER.info(f"Performed changes_current_time action - {amount}")
 
-    @eca_script_action(verb="starts")
+    @eca_script_action(verb = "starts")
     async def async_starts(self) -> None:
-        """Starts starts the timer."""
+        """Starts activates the timer to begin counting down, resuming its operation from the last paused state."""
         _LOGGER.info(f"Performed starts action")
 
-    @eca_script_action(verb="stops")
+    @eca_script_action(verb = "stops")
     async def async_stops(self) -> None:
-        """Stops stops the timer."""
+        """Stops deactivates the timer, resetting the elapsed time to zero."""
         _LOGGER.info(f"Performed stops action")
 
-    @eca_script_action(verb="pauses")
+    @eca_script_action(verb = "pauses")
     async def async_pauses(self) -> None:
-        """Pauses pauses the timer."""
+        """Pauses deactivates the timer, leaving the elapsed time unchanged."""
         _LOGGER.info(f"Performed pauses action")
 
-    @eca_script_action(verb="elapses-timer")
-    async def async_elapses_timer(self, seconds: int) -> None:
-        _LOGGER.info(f"Performed elapses_timer action - {seconds}")
-
-    @eca_script_action(verb="reaches")
+    @eca_script_action(verb = "reaches")
     async def async_reaches(self, seconds: int) -> None:
         _LOGGER.info(f"Performed reaches action - {seconds}")
 
-    @eca_script_action(verb="resets")
+    @eca_script_action(verb = "resets")
     async def async_resets(self) -> None:
-        """Resets resets the timer to the maximum duration."""
+        """Resets resets the timer to its maximum duration and deactivates it."""
         _LOGGER.info(f"Performed resets action")
 
 
 class Transition(ECAEntity):
+
     """
     Transition is a  that is used to trigger a transition to another scene.
 
@@ -2190,7 +2204,6 @@ class Transition(ECAEntity):
     - reference (Scene): Reference is the Unity Scene to transition to.
 
     """
-
     def __init__(self, reference: Scene, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._reference = reference
@@ -2208,12 +2221,13 @@ class Transition(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="teleports to")
+    @eca_script_action(verb = "teleports to")
     async def async_teleports_to(self, reference: Scene) -> None:
         _LOGGER.info(f"Performed teleports_to action - {reference}")
 
 
 class Trigger(ECAEntity):
+
     """
     Trigger is a  that can be used to trigger an action without an explicit request
             from the player. If the action is player initiated, then refer to
@@ -2221,7 +2235,6 @@ class Trigger(ECAEntity):
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -2233,39 +2246,19 @@ class Trigger(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb="triggers")
+    @eca_script_action(verb = "triggers")
     async def async_triggers(self, action: dict) -> None:
         _LOGGER.info(f"Performed triggers action - {action}")
 
 
-class ClothingCategories(ECAEntity):
-    """
-
-
-    Attributes:
-
-    """
-
-    def __init__(self, **kwargs: dict) -> None:
-        super().__init__(**kwargs)
-        self._attr_should_poll = False
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            **super_extra_attributes
-        }
-
-
 class POV(ECAEntity):
+
     """
 
 
     Attributes:
 
     """
-
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._attr_should_poll = False
@@ -2276,43 +2269,6 @@ class POV(ECAEntity):
         return {
             **super_extra_attributes
         }
-
-
-class ECAText(ECAEntity):
-    """
-    ECAText is an Interaction subclass that represents a text element.
-
-    Attributes:
-
-    """
-    def __init__(self, content: str, **kwargs: dict) -> None:
-        super().__init__(**kwargs)
-        self._content = content
-        self._attr_should_poll = False
-
-    @property
-    def content(self) -> str:
-        return self._content
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            "content": self.content,
-            **super_extra_attributes
-        }
-
-    @eca_script_action(verb="changes", variable="content", modifier="to")
-    async def async_changes_content(self, c: str) -> None:
-        _LOGGER.info(f"Performed changes content to action - {c}")
-
-    @eca_script_action(verb="appends")
-    async def async_appends(self, t: str) -> None:
-        _LOGGER.info(f"Performed appends action - {t}")
-
-    @eca_script_action(verb="deletes")
-    async def async_deletes(self, t: str) -> None:
-        _LOGGER.info(f"Performed deletes action - {t}")
 
 
 class ECAXRPointer(ECAEntity):

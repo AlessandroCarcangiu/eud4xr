@@ -76,16 +76,20 @@ class ECAAction:
             # trigger's subject and param does not have reference to the sensor
             kwargs = data[0]["event_data"] if isinstance(data, list) else data["event_data"]
             method = None
+
             try:
                 # active action - get subject and service
+                _, _, method, sig = get_entity_instance_and_method_signature_by_structured_language(
+                    hass, kwargs.get("subject"), kwargs.get("verb"), kwargs.get("variable"), kwargs.get("modifier"))
+
                 entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['subject'], kwargs['verb'])
                 kwargs["subject"] = convert_subject_to_unity(hass, entity_id)
-                kwargs["verb"] = kwargs["verb"].replace(" ", "_")
-                method, sig = cls.get_service_method(hass, entity_id, kwargs["verb"])
             except:
                 # passive action
-                passive_entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['variable_name'], kwargs['verb'])
-                _, sig = cls.get_service_method(hass, passive_entity_id, kwargs["verb"])
+                passive_entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['variable'], kwargs['verb'])
+                #_, sig = cls.get_service_method(hass, passive_entity_id, kwargs["verb"])
+                _, _, _, sig = get_entity_instance_and_method_signature_by_structured_language(
+                    hass, kwargs.get("variable"), kwargs.get("verb"), kwargs.get("variable"), kwargs.get("modifier"))
                 param = next (p for n, p in sig.parameters.items() if n != "self")
                 entity_id = get_entity_id_by_game_object_and_eca_script(hass, kwargs['subject'], param.annotation.__name__.lower())
                 kwargs["subject"] = entity_id
@@ -122,6 +126,9 @@ class ECAAction:
                     for param_name, param in sig.parameters.items():
                         if param_name != "self":
                             v = kwargs["value"] if kwargs.get("variable", None) else kwargs["obj"]  #data["data"][param_name]
+                            param_type = param.annotation.__name__.lower()
+                            if param_type in get_classes_subclassing(to_string=True):
+                                v = get_entity_id_by_game_object_and_eca_script(hass, v, param.annotation.__name__.lower())
                     if v:
                         if kwargs.get("variable", None):
                             kwargs["value"] = v

@@ -194,7 +194,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         _LOGGER.info(message)
         # update state #
         data = copy.deepcopy(update.get(CONF_SERVICE_UPDATE_FROM_UNITY_UPDATE))
-        group_id = data.pop("unity_id").split("@")[0]
+        group_id = data.pop("unity_id").split("@")[0].lower()
         group = find_group(hass, group_id)
         sensor = None
         entity = None
@@ -242,26 +242,33 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     _LOGGER.warning(
                             f"Sensor {sensor} or entity {entity} not found - Sensor_id: {sensor_id}"
                         )
-        if not is_retry:
-            ts = int(datetime.now().timestamp() * 1000)
-            failed_updates.append((ts, update))
-            _LOGGER.error(
-                f"Received a new update from unity - Error on handling update {update}\n"+
-                f"Possibly causes: group: {group} or sensor {sensor} or entity {entity} not found"
-            )
+        else:
+            if not is_retry:
+                ts = int(datetime.now().timestamp() * 1000)
+                failed_updates.append((ts, update))
+                _LOGGER.error(
+                    f"Received a new update from unity - Error on handling update {update}\n"+
+                    f"Possibly causes: group: {group} or sensor {sensor} or entity {entity} not found"
+                )
+            else:
+                _LOGGER.error(f"FALLIMENTO - {group} - {group_id}")
         return False
 
     # the system registered a new sensor -> check on the failed update list
     async def handle_failed_update_list(event):
+        _LOGGER.info("HANDLE FAILED UPDATE LIST")
         for ts, update in failed_updates.copy():
-            now = datetime.now().timestamp() * 1000
+            now = int(datetime.now().timestamp() * 1000)
+            _LOGGER.info(f"{now} / {ts} / {now-ts} / {now-ts > TIMESTAMP_MIN_UPDATE} - {update} - num_elements: {len(failed_updates)}")
             if now-ts > TIMESTAMP_MIN_UPDATE:
                 _LOGGER.info(
                     f"Deleted an old update {update}"
                 )
                 failed_updates.remove((ts, update))
             else:
+                _LOGGER.info("STO GESTENDO L'UPDATE")
                 res = await async_update_from_unity(hass, update, is_retry=True)
+                _LOGGER.info(f"RISULTATO GESTIONE: {res}")
                 if res:
                     _LOGGER.info(
                         f"Handled an old update {update}"

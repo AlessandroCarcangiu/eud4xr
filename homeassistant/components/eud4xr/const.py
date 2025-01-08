@@ -2,7 +2,7 @@ IS_DEBUG = False
 
 AUTOMATION_PATH = "automations.yaml"
 
-TIMESTAMP_MIN_UPDATE = 10000 # time limit for retaining failed updates due to an unregistered sensor
+TIMESTAMP_MIN_UPDATE = 1000 # time limit for retaining failed updates due to an unregistered sensor
 MAX_LENGTH_CIRCULAR_LIST = 15 # circular queue's length.
 
 # custom component

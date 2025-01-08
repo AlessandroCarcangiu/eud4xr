@@ -3,6 +3,7 @@ import textwrap
 import voluptuous as vol
 from collections import deque
 from functools import wraps
+from numbers import Number
 from typing import Tuple
 from homeassistant.helpers import config_validation as cv, entity_registry as er
 from .config_validation import get_unity_entity
@@ -121,7 +122,7 @@ class MappedClasses:
 
     @staticmethod
     def __is_built_in_class(type_class: callable) -> bool:
-        return type_class in [str, int, float, dict]
+        return type_class in [str, int, float, dict, Number]
 
     @staticmethod
     def __is_entity_class(type_class: callable) -> bool:

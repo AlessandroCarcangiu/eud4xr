@@ -13,7 +13,8 @@ from ..hass_utils import (
     get_entity_instance_by_entity_id,
     get_first_entity_by_group,
     convert_subject_to_unity,
-    get_entity_id_by_game_object_and_verb
+    get_entity_id_by_game_object_and_verb,
+    get_entity_id_by_game_object_and_eca_script
 )
 from ..sensor import ECAObject, get_classes_subclassing
 
@@ -74,8 +75,8 @@ class YAMLAction:
                     entity_id: sensor.{game_object_name}_{eca_script}
                     {argument_name} (optional and get from the service): sensor.{game_object_name}_{eca_script} or a {value}
         '''
-        # the next code must convert game object name to a game_object@eca_script
-        # eventually, it also must convert the value parameter if it is a reference to an object
+        # the next code converts game object name to a game_object@eca_script
+        # eventually, it also converts the value parameter if it is a reference to an object
         # trigger -> event (because a service cannot be a trigger)
         if as_event:
             if IS_DEBUG:
@@ -83,13 +84,6 @@ class YAMLAction:
                 print(f"to_dict: {self.to_dict()}")
                 print("------------end YAMLAction - AS EVENT - to_yaml------------\n")
             data = self.to_dict()
-
-            ### 31/12
-            # if data.get("obj",None):
-            #     data["variable_name"] = data["obj"]
-            #     data.pop("obj")
-            ###
-
             return {
                 "platform": "event",
                 "event_type": DOMAIN,
@@ -99,15 +93,18 @@ class YAMLAction:
                 print("------------start YAMLAction - AS service - to_yaml------------")
                 print(f"to_dict: {self.to_dict()}")
                 print("------------end YAMLAction - AS service - to_yaml------------\n")
+
         # as service #
         data = dict()
         passive_instance = None
-        active_instance, method_name, sig = get_entity_instance_and_method_signature_by_structured_language(
+
+        active_instance, method_name, _, sig = get_entity_instance_and_method_signature_by_structured_language(
             hass, self.subject, self.verb, self.variable, self.modifier)
+
         # active or passive action
         if not method_name:
             # new #
-            passive_instance, method_name, sig = get_entity_instance_and_method_signature_by_structured_language(
+            passive_instance, method_name, _, sig = get_entity_instance_and_method_signature_by_structured_language(
             hass, self.obj, self.verb, self.variable, self.modifier)
             if not method_name:
                 raise Exception(f"Service {self.verb} isnot supported")
@@ -136,3 +133,10 @@ class YAMLAction:
             "action": f"{DOMAIN}.{self.verb}",
             "data": data
         }
+
+    @staticmethod
+    def get_service_method(hass: HomeAssistant, entity_id: str, service: str) -> tuple:
+        entity_instance = get_entity_instance_by_entity_id(hass, entity_id)
+        method = getattr(entity_instance, f"async_{service}", None)
+        signature_method = inspect.signature(method) if method else None
+        return method, signature_method

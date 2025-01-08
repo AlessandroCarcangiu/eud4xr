@@ -88,10 +88,10 @@ def get_entity_instance_and_method_signature_by_structured_language(
             d_kwargs = getattr(method, "kwargs", {})
             if d_kwargs:
                 v = d_kwargs["verb"]
-                var = d_kwargs.get("variable_name", None)
-                m = d_kwargs.get("modifier_string", None)
+                var = d_kwargs.get("variable", None)
+                m = d_kwargs.get("modifier", None)
                 if (not var and v == verb) or (v==verb and var==variable and m == modifier):
-                    return entity_instance, name, inspect.signature(method)
+                    return entity_instance, name, method, inspect.signature(method)
     return None, None, None
 
 
