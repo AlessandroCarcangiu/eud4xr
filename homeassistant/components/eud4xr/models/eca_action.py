@@ -86,10 +86,10 @@ class ECAAction:
                 kwargs["subject"] = convert_subject_to_unity(hass, entity_id)
             except:
                 # passive action
-                passive_entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['variable'], kwargs['verb'])
+                #passive_entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['variable'], kwargs['verb'])
                 #_, sig = cls.get_service_method(hass, passive_entity_id, kwargs["verb"])
                 _, _, _, sig = get_entity_instance_and_method_signature_by_structured_language(
-                    hass, kwargs.get("variable"), kwargs.get("verb"), kwargs.get("variable"), kwargs.get("modifier"))
+                    hass, kwargs.get("obj"), kwargs.get("verb"), kwargs.get("variable"), kwargs.get("modifier"))
                 param = next (p for n, p in sig.parameters.items() if n != "self")
                 entity_id = get_entity_id_by_game_object_and_eca_script(hass, kwargs['subject'], param.annotation.__name__.lower())
                 kwargs["subject"] = entity_id

@@ -17,6 +17,7 @@ from .const import (
     API_GET_VIRTUAL_OBJECTS
 )
 from .models import Automation
+from .hass_utils import get_entity_instance_by_entity_id
 from .sensor import CURRENT_MODULE
 from .utils import MappedClasses
 
@@ -45,17 +46,16 @@ class AutomationsView(HomeAssistantView):
         return Response(status=200)
 
     async def get(self, request):
-        # type
-        eca = request.query.get("eca", False)
-
+        # get id
         automation_id = request.match_info.get("id")
+
         # retrieve
         if automation_id:
             automation = await async_get_automation(self.hass, automation_id)
-            automations = [Automation.from_yaml(self.hass, automation, eca).to_dict()]
+            automations = [Automation.from_yaml(self.hass, automation).to_dict()]
         else:
             # list
-            automations = [Automation.from_yaml(self.hass, a, eca).to_dict() for a in await async_list_automations(self.hass)]
+            automations = [Automation.from_yaml(self.hass, a).to_dict() for a in await async_list_automations(self.hass)]
 
         return self.json({"automations": automations})
 
@@ -200,7 +200,16 @@ class VirtualObjectsView(HomeAssistantView):
                 if not only_objects:
                     components = list()
                     for i in state.attributes["entity_id"]:
-                        components.append(self.hass.states.get(i))
+                        component_state = self.hass.states.get(i).as_dict().copy()
+                        # drop unuseful keys
+                        for k in ["last_changed", "last_reported", "last_updated", "context"]:
+                            if k in component_state:
+                                component_state.pop(k)
+                        # add class name
+                        component_entity = get_entity_instance_by_entity_id(self.hass, i)
+                        component_state["class"] = component_entity.eca_script
+                        components.append(component_state)
+
                     new_group["components"] = components
                     objects.append(new_group)
         return self.json({

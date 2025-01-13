@@ -62,14 +62,12 @@ async def async_list_automations(hass: HomeAssistant) -> list:
 async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
     existing_automations = await hass.async_add_executor_job(get_automations, hass)
     try:
-        print("0")
         # convert input string into yaml
         automations_data = list()
         if isinstance(data, dict):
             automations_data.append(automations_data)
         else:
             automations_data = [yaml.safe_load(d) for d in data]
-        print("1")
         # append or update automations
         for automation_data in automations_data:
             automation_id = automation_data.get("id")
@@ -77,7 +75,6 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
                 automation_id = datetime.now().strftime("%Y%m%d%H%M%S")
                 automation_data["id"] = automation_id
             existing_automations[automation_id] = automation_data
-        print("2")
         # update and reload automation.yaml file
         await update_automation_and_reload(hass, existing_automations)
         hass.bus.async_fire("event_automation_reloaded")
