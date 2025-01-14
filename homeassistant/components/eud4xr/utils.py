@@ -51,16 +51,34 @@ def update_deque(circular_list: deque):
 
 class Service:
 
-    def __init__(self, eca_action: dict, params: dict, description: str) -> None:
+    def __init__(self, method: any, eca_action: dict, params: dict, description: str) -> None:
+        self.method = method
         self.eca_action = eca_action
         self.params = params
         self.description = description
 
     def to_dict(self):
+        kwargs = getattr(self.method, "kwargs")
+        #return {
+            # "eca_action": self.eca_action,
+            # "params": self.params,
+            #"description": self.description
+        #}
+        data = {
+            "subject": "{l'oggetto che compie l'azione, che l'utente deve definire}",
+            "verb": kwargs["verb"]
+        }
+        if "variable" in kwargs and kwargs["variable"]:
+            data["variable"] = kwargs["variable"]
+        if "modifier" in kwargs and kwargs["modifier"]:
+            data["mod"] = kwargs["modifier"]
+        if "variable" in data:
+            data["value"] = "{un valore in input da assegnare, aggiungere o sottrare, che l'utente deve definire}"
+        elif len(self.params) > 1:
+                data["obj"] = "{un valore, o un altro oggetto, coinvolti nell'azione, che l'utente deve definire}",
         return {
-            "eca_action": self.eca_action,
-            "params": self.params,
             "description": self.description,
+            "structure": data
         }
 
 
@@ -204,8 +222,12 @@ class MappedClasses:
             # services
             list_services.append(
                 Service(
+                    method = method,
+
                     eca_action=f"eud4xr.{name.replace('async_','')}",
+
                     params=service_params,
+
                     description=inspect.getdoc(method)
                 ).to_dict()
             )

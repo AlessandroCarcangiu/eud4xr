@@ -6,7 +6,7 @@
   alias: Spegni la luce quando il cubo 1 si trova nella posizione 0,1,0
   condition: []
   description: ''
-  id: '202412311011570000'
+  id: '10000000000000000001'
   trigger:
   - event_data:
       obj:
@@ -16,18 +16,3 @@
       subject: cube1
       verb: moves to
     event_type: eud4xr
-    platform: event
-- action:
-  - action: eud4xr.deactivates
-    data:
-      entity_id: sensor.cube1_ecaobject
-  alias: Disattiva il cubo1 quando il cubo2 viene disattivato
-  condition: []
-  description: ''
-  id: 3c65b315-cacc-4b6a-bb0f-e7be29d2c741
-  trigger:
-  - event_data:
-      subject: cube2
-      verb: deactivates
-    event_type: eud4xr
-    platform: event
