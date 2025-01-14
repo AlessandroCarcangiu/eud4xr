@@ -72,6 +72,8 @@ def get_entity_id_by_game_object_and_eca_script(hass: HomeAssistant, game_object
 
 def get_entity_instance_and_method_signature_by_structured_language(
         hass: HomeAssistant, game_object_name: str, verb: str, variable: str = None, modifier: str = None) -> str:
+    verb = verb.replace("_", " ")
+
     # get group
     group = find_group(hass, game_object_name)
     if not group:

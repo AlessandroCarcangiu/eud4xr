@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 
 import voluptuous as vol
+import uuid
 import yaml
 
 from homeassistant.core import HomeAssistant
@@ -72,7 +73,7 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
         for automation_data in automations_data:
             automation_id = automation_data.get("id")
             if not automation_id:
-                automation_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                automation_id = str(uuid.uuid4()) #datetime.now().strftime("%Y%m%d%H%M%S")
                 automation_data["id"] = automation_id
             existing_automations[automation_id] = automation_data
         # update and reload automation.yaml file

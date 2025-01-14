@@ -57,6 +57,7 @@ class AutomationsView(HomeAssistantView):
             # list
             automations = [Automation.from_yaml(self.hass, a).to_dict() for a in await async_list_automations(self.hass)]
 
+
         return self.json({"automations": automations})
 
     async def delete(self, request):

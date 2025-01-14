@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import uuid
 import yaml
 from homeassistant.core import HomeAssistant
 from .action import Action
@@ -16,7 +17,7 @@ class Automation:
 
     def __init__(self, trigger: Action | ECAAction, conditions: list[Condition], actions: list[Action | ECAAction],
                  alias: str = "", description: str = "", id: str = None) -> None:
-        self.id = id if id else datetime.now().strftime("%Y%m%d%H%M%S")
+        self.id = id if id else str(uuid.uuid4())# datetime.now().strftime("%Y%m%d%H%M%S")
         self.trigger = trigger
         self.conditions = conditions
         self.actions = actions
