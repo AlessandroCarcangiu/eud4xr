@@ -183,12 +183,14 @@ class ContextObjectsView(HomeAssistantView):
 class VirtualObjectsView(HomeAssistantView):
     url = f"/api/eud4xr/{API_GET_VIRTUAL_OBJECTS}"
     name = f"api:{API_GET_VIRTUAL_OBJECTS}"
-    methods = ["GET"]
+    methods = ["POST"]
 
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
 
-    async def get(self, request):
+    async def post(self, request):
+        # get parameters #
+        # only_objects
         only_objects = request.query.get("only_objects", False)
         objects = list()
         registered_groups = filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all())
@@ -196,10 +198,17 @@ class VirtualObjectsView(HomeAssistantView):
         if only_objects:
            objects = [state.entity_id.split(".")[-1] for state in registered_groups]
         else:
+            # names
+            try:
+                names = (await request.json())
+            except Exception as e:
+                names = dict()
+            names = names.get("names", [])
+            
             for state in registered_groups:
                 new_group = dict()
                 new_group["name"] = state.entity_id.split(".")[-1]
-                if not only_objects:
+                if not only_objects and (not names or new_group["name"] in names):
                     components = list()
                     for i in state.attributes["entity_id"]:
                         component_state = self.hass.states.get(i).as_dict().copy()
@@ -228,11 +237,11 @@ class MultimediaFilesView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request):
+        # todo request to unity
+        audio_list = ["nona_sinfonia_audio.mp3"]
+        video_list = ["nona_sinfonia_video.mp4"]
+        # return files
         return self.json({
-            "file-audio": [
-                "nona_sinfonia_audio.mp3"
-            ],
-            "file-video": [
-                "nona_sinfonia_video.mp4"
-            ],
+            "file-audio": audio_list,
+            "file-video": video_list,
         })
