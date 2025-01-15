@@ -2820,4 +2820,41 @@ class ECAXRInteractable(ECAEntity):
         }
 
 
+class ECAText(ECAEntity):
+    """
+    ECAText is an Interaction subclass that represents a text element.
+
+    Attributes:
+
+    """
+    def __init__(self, content: str, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._content = content
+        self._attr_should_poll = False
+
+    @property
+    def content(self) -> str:
+        return self._content
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "content": self.content,
+            **super_extra_attributes
+        }
+
+    @eca_script_action(verb="changes", variable="content", modifier="to")
+    async def async_changes_content(self, c: str) -> None:
+        _LOGGER.info(f"Performed changes content to action - {c}")
+
+    @eca_script_action(verb="appends")
+    async def async_appends(self, t: str) -> None:
+        _LOGGER.info(f"Performed appends action - {t}")
+
+    @eca_script_action(verb="deletes")
+    async def async_deletes(self, t: str) -> None:
+        _LOGGER.info(f"Performed deletes action - {t}")
+
+
 CURRENT_MODULE = sys.modules[__name__]

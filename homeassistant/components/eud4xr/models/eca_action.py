@@ -135,7 +135,10 @@ class ECAAction:
                         else:
                             kwargs["obj"] = v
             else:
-                kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["obj"])
+                try:
+                    kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["obj"])
+                except Exception as e:
+                    pass
             ###
 
             return cls(

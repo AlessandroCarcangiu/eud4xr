@@ -59,26 +59,53 @@ class Service:
 
     def to_dict(self):
         kwargs = getattr(self.method, "kwargs")
+        # first solution
         #return {
             # "eca_action": self.eca_action,
             # "params": self.params,
             #"description": self.description
         #}
-        data = {
-            "subject": "{l'oggetto che compie l'azione, che l'utente deve definire}",
+
+        # second solution
+        # data = {
+        #     "subject": "{l'oggetto che compie l'azione, che l'utente deve definire}",
+        #     "verb": kwargs["verb"]
+        # }
+        # if "variable" in kwargs and kwargs["variable"]:
+        #     data["variable"] = kwargs["variable"]
+        # if "modifier" in kwargs and kwargs["modifier"]:
+        #     data["mod"] = kwargs["modifier"]
+        # if "variable" in data:
+        #     data["value"] = "{un valore in input da assegnare, aggiungere o sottrare, che l'utente deve definire}"
+        # elif len(self.params) > 1:
+        #         data["obj"] = "{un valore, o un altro oggetto, coinvolti nell'azione, che l'utente deve definire}",
+        # return {
+        #     "description": self.description,
+        #     **data
+        # }
+
+        # third solution
+        data = {}
+        if self.params:
+            data["Requested Parameter"] = self.params[list(self.params.keys())[0]]
+
+        json_structure = {
+            "subject": "{{l'oggetto che compie l'azione}}",
             "verb": kwargs["verb"]
         }
-        if "variable" in kwargs and kwargs["variable"]:
-            data["variable"] = kwargs["variable"]
-        if "modifier" in kwargs and kwargs["modifier"]:
-            data["mod"] = kwargs["modifier"]
-        if "variable" in data:
-            data["value"] = "{un valore in input da assegnare, aggiungere o sottrare, che l'utente deve definire}"
-        elif len(self.params) > 1:
-                data["obj"] = "{un valore, o un altro oggetto, coinvolti nell'azione, che l'utente deve definire}",
+        for i in ["variable", "modifier"]:
+            if i in kwargs and kwargs[i]:
+                json_structure[i] = kwargs[i]
+        if "variable" in json_structure:
+            json_structure["value"] = "{{un valore in input da assegnare, aggiungere o sottrare}}"
+        elif self.params:
+                json_structure["obj"] = "{{un valore, o un altro oggetto, coinvolti nell'azione}}"
+
         return {
-            "description": self.description,
-            "structure": data
+            "Service's name": kwargs["verb"],
+            **data,
+            "When to use me?": self.description,
+            "JSON format": json_structure
         }
 
 
@@ -115,9 +142,9 @@ class MappedClass:
 
     def to_dict(self) -> dict:
         return {
-            "description": self.description,
+            "What are my capabilities?": self.description,
             #"properties": self.properties,
-            "services": self.services,
+            "Supported Services": self.services,
         }
 
 
