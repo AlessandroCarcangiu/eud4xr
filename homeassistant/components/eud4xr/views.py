@@ -14,7 +14,8 @@ from .const import (
     API_GET_VIRTUAL_DEVICES,
     API_GET_ECA_CAPABILITIES,
     API_GET_CONTEXT_OBJECTS,
-    API_GET_VIRTUAL_OBJECTS
+    API_GET_VIRTUAL_OBJECTS,
+    API_GET_MULTIMEDIA_FILES
 )
 from .models import Automation
 from .hass_utils import get_entity_instance_by_entity_id
@@ -215,4 +216,23 @@ class VirtualObjectsView(HomeAssistantView):
                     objects.append(new_group)
         return self.json({
             "objects": objects
+        })
+
+
+class MultimediaFilesView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_GET_MULTIMEDIA_FILES}"
+    name = f"api:{API_GET_MULTIMEDIA_FILES}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        return self.json({
+            "file-audio": [
+                "nona_sinfonia_audio.mp3"
+            ],
+            "file-video": [
+                "nona_sinfonia_video.mp4"
+            ],
         })

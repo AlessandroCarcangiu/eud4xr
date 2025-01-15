@@ -23,6 +23,7 @@ API_GET_VIRTUAL_DEVICES = "list_virtual_framed_devices"
 API_GET_ECA_CAPABILITIES = "list_eca_capabilities"
 API_GET_CONTEXT_OBJECTS = "context_objects"
 API_GET_VIRTUAL_OBJECTS = "virtual_objects"
+API_GET_MULTIMEDIA_FILES = "multimedia_files"
 
 # unity services
 API_NOTIFY_UPDATE = "/api/external_updates/"
