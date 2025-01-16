@@ -1,5 +1,8 @@
 import logging
+import math
+import numpy as np
 from aiohttp.web import Response
+from collections import OrderedDict
 from homeassistant.components import HomeAssistant
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import State
@@ -15,7 +18,9 @@ from .const import (
     API_GET_ECA_CAPABILITIES,
     API_GET_CONTEXT_OBJECTS,
     API_GET_VIRTUAL_OBJECTS,
-    API_GET_MULTIMEDIA_FILES
+    API_GET_MULTIMEDIA_FILES,
+    API_GET_CLOSE_OBJECTS,
+    MIN_DISTANCE
 )
 from .models import Automation
 from .hass_utils import get_entity_instance_by_entity_id
@@ -203,12 +208,12 @@ class VirtualObjectsView(HomeAssistantView):
                 names = (await request.json())
             except Exception as e:
                 names = dict()
-            names = names.get("names", [])
-            
+            names = [n.lower() for n in names.get("names", [])]
+
             for state in registered_groups:
                 new_group = dict()
                 new_group["name"] = state.entity_id.split(".")[-1]
-                if not only_objects and (not names or new_group["name"] in names):
+                if not only_objects and (not names or new_group["name"].lower() in names):
                     components = list()
                     for i in state.attributes["entity_id"]:
                         component_state = self.hass.states.get(i).as_dict().copy()
@@ -245,3 +250,59 @@ class MultimediaFilesView(HomeAssistantView):
             "file-audio": audio_list,
             "file-video": video_list,
         })
+
+
+class FindCloseObjectsView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_GET_CLOSE_OBJECTS}"
+    name = f"api:{API_GET_CLOSE_OBJECTS}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    @staticmethod
+    def get_distance(a, b) -> float:
+        p1 = np.array((a['x'],a['y'],a['z']))
+        p2 = np.array((b['x'],b['y'],b['z']))
+        d1 = np.linalg.norm(p1-p2)
+        d2 = math.sqrt(
+            (a['x'] - b['x'])**2 +
+            (a['y'] - b['y'])**2 +
+            (a['z'] - b['z'])**2
+        )
+        return d2
+
+    def get_eca_object_instance(self, group_name: str) -> object:
+        group_ecaobject = None
+        try:
+            group_ecaobject = get_entity_instance_by_entity_id(self.hass, f"sensor.{group_name}_ecaobject")
+        except Exception as e:
+            print(f"not found {group_name} + {e}")
+        return group_ecaobject
+
+    async def get(self, request):
+        object_name = request.query.get("name", "")
+        distances = dict()
+        registered_groups = list(filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all()))
+        ref = self.get_eca_object_instance(object_name)
+
+        if ref and hasattr(ref, "position"):
+            # get object position
+            for group in registered_groups:
+                group_name = group.entity_id.split(".")[-1]
+                if object_name != group_name:
+                    group_ecaobject = self.get_eca_object_instance(group_name)
+                    if group_ecaobject and hasattr(group_ecaobject, "position"):
+                        print(f"{group_name} - {group_ecaobject.position}")
+                        distances[group_name] = self.get_distance(ref.position, group_ecaobject.position)
+
+        # keep in distances: i) very close objects (distance < 1) + ii) framed/pointed/grabbed objects
+        from .sensor import DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS
+        deques = [DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS]
+        distances = dict(
+            filter(
+                lambda x: x[1] < MIN_DISTANCE or any(x[0] in list(d) for d in deques),
+                distances.items()
+            )
+        )
+        return self.json(OrderedDict(sorted(distances.items(), key=lambda x: x[1])))

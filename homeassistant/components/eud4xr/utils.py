@@ -7,7 +7,13 @@ from numbers import Number
 from typing import Tuple
 from homeassistant.helpers import config_validation as cv, entity_registry as er
 from .config_validation import get_unity_entity
-from .eca_classes import ECAPosition, ECARotation, ECAScale
+from .eca_classes import (
+    ECAPosition,
+    ECARotation,
+    ECAScale,
+    ECABoolean,
+    ECABooleanEnum
+)
 from .entity import ECAEntity
 
 
@@ -42,8 +48,9 @@ def update_deque(circular_list: deque):
         def wrapper(self, value: any):
             game_object_name = self.game_object.split("@")[0]
             if game_object_name in circular_list:
-                circular_list.remove(game_object_name)
-            circular_list.append(game_object_name)
+                circular_list.remove(game_object_name.lower())
+            if bool(ECABoolean(ECABooleanEnum.get_value_by_str(value))):
+                circular_list.append(game_object_name.lower())
             return func(self, value)
         return wrapper
     return decorator

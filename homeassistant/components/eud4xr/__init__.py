@@ -30,7 +30,8 @@ from .views import (
     ListECACapabilitiesView,
     ContextObjectsView,
     VirtualObjectsView,
-    MultimediaFilesView
+    MultimediaFilesView,
+    FindCloseObjectsView
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -341,4 +342,5 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(ContextObjectsView(hass))
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(MultimediaFilesView(hass))
+    hass.http.register_view(FindCloseObjectsView(hass))
     return True

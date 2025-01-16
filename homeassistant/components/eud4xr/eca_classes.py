@@ -32,6 +32,11 @@ class ECABoolean:
     def to_value(self) -> str:
         return self.choice.value
 
+    def __bool__(self) -> bool:
+        if self.choice in [ECABooleanEnum.TRUE, ECABooleanEnum.YES, ECABooleanEnum.ON]:
+            return True
+        return False
+
     @staticmethod
     def validate(value: str):
         if not isinstance(value, str):

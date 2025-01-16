@@ -4,6 +4,7 @@ AUTOMATION_PATH = "automations.yaml"
 
 TIMESTAMP_MIN_UPDATE = 1000 # time limit for retaining failed updates due to an unregistered sensor
 MAX_LENGTH_CIRCULAR_LIST = 15 # circular queue's length.
+MIN_DISTANCE = 1
 
 # custom component
 DOMAIN = "eud4xr"
@@ -24,6 +25,7 @@ API_GET_ECA_CAPABILITIES = "list_eca_capabilities"
 API_GET_CONTEXT_OBJECTS = "context_objects"
 API_GET_VIRTUAL_OBJECTS = "virtual_objects"
 API_GET_MULTIMEDIA_FILES = "multimedia_files"
+API_GET_CLOSE_OBJECTS = "find_close_objects"
 
 # unity services
 API_NOTIFY_UPDATE = "/api/external_updates/"

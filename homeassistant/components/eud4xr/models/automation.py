@@ -1,13 +1,16 @@
 from datetime import datetime
+import copy
 import logging
 import uuid
 import yaml
 from homeassistant.core import HomeAssistant
-from .action import Action
-from .yaml_action import YAMLAction
-from .eca_action import ECAAction
+from typing import Union
 from ..const import IS_DEBUG
+from .action import Action
 from .condition import Condition, SimpleCondition, CompositeCondition, get_condition
+from .eca_action import ECAAction
+from .safe_action import SafeAction
+from .yaml_action import YAMLAction
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,8 +49,10 @@ class Automation:
         r_conditions = data.get("conditions", [])
         kwargs = {
             "id":data.get("id"),
-            "trigger":YAMLAction.from_dict(data.get("trigger")),
-            "actions":[YAMLAction.from_dict(a) for a in data.get("actions")],
+            # "trigger":YAMLAction.from_dict(data.get("trigger")),
+            # "actions":[YAMLAction.from_dict(a) for a in data.get("actions")],
+            "trigger": cls.safe_action_to_yaml(data.get("trigger")),
+            "actions":[cls.safe_action_to_yaml(a) for a in data.get("actions")],
             "alias":data.get("alias"),
             "description":data.get("description"),
         }
@@ -72,10 +77,11 @@ class Automation:
 
     @classmethod
     def from_yaml(cls, hass: HomeAssistant, data: dict) -> 'Automation':
-        ActionClass = ECAAction
-
-        trigger = ActionClass.from_yaml(hass, data.get("trigger"), is_trigger=True)
-        actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]
+        # ActionClass = ECAAction
+        # trigger = ActionClass.from_yaml(hass, data.get("trigger"), is_trigger=True)
+        trigger = cls.safe_action_from_yaml(hass, data.get("trigger"), is_trigger=True)
+        # actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]
+        actions = [cls.safe_action_from_yaml(hass, a) for a in data.get("action")]
         data_conditions = data.get("condition")
         conditions = [
             SimpleCondition.from_yaml(hass, c) if c["condition"] == "template" else CompositeCondition.from_yaml(hass, c)
@@ -97,3 +103,23 @@ class Automation:
             description=data.get("description"),
             id=data.get("id")
         )
+
+    @staticmethod
+    def safe_action_to_yaml(data: dict) -> Union[YAMLAction, SafeAction]:
+        action = None
+        try:
+            action = YAMLAction.from_dict(data)
+        except Exception as e:
+            action = SafeAction.from_dict(data)
+        return action
+
+    @staticmethod
+    def safe_action_from_yaml(hass: HomeAssistant, data: dict, **kwargs) -> Union[ECAAction, SafeAction]:
+        action = None
+        try:
+            d = copy.deepcopy(data)
+            action = ECAAction.from_yaml(hass=hass, data=d, **kwargs)
+        except Exception as e:
+            d = copy.deepcopy(data)
+            action = SafeAction.from_yaml(d)
+        return action

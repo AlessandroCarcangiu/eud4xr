@@ -194,7 +194,7 @@ class ECAObject(ECAEntity):
         self._scale = scale
         self._visible = visible
         self._active = active
-        self._isInsideCamera = isInsideCamera
+        self.isInsideCamera = isInsideCamera
         self._attr_should_poll = False
 
     @property
