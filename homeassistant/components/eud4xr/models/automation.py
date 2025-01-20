@@ -49,10 +49,10 @@ class Automation:
         r_conditions = data.get("conditions", [])
         kwargs = {
             "id":data.get("id"),
-            # "trigger":YAMLAction.from_dict(data.get("trigger")),
-            # "actions":[YAMLAction.from_dict(a) for a in data.get("actions")],
-            "trigger": cls.safe_action_to_yaml(data.get("trigger")),
-            "actions":[cls.safe_action_to_yaml(a) for a in data.get("actions")],
+            "trigger":YAMLAction.from_dict(data.get("trigger")),
+            "actions":[YAMLAction.from_dict(a) for a in data.get("actions")],
+            #"trigger": cls.safe_action_to_yaml(data.get("trigger")),
+            #"actions":[cls.safe_action_to_yaml(a) for a in data.get("actions")],
             "alias":data.get("alias"),
             "description":data.get("description"),
         }
@@ -66,11 +66,13 @@ class Automation:
         yaml_data["alias"] = self.alias
         yaml_data["description"] = self.description
         # trigger
-        yaml_data["trigger"] = [self.trigger.to_yaml(hass=hass, as_event=True)]
+        #yaml_data["trigger"] = [self.trigger.to_yaml(hass=hass, as_event=True)]
+        yaml_data["trigger"] = [self.safe_action_to_yaml(hass, self.trigger, as_event=True)]
         # conditions
         yaml_data["condition"] = [c.to_yaml(hass) for c in self.conditions]
         # actions
-        yaml_data["action"] = [a.to_yaml(hass=hass) for a in self.actions]
+        #yaml_data["action"] = [a.to_yaml(hass=hass) for a in self.actions]
+        yaml_data["action"] = [self.safe_action_to_yaml(hass, a) for a in self.actions]
         # convert to yaml
         automation_yaml = yaml.dump(yaml_data, default_flow_style=False)
         return automation_yaml
@@ -105,13 +107,13 @@ class Automation:
         )
 
     @staticmethod
-    def safe_action_to_yaml(data: dict) -> Union[YAMLAction, SafeAction]:
-        action = None
+    def safe_action_to_yaml(hass: HomeAssistant, action: YAMLAction, **kwargs) -> dict:
+        data = None
         try:
-            action = YAMLAction.from_dict(data)
+            data = action.to_yaml(hass, **kwargs)
         except Exception as e:
-            action = SafeAction.from_dict(data)
-        return action
+            data = SafeAction.to_yaml(action.to_dict())
+        return data
 
     @staticmethod
     def safe_action_from_yaml(hass: HomeAssistant, data: dict, **kwargs) -> Union[ECAAction, SafeAction]:

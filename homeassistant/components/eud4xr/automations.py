@@ -78,7 +78,9 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
             existing_automations[automation_id] = automation_data
         # update and reload automation.yaml file
         await update_automation_and_reload(hass, existing_automations)
+
         hass.bus.async_fire("event_automation_reloaded")
+        
         _LOGGER.info("Automations successfully updated or added")
 
     except yaml.YAMLError as e:

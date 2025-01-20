@@ -1436,13 +1436,16 @@ class Artwork(ECAEntity):
     - author (str): author specifies the name of the artist of the artwork.
     - price (float): price represents the monetary value of the artwork.
     - year (int): year denotes the year in which the artwork was created.
-
+    - type (str): type specifies the type of artwork (e.g., painting, sculpture).
+    - description (str): description provides a brief description of the artwork.
     """
-    def __init__(self, author: str, price: float, year: int, **kwargs: dict) -> None:
+    def __init__(self, author: str, price: float, year: int, type: str, description: str, **kwargs: dict) -> None:
         super().__init__(**kwargs)
         self._author = author
         self._price = price
         self._year = year
+        self._type = type
+        self._description = description
         self._attr_should_poll = False
 
     @property
@@ -1458,13 +1461,23 @@ class Artwork(ECAEntity):
         return self._year
 
     @property
+    def type(self) -> str:
+        return self._type
+
+    @property
+    def description(self) -> str:
+        return self._description
+
+    @property
     def extra_state_attributes(self) -> dict:
         super_extra_attributes = super().extra_state_attributes
         return {
             "author": self.author,
             "price": self.price,
             "year": self.year,
-            **super_extra_attributes
+            "type": self.type,
+            "description": self.description,
+            **super_extra_attributes,
         }
 
 

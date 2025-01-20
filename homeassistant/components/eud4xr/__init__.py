@@ -287,14 +287,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             async with aiohttp.ClientSession() as session:
                 automations = [Automation.from_yaml(hass, a).to_dict() for a in await async_list_automations(hass)]
-                async with session.post(
-                        f"{server_unity_url}{API_NOTIFY_AUTOMATIONS}", json=automations
-                    ) as response:
-                        if response.status == 200:
-                            _LOGGER.info("Update successfully sent")
-                        else:
-                            _LOGGER.error(f"Error on notifying automations to Unity: {response.status}")
-
                 try:
                     automations = [Automation.from_yaml(hass, a).to_dict() for a in await async_list_automations(hass)]
                     async with session.post(
@@ -304,6 +296,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                                 _LOGGER.info("Update successfully sent")
                             else:
                                 _LOGGER.error(f"Error on notifying automations to Unity: {response.status}")
+
                 except Exception as e:
                     _LOGGER.error(f"Error on conctating Unity while notifying automations: {e}")
         except Exception as e:
