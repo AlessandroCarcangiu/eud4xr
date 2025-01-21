@@ -216,15 +216,17 @@ class VirtualObjectsView(HomeAssistantView):
                 if not only_objects and (not names or new_group["name"].lower() in names):
                     components = list()
                     for i in state.attributes["entity_id"]:
-                        component_state = self.hass.states.get(i).as_dict().copy()
-                        # drop unuseful keys
-                        for k in ["last_changed", "last_reported", "last_updated", "context"]:
-                            if k in component_state:
-                                component_state.pop(k)
-                        # add class name
-                        component_entity = get_entity_instance_by_entity_id(self.hass, i)
-                        component_state["class"] = component_entity.eca_script
-                        components.append(component_state)
+                        c = self.hass.states.get(i)
+                        if c:
+                            component_state = c.as_dict().copy()
+                            # drop unuseful keys
+                            for k in ["last_changed", "last_reported", "last_updated", "context"]:
+                                if k in component_state:
+                                    component_state.pop(k)
+                            # add class name
+                            component_entity = get_entity_instance_by_entity_id(self.hass, i)
+                            component_state["class"] = component_entity.eca_script
+                            components.append(component_state)
 
                     new_group["components"] = components
                     objects.append(new_group)
@@ -293,7 +295,6 @@ class FindCloseObjectsView(HomeAssistantView):
                 if object_name != group_name:
                     group_ecaobject = self.get_eca_object_instance(group_name)
                     if group_ecaobject and hasattr(group_ecaobject, "position"):
-                        print(f"{group_name} - {group_ecaobject.position}")
                         distances[group_name] = self.get_distance(ref.position, group_ecaobject.position)
 
         # keep in distances: i) very close objects (distance < 1) + ii) framed/pointed/grabbed objects

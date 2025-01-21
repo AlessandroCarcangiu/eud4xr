@@ -2576,6 +2576,13 @@ class Switch(ECAEntity):
         """
         _LOGGER.info(f"Performed turns action - {on}")
 
+    @eca_script_action(verb = "toogle status")
+    async def async_toogle_status(self) -> None:
+        """
+        Toggle status toggles the switch state.
+        """
+        _LOGGER.info(f"Performed toogle status action")
+
 
 class Timer(ECAEntity):
 
@@ -2868,6 +2875,26 @@ class ECAText(ECAEntity):
     @eca_script_action(verb="deletes")
     async def async_deletes(self, t: str) -> None:
         _LOGGER.info(f"Performed deletes action - {t}")
+
+
+class ECASocket(ECAEntity):
+
+    def __init__(self, content: str, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._content = content
+        self._attr_should_poll = False
+
+    @property
+    def content(self) -> str:
+        return self._content
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "content": self.content,
+            **super_extra_attributes
+        }
 
 
 CURRENT_MODULE = sys.modules[__name__]

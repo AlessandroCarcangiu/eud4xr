@@ -45,8 +45,13 @@ class SafeAction:
         '''
             It converts eca actions from hass format to natural language:
         '''
-        action_data = data[0]["event_data"] if isinstance(data, list) else data["event_data"]
-
+        if isinstance(data, list):
+            action_data = data[0]["event_data"]
+        elif "event_data" in data:
+            action_data = data["event_data"]
+        else:
+            action_data = data["data"]
+        #action_data = data[0]["event_data"] if isinstance(data, list) else if "event_data" in data data["event_data"]
         return SafeAction(**action_data)
 
     @classmethod
