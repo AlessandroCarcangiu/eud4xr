@@ -198,6 +198,7 @@ class VirtualObjectsView(HomeAssistantView):
         # only_objects
         only_objects = request.query.get("only_objects", False)
         objects = list()
+        objects_all = list()
         registered_groups = filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all())
 
         if only_objects:
@@ -213,25 +214,29 @@ class VirtualObjectsView(HomeAssistantView):
             for state in registered_groups:
                 new_group = dict()
                 new_group["name"] = state.entity_id.split(".")[-1]
-                if not only_objects and (not names or new_group["name"].lower() in names):
-                    components = list()
-                    for i in state.attributes["entity_id"]:
-                        c = self.hass.states.get(i)
-                        if c:
-                            component_state = c.as_dict().copy()
-                            # drop unuseful keys
-                            for k in ["last_changed", "last_reported", "last_updated", "context"]:
-                                if k in component_state:
-                                    component_state.pop(k)
-                            # add class name
-                            component_entity = get_entity_instance_by_entity_id(self.hass, i)
-                            component_state["class"] = component_entity.eca_script
-                            components.append(component_state)
 
+                components = list()
+                for i in state.attributes["entity_id"]:
+                    c = self.hass.states.get(i)
+                    if c:
+                        component_state = c.as_dict().copy()
+                        # drop unuseful keys
+                        for k in ["last_changed", "last_reported", "last_updated", "context"]:
+                            if k in component_state:
+                                component_state.pop(k)
+                        # add class name
+                        component_entity = get_entity_instance_by_entity_id(self.hass, i)
+                        component_state["class"] = component_entity.eca_script
+                        components.append(component_state)
                     new_group["components"] = components
+
+                objects_all.append(new_group)
+                if not names or new_group["name"].lower() in names:
                     objects.append(new_group)
+
+
         return self.json({
-            "objects": objects
+            "objects": objects if objects else objects_all
         })
 
 
