@@ -64,7 +64,10 @@ class SimpleCondition(Condition):
 
         # from game_object_name to sensor_name
         # - strategy: find a group with same name, loop on its entities and get the first that has property
-        entity_id = get_entity_id_by_game_object_and_property(hass, self.component, self.property)
+        try:
+            entity_id = get_entity_id_by_game_object_and_property(hass, self.component, self.property)
+        except:
+            entity_id = self.component
         res = {
             "condition": "template",
             "value_template": "{{ " + f"state_attr(\"{entity_id}\", \"{self.property}\") {self.symbol} {comparewith_str} " + "}}"

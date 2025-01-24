@@ -279,6 +279,35 @@ class FindCloseObjectsView(HomeAssistantView):
         )
         return d2
 
+    @staticmethod
+    def get_direction(a, b) -> list:
+        dx = b['x'] - a['x']
+        dy = b['y'] - a['y']
+        dz = b['z'] - a['z']
+
+        directions = list()
+        if dz > 0:
+            directions.append("sopra")
+        elif dz < 0:
+            directions.append("sotto")
+        if dy > 0:
+            directions.append("davanti")
+        elif dy < 0:
+            directions.append("dietro")
+        if dx > 0.5 or dx < 0.5:
+            directions.append("a fianco")
+        return " e ".join(directions) if directions else "nella stessa posizione"
+        # diffs = {'z': abs(dz), 'y': abs(dy), 'x': abs(dx)}
+        # dominant_axis = max(diffs, key=diffs.get)
+        # # Determinazione della direzione principale
+        # if dominant_axis == 'z':
+        #     direction = "sopra" if dz > 0 else "sotto"
+        # elif dominant_axis == 'y':
+        #     direction = "davanti" if dy > 0 else "dietro"
+        # elif dominant_axis == 'x':
+        #     direction = "a destra" if dx > 0 else "a sinistra"
+        # return direction
+
     def get_eca_object_instance(self, group_name: str) -> object:
         group_ecaobject = None
         try:
@@ -288,7 +317,7 @@ class FindCloseObjectsView(HomeAssistantView):
         return group_ecaobject
 
     async def get(self, request):
-        object_name = request.query.get("name", "")
+        object_name = request.query.get("name", "").lower()
         distances = dict()
         registered_groups = list(filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all()))
         ref = self.get_eca_object_instance(object_name)
@@ -300,15 +329,18 @@ class FindCloseObjectsView(HomeAssistantView):
                 if object_name != group_name:
                     group_ecaobject = self.get_eca_object_instance(group_name)
                     if group_ecaobject and hasattr(group_ecaobject, "position"):
-                        distances[group_name] = self.get_distance(ref.position, group_ecaobject.position)
+                        distances[group_name] = {
+                            "distance": self.get_distance(ref.position, group_ecaobject.position),
+                            "directions": self.get_direction(ref.position, group_ecaobject.position)
+                        }
 
         # keep in distances: i) very close objects (distance < 1) + ii) framed/pointed/grabbed objects
         from .sensor import DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS
         deques = [DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS]
         distances = dict(
             filter(
-                lambda x: x[1] < MIN_DISTANCE or any(x[0] in list(d) for d in deques),
+                lambda x: x[1]["distance"] < MIN_DISTANCE or any(x[0] in list(d) for d in deques),
                 distances.items()
             )
         )
-        return self.json(OrderedDict(sorted(distances.items(), key=lambda x: x[1])))
+        return self.json(OrderedDict(sorted(distances.items(), key=lambda x: x[1]["distance"])))
