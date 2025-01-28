@@ -177,6 +177,7 @@ class ECAObject(ECAEntity):
             It supports properties such as position, rotation, scale, visibility, and activity, and provides methods for moving, rotating, scaling, and controlling visibility.
 
     Attributes:
+    - description (str): description describes in a few words what the object is and its role.
     - position (ECAPosition): p represents the position of the virtual object in the 3D space. It's a vector with three components: x, y, and z.
     - rotation (ECARotation): r represents the rotation of the object in the 3D space. It's a vector with three components: x, y, and z (euler angles).
     - scale (ECAScale): r represents the scale of the object in the 3D space.
@@ -187,8 +188,9 @@ class ECAObject(ECAEntity):
     - isInsideCamera (ECABoolean): isInsideCamera indicates whether the object is currently within the camera's field of view. This property is automatically updated at runtime.
 
     """
-    def __init__(self, position: ECAPosition, rotation: ECARotation, scale: ECAScale, visible: ECABoolean, active: ECABoolean, isInsideCamera: ECABoolean, **kwargs: dict) -> None:
+    def __init__(self, description: str, position: ECAPosition, rotation: ECARotation, scale: ECAScale, visible: ECABoolean, active: ECABoolean, isInsideCamera: ECABoolean, **kwargs: dict) -> None:
         super().__init__(**kwargs)
+        self._description = description
         self._position = position
         self._rotation = rotation
         self._scale = scale
@@ -196,6 +198,10 @@ class ECAObject(ECAEntity):
         self._active = active
         self.isInsideCamera = isInsideCamera
         self._attr_should_poll = False
+
+    @property
+    def description(self) -> str:
+        return self._description
 
     @property
     def position(self) -> ECAPosition:
@@ -230,6 +236,7 @@ class ECAObject(ECAEntity):
     def extra_state_attributes(self) -> dict:
         super_extra_attributes = super().extra_state_attributes
         return {
+            "description": self.description,
             "position": self.position,
             "rotation": self.rotation,
             "scale": self.scale,

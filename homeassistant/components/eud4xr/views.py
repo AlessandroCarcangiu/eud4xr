@@ -250,8 +250,8 @@ class MultimediaFilesView(HomeAssistantView):
 
     async def get(self, request):
         # todo request to unity
-        audio_list = ["nona_sinfonia_audio.mp3"]
-        video_list = ["nona_sinfonia_video.mp4"]
+        audio_list = ["nona_sinfonia_audio.mp3", "la_regina_egizia.mp3", "barocco.mp3", "le_divinità_egizie.mp3"]
+        video_list = ["nona_sinfonia_video.mp4", "chi_era_ophelia.mp4"]
         # return files
         return self.json({
             "file-audio": audio_list,

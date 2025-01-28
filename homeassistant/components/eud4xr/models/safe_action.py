@@ -8,13 +8,14 @@ from ..const import (
 
 class SafeAction:
 
-    def __init__(self, verb: str, subject: str, obj: object=None, variable: str=None, modifier: str=None, value: str=None) -> None:
-        self.verb = verb
-        self.subject = subject
+    def __init__(self, verb: str=None, subject: str=None, obj: object=None, variable: str=None, modifier: str=None, value: str=None, **kwargs) -> None:
+        self.verb = verb if verb else kwargs.pop("action", "").split(".")[-1]
+        self.subject = subject if subject else kwargs.pop("entity_id", "")
         self.obj = obj
         self.variable = variable
         self.modifier = modifier
         self.value = value
+        self.params = kwargs
 
     def to_dict(self) -> dict:
         data = {
@@ -24,7 +25,8 @@ class SafeAction:
                 "obj": self.obj,
                 "variable": self.variable,
                 "modifier": self.modifier,
-                "value": self.value
+                "value": self.value,
+                "params": self.params
                 }.items() if v}
         }
         return data
@@ -50,7 +52,7 @@ class SafeAction:
         elif "event_data" in data:
             action_data = data["event_data"]
         else:
-            action_data = data["data"]
+            action_data = {**data["data"], "action": data.get("action")}
         #action_data = data[0]["event_data"] if isinstance(data, list) else if "event_data" in data data["event_data"]
         return SafeAction(**action_data)
 
