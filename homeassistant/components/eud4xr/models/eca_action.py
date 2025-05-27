@@ -1,22 +1,16 @@
 import inspect
+
 from homeassistant.core import HomeAssistant
-from ..const import (
-    DOMAIN,
-    IS_DEBUG
-)
+
 from ..hass_utils import (
-    find_group,
-    find_sensor,
-    get_entity_state_by_id,
+    convert_subject_to_unity,
+    get_entity_id_by_game_object_and_eca_script,
+    get_entity_id_by_game_object_and_verb,
     get_entity_instance_and_method_signature_by_structured_language,
-    get_method_by_eca_script_name,
     get_entity_instance_by_entity_id,
     get_first_entity_by_group,
-    convert_subject_to_unity,
-    get_entity_id_by_game_object_and_verb,
-    get_entity_id_by_game_object_and_eca_script
 )
-from ..sensor import ECAObject, get_classes_subclassing
+from ..sensor import get_classes_subclassing
 
 
 class ECAAction:
@@ -61,14 +55,13 @@ class ECAAction:
 
     @classmethod
     def from_yaml(cls, hass: HomeAssistant, data: dict, is_trigger: bool = False) -> 'ECAAction':
-        '''
-            It converts eca actions from hass format to natural language:
-                verb: {verb in natural language},
-                subject: {game_object_name@eca_script},
-                obj:
-                variable: {variable},
-                modifier: {modifier}
-                value
+        '''It converts eca actions from hass format to natural language:
+        verb: {verb in natural language},
+        subject: {game_object_name@eca_script},
+        obj:
+        variable: {variable},
+        modifier: {modifier}
+        value
         '''
         # an eca action expressed as trigger is an event very similar to the ECARules4All's action definition (it contains verb, subject, ecc.)
         # consequently, we just extract the event_data and send it to Unity
@@ -137,7 +130,7 @@ class ECAAction:
             else:
                 try:
                     kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["obj"])
-                except Exception as e:
+                except Exception:
                     pass
             ###
 

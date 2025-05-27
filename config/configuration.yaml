@@ -1,4 +1,3 @@
-
 # Loads default set of integrations. Do not remove.
 default_config:
 
@@ -18,7 +17,7 @@ logger:
 
 # debugpy:
 #   start: true
-  #wait: true
+#wait: true
 
 http:
   use_x_forwarded_for: true
@@ -26,9 +25,9 @@ http:
     - 172.17.0.1
 
 eud4xr:
-  server_unity_url: "https://fly-powerful-slug.ngrok-free.app" # change with your unity server url
-  #server_unity_url: "http://192.168.1.123:5000"
-  server_unity_token: "token"
+  #server_unity_url: "https://fly-powerful-slug.ngrok-free.app" # change with your unity server url
+  server_unity_url: "http://192.168.68.122:5000"
+  server_unity_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0Nzk2M2NlMmMwODY0MTA0OGQ4NDQ5ZmFmNGNjODhkNyIsImlhdCI6MTc0NzE0NDI5MiwiZXhwIjoyMDYyNTA0MjkyfQ.k_E3058JJFfibf-ccFOZo5BtSH1VSvTbtW0e35Se8Is"
   # unity_entities:
   #   - eca_script: "Sound"
   #     game_object: "Cube1@Sound"
@@ -155,7 +154,6 @@ eud4xr:
   #       "life": 100,
   #       "playing": "yes"
   #     }
-
 
 group:
   # cube1:

@@ -1,17 +1,16 @@
-from datetime import datetime
 import copy
 import logging
 import uuid
+
 import yaml
+
 from homeassistant.core import HomeAssistant
-from typing import Union
-from ..const import IS_DEBUG
+
 from .action import Action
-from .condition import Condition, SimpleCondition, CompositeCondition, get_condition
+from .condition import CompositeCondition, Condition, SimpleCondition, get_condition
 from .eca_action import ECAAction
 from .safe_action import SafeAction
 from .yaml_action import YAMLAction
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -111,17 +110,17 @@ class Automation:
         data = None
         try:
             data = action.to_yaml(hass, **kwargs)
-        except Exception as e:
+        except Exception:
             data = SafeAction.to_yaml(action.to_dict())
         return data
 
     @staticmethod
-    def safe_action_from_yaml(hass: HomeAssistant, data: dict, **kwargs) -> Union[ECAAction, SafeAction]:
+    def safe_action_from_yaml(hass: HomeAssistant, data: dict, **kwargs) -> ECAAction | SafeAction:
         action = None
         try:
             d = copy.deepcopy(data)
             action = ECAAction.from_yaml(hass=hass, data=d, **kwargs)
-        except Exception as e:
+        except Exception:
             d = copy.deepcopy(data)
             action = SafeAction.from_yaml(d)
         return action

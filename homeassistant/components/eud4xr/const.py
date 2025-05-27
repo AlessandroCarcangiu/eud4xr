@@ -26,6 +26,8 @@ API_GET_CONTEXT_OBJECTS = "context_objects"
 API_GET_VIRTUAL_OBJECTS = "virtual_objects"
 API_GET_MULTIMEDIA_FILES = "multimedia_files"
 API_GET_CLOSE_OBJECTS = "find_close_objects"
+API_SEND_EXPRESSION = "send_expression"
+
 
 # unity services
 API_NOTIFY_UPDATE = "/api/external_updates/"

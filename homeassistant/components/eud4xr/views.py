@@ -1,32 +1,34 @@
+from collections import OrderedDict
 import logging
 import math
-import numpy as np
+
 from aiohttp.web import Response
-from collections import OrderedDict
+import numpy as np
+
 from homeassistant.components import HomeAssistant
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import State
+
 from .automations import (
-    async_list_automations,
     async_add_update_automation,
     async_get_automation,
-    async_remove_automation
+    async_list_automations,
+    async_remove_automation,
 )
 from .const import (
     API_GET_AUTOMATIONS,
-    API_GET_VIRTUAL_DEVICES,
-    API_GET_ECA_CAPABILITIES,
-    API_GET_CONTEXT_OBJECTS,
-    API_GET_VIRTUAL_OBJECTS,
-    API_GET_MULTIMEDIA_FILES,
     API_GET_CLOSE_OBJECTS,
-    MIN_DISTANCE
+    API_GET_CONTEXT_OBJECTS,
+    API_GET_ECA_CAPABILITIES,
+    API_GET_MULTIMEDIA_FILES,
+    API_GET_VIRTUAL_DEVICES,
+    API_GET_VIRTUAL_OBJECTS,
+    API_SEND_EXPRESSION,
+    MIN_DISTANCE,
 )
-from .models import Automation
 from .hass_utils import get_entity_instance_by_entity_id
-from .sensor import CURRENT_MODULE
+from .models import Automation, TaskExpression
 from .utils import MappedClasses
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,8 +63,10 @@ class AutomationsView(HomeAssistantView):
             automations = [Automation.from_yaml(self.hass, automation).to_dict()]
         else:
             # list
-            automations = [Automation.from_yaml(self.hass, a).to_dict() for a in await async_list_automations(self.hass)]
-
+            automations = [
+                Automation.from_yaml(self.hass, a).to_dict()
+                for a in await async_list_automations(self.hass)
+            ]
 
         return self.json({"automations": automations})
 
@@ -71,7 +75,7 @@ class AutomationsView(HomeAssistantView):
         if automation_id:
             await async_remove_automation(self.hass, automation_id)
             return Response(status=200)
-        _LOGGER.error(f"The request must specify an id in the url")
+        _LOGGER.error("The request must specify an id in the url")
 
 
 class ListFramedVirtualDevicesView(HomeAssistantView):
@@ -109,7 +113,7 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
             # 2) @Type is equal to "ECAObject"
             # 3) The attribute "isInsideCamera" is "yes"
             # If all the conditions are met, return True. Otherwise, return False
-            #print(f"\nsensor: {s}\n")
+            # print(f"\nsensor: {s}\n")
 
             # 0) The entity is not a sensor
             if s.domain != "sensor" or s.state != "active":
@@ -153,15 +157,22 @@ class ListECACapabilitiesView(HomeAssistantView):
         all = request.query.get("all", False)
 
         ECA_SCRIPTS = MappedClasses.mapping_classes(self.hass)
-        data = {k: v.to_dict() for k,v in ECA_SCRIPTS.items()}
+        data = {k: v.to_dict() for k, v in ECA_SCRIPTS.items()}
 
         if not all:
             filtered_data = dict()
-            registered_groups = filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all())
+            registered_groups = filter(
+                lambda state: state.entity_id.startswith("group."),
+                self.hass.states.async_all(),
+            )
             for state in registered_groups:
                 for sensor_id in state.attributes["entity_id"]:
-                    sensor_class = self.hass.states.get(sensor_id).attributes.get("friendly_name").split("@")[-1]
-                    if not sensor_class in filtered_data:
+                    sensor_class = (
+                        self.hass.states.get(sensor_id)
+                        .attributes.get("friendly_name")
+                        .split("@")[-1]
+                    )
+                    if sensor_class not in filtered_data:
                         filtered_data[sensor_class] = data[sensor_class]
             data = filtered_data
 
@@ -177,12 +188,19 @@ class ContextObjectsView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request):
-        from .sensor import DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS
-        return self.json({
-            "framed_objects": list(DEQUE_FRAMED_OBJECTS),
-            "pointed_objects": list(DEQUE_POINTED_OBJECTS),
-            "interacted_with_objects": list(DEQUE_INTERACTED_OBJECTS)
-        })
+        from .sensor import (
+            DEQUE_FRAMED_OBJECTS,
+            DEQUE_INTERACTED_OBJECTS,
+            DEQUE_POINTED_OBJECTS,
+        )
+
+        return self.json(
+            {
+                "framed_objects": list(DEQUE_FRAMED_OBJECTS),
+                "pointed_objects": list(DEQUE_POINTED_OBJECTS),
+                "interacted_with_objects": list(DEQUE_INTERACTED_OBJECTS),
+            }
+        )
 
 
 class VirtualObjectsView(HomeAssistantView):
@@ -199,15 +217,18 @@ class VirtualObjectsView(HomeAssistantView):
         only_objects = request.query.get("only_objects", False)
         objects = list()
         objects_all = list()
-        registered_groups = filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all())
+        registered_groups = filter(
+            lambda state: state.entity_id.startswith("group."),
+            self.hass.states.async_all(),
+        )
 
         if only_objects:
-           objects = [state.entity_id.split(".")[-1] for state in registered_groups]
+            objects = [state.entity_id.split(".")[-1] for state in registered_groups]
         else:
             # names
             try:
-                names = (await request.json())
-            except Exception as e:
+                names = await request.json()
+            except Exception:
                 names = dict()
             names = [n.lower() for n in names.get("names", [])]
 
@@ -221,11 +242,18 @@ class VirtualObjectsView(HomeAssistantView):
                     if c:
                         component_state = c.as_dict().copy()
                         # drop unuseful keys
-                        for k in ["last_changed", "last_reported", "last_updated", "context"]:
+                        for k in [
+                            "last_changed",
+                            "last_reported",
+                            "last_updated",
+                            "context",
+                        ]:
                             if k in component_state:
                                 component_state.pop(k)
                         # add class name
-                        component_entity = get_entity_instance_by_entity_id(self.hass, i)
+                        component_entity = get_entity_instance_by_entity_id(
+                            self.hass, i
+                        )
                         component_state["class"] = component_entity.eca_script
                         components.append(component_state)
                     new_group["components"] = components
@@ -234,10 +262,7 @@ class VirtualObjectsView(HomeAssistantView):
                 if not names or new_group["name"].lower() in names:
                     objects.append(new_group)
 
-
-        return self.json({
-            "objects": objects if objects else objects_all
-        })
+        return self.json({"objects": objects if objects else objects_all})
 
 
 class MultimediaFilesView(HomeAssistantView):
@@ -250,13 +275,20 @@ class MultimediaFilesView(HomeAssistantView):
 
     async def get(self, request):
         # todo request to unity
-        audio_list = ["nona_sinfonia_audio.mp3", "la_regina_egizia.mp3", "barocco.mp3", "le_divinità_egizie.mp3"]
+        audio_list = [
+            "nona_sinfonia_audio.mp3",
+            "la_regina_egizia.mp3",
+            "barocco.mp3",
+            "le_divinità_egizie.mp3",
+        ]
         video_list = ["nona_sinfonia_video.mp4", "chi_era_ophelia.mp4"]
         # return files
-        return self.json({
-            "file-audio": audio_list,
-            "file-video": video_list,
-        })
+        return self.json(
+            {
+                "file-audio": audio_list,
+                "file-video": video_list,
+            }
+        )
 
 
 class FindCloseObjectsView(HomeAssistantView):
@@ -269,21 +301,19 @@ class FindCloseObjectsView(HomeAssistantView):
 
     @staticmethod
     def get_distance(a, b) -> float:
-        p1 = np.array((a['x'],a['y'],a['z']))
-        p2 = np.array((b['x'],b['y'],b['z']))
-        d1 = np.linalg.norm(p1-p2)
+        p1 = np.array((a["x"], a["y"], a["z"]))
+        p2 = np.array((b["x"], b["y"], b["z"]))
+        d1 = np.linalg.norm(p1 - p2)
         d2 = math.sqrt(
-            (a['x'] - b['x'])**2 +
-            (a['y'] - b['y'])**2 +
-            (a['z'] - b['z'])**2
+            (a["x"] - b["x"]) ** 2 + (a["y"] - b["y"]) ** 2 + (a["z"] - b["z"]) ** 2
         )
         return d2
 
     @staticmethod
     def get_direction(a, b) -> list:
-        dx = b['x'] - a['x']
-        dy = b['y'] - a['y']
-        dz = b['z'] - a['z']
+        dx = b["x"] - a["x"]
+        dy = b["y"] - a["y"]
+        dz = b["z"] - a["z"]
 
         directions = list()
         if dz > 0:
@@ -311,7 +341,9 @@ class FindCloseObjectsView(HomeAssistantView):
     def get_eca_object_instance(self, group_name: str) -> object:
         group_ecaobject = None
         try:
-            group_ecaobject = get_entity_instance_by_entity_id(self.hass, f"sensor.{group_name}_ecaobject")
+            group_ecaobject = get_entity_instance_by_entity_id(
+                self.hass, f"sensor.{group_name}_ecaobject"
+            )
         except Exception as e:
             print(f"not found {group_name} + {e}")
         return group_ecaobject
@@ -319,7 +351,12 @@ class FindCloseObjectsView(HomeAssistantView):
     async def get(self, request):
         object_name = request.query.get("name", "").lower()
         distances = dict()
-        registered_groups = list(filter(lambda state: state.entity_id.startswith("group."), self.hass.states.async_all()))
+        registered_groups = list(
+            filter(
+                lambda state: state.entity_id.startswith("group."),
+                self.hass.states.async_all(),
+            )
+        )
         ref = self.get_eca_object_instance(object_name)
 
         if ref and hasattr(ref, "position"):
@@ -330,17 +367,136 @@ class FindCloseObjectsView(HomeAssistantView):
                     group_ecaobject = self.get_eca_object_instance(group_name)
                     if group_ecaobject and hasattr(group_ecaobject, "position"):
                         distances[group_name] = {
-                            "distance": self.get_distance(ref.position, group_ecaobject.position),
-                            "directions": self.get_direction(ref.position, group_ecaobject.position)
+                            "distance": self.get_distance(
+                                ref.position, group_ecaobject.position
+                            ),
+                            "directions": self.get_direction(
+                                ref.position, group_ecaobject.position
+                            ),
                         }
 
         # keep in distances: i) very close objects (distance < 1) + ii) framed/pointed/grabbed objects
-        from .sensor import DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS
+        from .sensor import (
+            DEQUE_FRAMED_OBJECTS,
+            DEQUE_INTERACTED_OBJECTS,
+            DEQUE_POINTED_OBJECTS,
+        )
+
         deques = [DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS]
         distances = dict(
             filter(
-                lambda x: x[1]["distance"] < MIN_DISTANCE or any(x[0] in list(d) for d in deques),
-                distances.items()
+                lambda x: x[1]["distance"] < MIN_DISTANCE
+                or any(x[0] in list(d) for d in deques),
+                distances.items(),
             )
         )
-        return self.json(OrderedDict(sorted(distances.items(), key=lambda x: x[1]["distance"])))
+        return self.json(
+            OrderedDict(sorted(distances.items(), key=lambda x: x[1]["distance"]))
+        )
+
+
+class TaskExpressionView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_SEND_EXPRESSION}"
+    name = f"api:{API_SEND_EXPRESSION}"
+    requires_auth = True
+
+    def __init__(self, hass):
+        self.hass = hass
+        self.task_expression = TaskExpression(hass)
+
+    async def post(self, request):
+        try:
+            data = await request.json()
+        except Exception:
+            return self.json_message("Payload JSON non valido", 400)
+
+        name = data.get("name")
+        sequence = data.get("sequence")
+        choice = data.get("choice")
+        order = data.get("order")
+
+        if not isinstance(name, str):
+            return self.json_message("Campo 'name' mancante o non valido", 400)
+
+        if sequence is not None:
+            if not isinstance(sequence, list) or not all(isinstance(i, str) for i in sequence):
+                return self.json_message(
+                    "Campo 'sequence' deve essere una lista di stringhe", 400
+                )
+            try:
+                await self.task_expression.create_sequence(name, sequence)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Sequenza '{name}' creata con successo", 200)
+        elif choice is not None:
+            if not isinstance(choice, list) or not all(isinstance(i, str) for i in choice):
+                return self.json_message(
+                    "Campo 'choice' deve essere una lista di stringhe", 400
+                )
+            try:
+                await self.task_expression.create_choice(name, choice)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Scelta '{name}' creata con successo", 200)
+        elif order is not None:
+            if not isinstance(order, list) or not all(isinstance(i, str) for i in order):
+                return self.json_message(
+                    "Campo 'order' deve essere una lista di stringhe", 400
+                )
+            try:
+                await self.task_expression.create_order(name, order)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Ordine '{name}' creato con successo", 200)
+        return self.json_message("Fornire il campo 'sequence' o 'choice'", 400)
+
+    async def delete(self, request):
+        """Cancella una sequenza"""
+        try:
+            data = await request.json()
+        except Exception:
+            return self.json_message("Payload JSON non valido", 400)
+
+        sequence = data.get("sequence")
+        choice = data.get("choice")
+        order = data.get("order")
+        if sequence is not None:
+            try:
+                await self.task_expression.delete_sequence(sequence)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+
+            return self.json_message(f"Sequenza '{sequence}' eliminata con successo", 200)
+        elif choice is not None:
+            try:
+                await self.task_expression.delete_choice(choice)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+
+            return self.json_message(f"Scelta '{choice}' eliminata con successo", 200)
+        elif order is not None:
+            try:
+                await self.task_expression.delete_order(order)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+
+            return self.json_message(f"Ordine '{order}' eliminato con successo", 200)
+
+        return self.json_message("Fornire il campo 'sequence' o 'choice'", 400)
+
+
+
+    def json_message(self, message: str, status_code: int = 200):
+        return self.json({"message": message}, status_code=status_code)

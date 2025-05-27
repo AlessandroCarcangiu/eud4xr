@@ -1,8 +1,13 @@
 import json
 import re
+
 from homeassistant.core import HomeAssistant
+
 from ..const import IS_DEBUG
-from ..hass_utils import get_entity_id_by_game_object_and_property, convert_subject_to_unity
+from ..hass_utils import (
+    convert_subject_to_unity,
+    get_entity_id_by_game_object_and_property,
+)
 
 
 class Condition:
@@ -41,16 +46,15 @@ class SimpleCondition(Condition):
         )
 
     def to_yaml(self, hass: HomeAssistant) -> dict:
-        '''
-            It converts eca conditions from natural language to hass format.
-            In natural language, a condition based on eca objects appears as:
-                component: {game_object_name},
-                property: {verb_name} (express in natural language),
-                symbol: {symbol},
-                compareWith: {value}
-            In HASS, a condition based on eca objects would appear as:
-                condition: template
-                value_template: ' {{ state_attr('{sensor.game_object_name_eca_script}', '{property_name}') {symbol} {value} }}
+        '''It converts eca conditions from natural language to hass format.
+        In natural language, a condition based on eca objects appears as:
+            component: {game_object_name},
+            property: {verb_name} (express in natural language),
+            symbol: {symbol},
+            compareWith: {value}
+        In HASS, a condition based on eca objects would appear as:
+            condition: template
+            value_template: ' {{ state_attr('{sensor.game_object_name_eca_script}', '{property_name}') {symbol} {value} }}
         '''
         if IS_DEBUG:
             print("------------start SIMPLECONDITION to_yaml------------")
@@ -76,12 +80,11 @@ class SimpleCondition(Condition):
 
     @classmethod
     def from_yaml(cls, hass: HomeAssistant, data: dict) -> dict:
-        '''
-            It converts eca conditions from hass format to natural language:
-                component: game_object_name@eca_script
-                property: property_name
-                symbol: symbol
-                compareWith: value
+        '''It converts eca conditions from hass format to natural language:
+        component: game_object_name@eca_script
+        property: property_name
+        symbol: symbol
+        compareWith: value
         '''
         if IS_DEBUG:
             print("------------start SIMPLECONDITION from_yaml------------")

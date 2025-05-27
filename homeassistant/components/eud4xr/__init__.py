@@ -1,38 +1,61 @@
-import aiohttp
 import copy
+from datetime import datetime, timedelta
 import inspect
 import logging
+
+import aiohttp
 import voluptuous as vol
-from datetime import datetime, timedelta
+
 from homeassistant.components.group import Group, expand_entity_ids
-from homeassistant.core import HomeAssistant, ServiceCall, callback, Event
-from homeassistant.helpers import (
-    config_validation as cv,
-    discovery,
-)
+from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
+from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import ConfigType
-from .automations import (
-    async_list_automations
-)
+
+from .automations import async_list_automations
 from .const import *
+from .hass_utils import find_group, find_sensor
 from .models import Automation
 from .sensor import (
     GAMEOBJECT_ECASCRIPT_SCHEMA,
     SERVICE_UPDATE_FROM_UNITY,
     UPDATES_FROM_UNITY_SCHEMA,
 )
-from .hass_utils import find_group, find_sensor
 from .views import (
     AutomationsView,
-    ListFramedVirtualDevicesView,
-    ListECACapabilitiesView,
     ContextObjectsView,
-    VirtualObjectsView,
+    FindCloseObjectsView,
+    ListECACapabilitiesView,
+    ListFramedVirtualDevicesView,
     MultimediaFilesView,
-    FindCloseObjectsView
+    TaskExpressionView,
+    VirtualObjectsView,
 )
+from .models import (
+    TaskExpression,
+    MARK_DONE_SERVICE_SCHEMA,
+)
+from .models.task_expression_sensor import TaskExpressionSensor
+
+# from .sequence_manager import (
+#     SequenceManager,
+#     REMOVE_SEQUENCE_SCHEMA,
+#     ADD_SEQUENCE_SCHEMA,
+#     START_SEQUENCE_SCHEMA,
+# )
+
+# from .iteration_manager import (
+#     IterationManager,
+#     START_ITERATION_SCHEMA,
+# )
+
+# from .choice_manager import (
+#     ChoiceManager,
+#     PERFORM_CHOICE_SCHEMA,
+#     REGISTER_CHOICES_SCHEMA
+# )
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +70,7 @@ group_locks = {}
 #         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS, default={}): dict,
 #     }
 # )
-#31/12
+# 31/12
 SERVICE_SEND_REQUEST_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT): cv.string,
@@ -66,7 +89,6 @@ REGISTER_VIRTUAL_OBJECT_SCHEMA = vol.Schema(
         ),
     }
 )
-
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -183,6 +205,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                             "friendly_name": group_name,
                         },
                     )
+
                 await hass.add_job(async_update_group)
 
         _LOGGER.info("Registered a new object - {entity_name}")
@@ -192,7 +215,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         await async_update_from_unity(hass, call.data)
 
     async def async_update_from_unity(hass, update, is_retry: bool = False):
-        message = f"Received a new update from unity: {update}" if not is_retry else f"Received an old update from unity: {update}"
+        message = (
+            f"Received a new update from unity: {update}"
+            if not is_retry
+            else f"Received an old update from unity: {update}"
+        )
         _LOGGER.info(message)
         # update state #
         data = copy.deepcopy(update.get(CONF_SERVICE_UPDATE_FROM_UNITY_UPDATE))
@@ -242,18 +269,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                         return True
                 else:
                     _LOGGER.warning(
-                            f"Sensor {sensor} or entity {entity} not found - Sensor_id: {sensor_id}"
-                        )
+                        f"Sensor {sensor} or entity {entity} not found - Sensor_id: {sensor_id}"
+                    )
+        elif not is_retry:
+            ts = int(datetime.now().timestamp() * 1000)
+            failed_updates.append((ts, update))
+            _LOGGER.error(
+                f"Received a new update from unity - Error on handling update {update}\n"
+                + f"Possibly causes: group: {group} or sensor {sensor} or entity {entity} not found"
+            )
         else:
-            if not is_retry:
-                ts = int(datetime.now().timestamp() * 1000)
-                failed_updates.append((ts, update))
-                _LOGGER.error(
-                    f"Received a new update from unity - Error on handling update {update}\n"+
-                    f"Possibly causes: group: {group} or sensor {sensor} or entity {entity} not found"
-                )
-            else:
-                _LOGGER.error(f"FALLIMENTO - {group} - {group_id}")
+            _LOGGER.error(f"FALLIMENTO - {group} - {group_id}")
         return False
 
     # the system registered a new sensor -> check on the failed update list
@@ -261,20 +287,18 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         _LOGGER.info("HANDLE FAILED UPDATE LIST")
         for ts, update in failed_updates.copy():
             now = int(datetime.now().timestamp() * 1000)
-            _LOGGER.info(f"{now} / {ts} / {now-ts} / {now-ts > TIMESTAMP_MIN_UPDATE} - {update} - num_elements: {len(failed_updates)}")
-            if now-ts > TIMESTAMP_MIN_UPDATE:
-                _LOGGER.info(
-                    f"Deleted an old update {update}"
-                )
+            _LOGGER.info(
+                f"{now} / {ts} / {now-ts} / {now-ts > TIMESTAMP_MIN_UPDATE} - {update} - num_elements: {len(failed_updates)}"
+            )
+            if now - ts > TIMESTAMP_MIN_UPDATE:
+                _LOGGER.info(f"Deleted an old update {update}")
                 failed_updates.remove((ts, update))
             else:
                 _LOGGER.info("STO GESTENDO L'UPDATE")
                 res = await async_update_from_unity(hass, update, is_retry=True)
                 _LOGGER.info(f"RISULTATO GESTIONE: {res}")
                 if res:
-                    _LOGGER.info(
-                        f"Handled an old update {update}"
-                    )
+                    _LOGGER.info(f"Handled an old update {update}")
                     failed_updates.remove((ts, update))
 
     # listener update automation file
@@ -286,21 +310,31 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def notify_automations(hass: HomeAssistant):
         try:
             async with aiohttp.ClientSession() as session:
-                automations = [Automation.from_yaml(hass, a).to_dict() for a in await async_list_automations(hass)]
+                automations = [
+                    Automation.from_yaml(hass, a).to_dict()
+                    for a in await async_list_automations(hass)
+                ]
                 try:
-                    automations = [Automation.from_yaml(hass, a).to_dict() for a in await async_list_automations(hass)]
+                    automations = [
+                        Automation.from_yaml(hass, a).to_dict()
+                        for a in await async_list_automations(hass)
+                    ]
                     async with session.post(
-                            f"{server_unity_url}{API_NOTIFY_AUTOMATIONS}", json=automations
-                        ) as response:
-                            if response.status == 200:
-                                _LOGGER.info("Update successfully sent")
-                            else:
-                                _LOGGER.error(f"Error on notifying automations to Unity: {response.status}")
+                        f"{server_unity_url}{API_NOTIFY_AUTOMATIONS}", json=automations
+                    ) as response:
+                        if response.status == 200:
+                            _LOGGER.info("Update successfully sent")
+                        else:
+                            _LOGGER.error(
+                                f"Error on notifying automations to Unity: {response.status}"
+                            )
 
                 except Exception as e:
-                    _LOGGER.error(f"Error on conctating Unity while notifying automations: {e}")
+                    _LOGGER.error(
+                        f"Error on conctating Unity while notifying automations: {e}"
+                    )
         except Exception as e:
-                    _LOGGER.error(f"Error on converting automations to json structure: {e}")
+            _LOGGER.error(f"Error on converting automations to json structure: {e}")
 
     hass.services.async_register(
         DOMAIN,
@@ -330,10 +364,93 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # views
     hass.http.register_view(AutomationsView(hass))
-    #hass.http.register_view(ListFramedVirtualDevicesView(hass))
+    # hass.http.register_view(ListFramedVirtualDevicesView(hass))
     hass.http.register_view(ListECACapabilitiesView(hass))
     hass.http.register_view(ContextObjectsView(hass))
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(MultimediaFilesView(hass))
     hass.http.register_view(FindCloseObjectsView(hass))
+    hass.http.register_view(TaskExpressionView(hass))
+
+    # # Adding component sequence manager
+    # component = EntityComponent(_LOGGER, DOMAIN, hass)
+    # hass.data[f"{DOMAIN}_component"] = component
+
+    # sequence_manager = SequenceManager(hass)
+    # await component.async_add_entities([sequence_manager])
+
+    # hass.data[DOMAIN] = {}
+    # hass.data[DOMAIN]["sequence_manager"] = sequence_manager
+
+    # # Sequence Manager services
+    # async def handle_add_sequence(call):
+    #     await sequence_manager.add_sequence(call.data["name"], call.data["sequence"])
+
+    # async def handle_remove_sequence(call):
+    #     await sequence_manager.remove_sequence(call.data["name"])
+
+    # async def handle_start_sequence(call):
+    #     await sequence_manager.start_sequence(call.data["name"])
+
+    # hass.services.async_register(
+    #     DOMAIN, "add_sequence", handle_add_sequence, schema=ADD_SEQUENCE_SCHEMA
+    # )
+    # hass.services.async_register(
+    #     DOMAIN, "remove_sequence", handle_remove_sequence, schema=REMOVE_SEQUENCE_SCHEMA
+    # )
+    # hass.services.async_register(
+    #     DOMAIN, "start_sequence", handle_start_sequence, schema=START_SEQUENCE_SCHEMA
+    # )
+
+    # # Adding component iterator manager
+    # iteration_manager = IterationManager(hass)
+
+    # async def handle_start_iteration(call):
+    #     await iteration_manager.start_iteration(
+    #         actions=call.data["actions"],
+    #         repeat=call.data.get("repeat"),
+    #         condition=call.data.get("condition"),
+    #     )
+
+    # hass.services.async_register(
+    #     DOMAIN,
+    #     "start_iteration",
+    #     handle_start_iteration,
+    #     schema=START_ITERATION_SCHEMA,
+    # )
+
+    # manager = ChoiceManager(hass)
+
+    # hass.services.async_register(
+    #     DOMAIN,
+    #     service="register_choices",
+    #     service_func=manager.register_choices,
+    #     schema=REGISTER_CHOICES_SCHEMA,
+    # )
+
+    # hass.services.async_register(
+    #     DOMAIN,
+    #     service="perform_choice",
+    #     service_func=manager.perform_choice,
+    #     schema=PERFORM_CHOICE_SCHEMA,
+    # )
+
+
+    async def handle_task_expression_mark_done(call):
+        task_expression = TaskExpression(hass)
+        await task_expression.mark_done(call.data["entity_id"], call.data["name"], call.data["type"])
+
+    hass.services.async_register(
+        DOMAIN,
+        service="mark_done",
+        service_func=handle_task_expression_mark_done,
+        schema=MARK_DONE_SERVICE_SCHEMA,
+    )
+
+
+    
+
+
     return True
+
+

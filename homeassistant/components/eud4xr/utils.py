@@ -1,19 +1,14 @@
-import inspect
-import textwrap
-import voluptuous as vol
 from collections import deque
 from functools import wraps
+import inspect
 from numbers import Number
-from typing import Tuple
-from homeassistant.helpers import config_validation as cv, entity_registry as er
+
+import voluptuous as vol
+
+from homeassistant.helpers import config_validation as cv
+
 from .config_validation import get_unity_entity
-from .eca_classes import (
-    ECAPosition,
-    ECARotation,
-    ECAScale,
-    ECABoolean,
-    ECABooleanEnum
-)
+from .eca_classes import ECABoolean, ECABooleanEnum, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
 
 
@@ -101,7 +96,7 @@ class Service:
             "verb": kwargs["verb"]
         }
         for i in ["variable", "modifier"]:
-            if i in kwargs and kwargs[i]:
+            if kwargs.get(i):
                 json_structure[i] = kwargs[i]
         if "variable" in json_structure:
             json_structure["value"] = "{{un valore in input da assegnare, aggiungere o sottrare}}"
@@ -223,7 +218,7 @@ class MappedClasses:
         return str
 
     @classmethod
-    def __mapping_methods(cls, clazz, hass) -> Tuple[list, list]:
+    def __mapping_methods(cls, clazz, hass) -> tuple[list, list]:
         list_methods = list()
         list_services = list()
 

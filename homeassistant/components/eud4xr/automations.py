@@ -1,8 +1,7 @@
-from datetime import datetime
 import logging
+import uuid
 
 import voluptuous as vol
-import uuid
 import yaml
 
 from homeassistant.core import HomeAssistant
@@ -10,7 +9,6 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import (
     AUTOMATION_PATH,
-    IS_DEBUG,
     CONF_SERVICE_ADD_UPDATE_AUTOMATION_DATA,
     CONF_SERVICE_REMOVE_AUTOMATION_ID,
 )
@@ -80,7 +78,7 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
         await update_automation_and_reload(hass, existing_automations)
 
         hass.bus.async_fire("event_automation_reloaded")
-        
+
         _LOGGER.info("Automations successfully updated or added")
 
     except yaml.YAMLError as e:

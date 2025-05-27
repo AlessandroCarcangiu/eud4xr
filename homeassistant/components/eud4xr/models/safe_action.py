@@ -1,9 +1,4 @@
-import inspect
-from homeassistant.core import HomeAssistant
-from ..const import (
-    DOMAIN,
-    IS_DEBUG
-)
+from ..const import DOMAIN
 
 
 class SafeAction:
@@ -44,8 +39,7 @@ class SafeAction:
 
     @classmethod
     def from_yaml(cls, data: dict) -> 'SafeAction':
-        '''
-            It converts eca actions from hass format to natural language:
+        '''It converts eca actions from hass format to natural language:
         '''
         if isinstance(data, list):
             action_data = data[0]["event_data"]
@@ -58,8 +52,7 @@ class SafeAction:
 
     @classmethod
     def to_yaml(cls, data: dict) -> dict:
-        '''
-            It converts eca actions from natural language to hass event
+        '''It converts eca actions from natural language to hass event
         '''
         return {
             "platform": "event",

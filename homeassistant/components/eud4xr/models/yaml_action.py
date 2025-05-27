@@ -1,22 +1,13 @@
 import inspect
+
 from homeassistant.core import HomeAssistant
-from ..const import (
-    DOMAIN,
-    IS_DEBUG
-)
+
+from ..const import DOMAIN, IS_DEBUG
 from ..hass_utils import (
-    find_group,
-    find_sensor,
-    get_entity_state_by_id,
     get_entity_instance_and_method_signature_by_structured_language,
-    get_method_by_eca_script_name,
     get_entity_instance_by_entity_id,
-    get_first_entity_by_group,
-    convert_subject_to_unity,
-    get_entity_id_by_game_object_and_verb,
-    get_entity_id_by_game_object_and_eca_script
 )
-from ..sensor import ECAObject, get_classes_subclassing
+from ..sensor import get_classes_subclassing
 
 
 class YAMLAction:
@@ -57,23 +48,22 @@ class YAMLAction:
         )
 
     def to_yaml(self, hass: HomeAssistant, as_event: bool = False) -> dict:
-        '''
-            It converts eca actions from natural language to hass format.
-            Action as trigger:
-                platform: event
-                event_type: eud4xr
-                event_data:
-                    verb: {verb} (name of the service without 'async'),
-                    subject: {game_object_name},
-                    obj: {game_object_name} or a {value},
-                    variable: {variable}
-                    modifier: {modifier}
-                    value: {value}
-            Action as service:
-                action: eud4xr.{name_service}
-                data:
-                    entity_id: sensor.{game_object_name}_{eca_script}
-                    {argument_name} (optional and get from the service): sensor.{game_object_name}_{eca_script} or a {value}
+        '''It converts eca actions from natural language to hass format.
+        Action as trigger:
+            platform: event
+            event_type: eud4xr
+            event_data:
+                verb: {verb} (name of the service without 'async'),
+                subject: {game_object_name},
+                obj: {game_object_name} or a {value},
+                variable: {variable}
+                modifier: {modifier}
+                value: {value}
+        Action as service:
+            action: eud4xr.{name_service}
+            data:
+                entity_id: sensor.{game_object_name}_{eca_script}
+                {argument_name} (optional and get from the service): sensor.{game_object_name}_{eca_script} or a {value}
         '''
         # the next code converts game object name to a game_object@eca_script
         # eventually, it also converts the value parameter if it is a reference to an object

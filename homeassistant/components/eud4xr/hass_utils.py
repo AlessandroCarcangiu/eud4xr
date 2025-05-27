@@ -1,7 +1,8 @@
 import inspect
+
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
-from .const import IS_DEBUG
+
 from .sensor import get_classes_subclassing
 
 

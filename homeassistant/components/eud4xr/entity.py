@@ -6,10 +6,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_registry import RegistryEntry
 
 from .const import (
-    CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER,
-    CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS,
     CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT,
-    CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE,
     CONF_SERVICE_UPDATE_FROM_UNITY_VERB,
     DOMAIN,
     SERVICE_SEND_REQUEST,
