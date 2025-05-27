@@ -1,6 +1,9 @@
 import os
+
 import yaml
+
 from homeassistant.components.sensor import SensorEntity
+
 
 class TaskExpressionSensor(SensorEntity):
 
@@ -35,7 +38,7 @@ class TaskExpressionSensor(SensorEntity):
             self.async_write_ha_state()
             return
 
-        with open(self.EXPRESSIONS_FILE_PATH, "r") as f:
+        with open(self.EXPRESSIONS_FILE_PATH) as f:
             expressions = yaml.safe_load(f) or {}
 
         def extract_name_state(list_of_items):

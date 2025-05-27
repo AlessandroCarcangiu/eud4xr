@@ -16,7 +16,8 @@ from homeassistant.helpers.typing import ConfigType
 from .automations import async_list_automations
 from .const import *
 from .hass_utils import find_group, find_sensor
-from .models import Automation
+from .models import MARK_DONE_SERVICE_SCHEMA, Automation, TaskExpression
+from .models.task_expression_sensor import TaskExpressionSensor
 from .sensor import (
     GAMEOBJECT_ECASCRIPT_SCHEMA,
     SERVICE_UPDATE_FROM_UNITY,
@@ -32,11 +33,6 @@ from .views import (
     TaskExpressionView,
     VirtualObjectsView,
 )
-from .models import (
-    TaskExpression,
-    MARK_DONE_SERVICE_SCHEMA,
-)
-from .models.task_expression_sensor import TaskExpressionSensor
 
 # from .sequence_manager import (
 #     SequenceManager,
@@ -448,7 +444,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     )
 
 
-    
+
 
 
     return True

@@ -26,8 +26,8 @@ http:
 
 eud4xr:
   #server_unity_url: "https://fly-powerful-slug.ngrok-free.app" # change with your unity server url
-  server_unity_url: "http://192.168.68.122:5000"
-  server_unity_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0Nzk2M2NlMmMwODY0MTA0OGQ4NDQ5ZmFmNGNjODhkNyIsImlhdCI6MTc0NzE0NDI5MiwiZXhwIjoyMDYyNTA0MjkyfQ.k_E3058JJFfibf-ccFOZo5BtSH1VSvTbtW0e35Se8Is"
+  server_unity_url: "http://localhost:5000"
+  server_unity_token: "token"
   # unity_entities:
   #   - eca_script: "Sound"
   #     game_object: "Cube1@Sound"

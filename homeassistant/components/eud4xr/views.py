@@ -430,7 +430,7 @@ class TaskExpressionView(HomeAssistantView):
             except Exception as e:
                 return self.json_message(f"Errore interno: {e!s}", 500)
             return self.json_message(f"Sequenza '{name}' creata con successo", 200)
-        elif choice is not None:
+        if choice is not None:
             if not isinstance(choice, list) or not all(isinstance(i, str) for i in choice):
                 return self.json_message(
                     "Campo 'choice' deve essere una lista di stringhe", 400
@@ -442,7 +442,7 @@ class TaskExpressionView(HomeAssistantView):
             except Exception as e:
                 return self.json_message(f"Errore interno: {e!s}", 500)
             return self.json_message(f"Scelta '{name}' creata con successo", 200)
-        elif order is not None:
+        if order is not None:
             if not isinstance(order, list) or not all(isinstance(i, str) for i in order):
                 return self.json_message(
                     "Campo 'order' deve essere una lista di stringhe", 400
@@ -475,7 +475,7 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(f"Errore interno: {e!s}", 500)
 
             return self.json_message(f"Sequenza '{sequence}' eliminata con successo", 200)
-        elif choice is not None:
+        if choice is not None:
             try:
                 await self.task_expression.delete_choice(choice)
             except ValueError as e:
@@ -484,7 +484,7 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(f"Errore interno: {e!s}", 500)
 
             return self.json_message(f"Scelta '{choice}' eliminata con successo", 200)
-        elif order is not None:
+        if order is not None:
             try:
                 await self.task_expression.delete_order(order)
             except ValueError as e:

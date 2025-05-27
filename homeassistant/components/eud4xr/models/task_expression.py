@@ -1,6 +1,8 @@
 import os
-import yaml
+
 import voluptuous as vol
+import yaml
+
 from homeassistant.const import CONF_ENTITY_ID
 import homeassistant.helpers.config_validation as cv
 
@@ -223,7 +225,7 @@ class TaskExpression:
             await self._add_action_mark_done_to_automation(
                 automation_entity_id=automation_id, name=name, type_="order"
             )
-        
+
 
     async def delete_sequence(self, name):
         if self.sequences is None:
@@ -469,7 +471,7 @@ class TaskExpression:
                 "selected": entity_id,
             }
 
-        with open(self.EXPRESSIONS_FILE_PATH, "r") as f:
+        with open(self.EXPRESSIONS_FILE_PATH) as f:
             expressions = yaml.safe_load(f) or {}
 
         sequences_yaml = []
