@@ -322,11 +322,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     )
     hass.bus.async_listen("event_automation_reloaded", handle_automation_reloaded)
     hass.bus.async_listen("event_sensor_registered", handle_failed_update_list)
-    # async_track_time_interval(
-    #     hass,
-    #     handle_failed_update_list,
-    #     timedelta(seconds=10)
-    # )
+
 
     # views
     hass.http.register_view(AutomationsView(hass))
