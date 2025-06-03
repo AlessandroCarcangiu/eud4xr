@@ -2,8 +2,10 @@ IS_DEBUG = False
 
 AUTOMATION_PATH = "automations.yaml"
 
-TIMESTAMP_MIN_UPDATE = 1000 # time limit for retaining failed updates due to an unregistered sensor
-MAX_LENGTH_CIRCULAR_LIST = 15 # circular queue's length.
+TIMESTAMP_MIN_UPDATE = (
+    1000  # time limit for retaining failed updates due to an unregistered sensor
+)
+MAX_LENGTH_CIRCULAR_LIST = 15  # circular queue's length.
 MIN_DISTANCE = 4
 
 # custom component
@@ -60,3 +62,10 @@ CONF_SERVICE_UPDATE_FROM_UNITY_NEW_VALUE = "new_value"
 # CONF automation
 CONF_SERVICE_ADD_UPDATE_AUTOMATION_DATA = "data"
 CONF_SERVICE_REMOVE_AUTOMATION_ID = "automation_id"
+
+CONF_TASK_MODELLING_NAME = "task_modelling"
+CONF_TASK_MODELLING_STORE_NAME = "task_modelling"
+CONF_TASK_MODELLING_STORE_VERSION = "1"
+CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY = "order_independence_counters"
+CONF_TASK_MODELLING_ENTITIES = "task_modelling_entities"
+CONF_TASK_MODELLING_EXPRESSIONS = "task_modelling_expressions"

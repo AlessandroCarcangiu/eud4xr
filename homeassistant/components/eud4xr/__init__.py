@@ -11,18 +11,25 @@ from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 from .automations import async_list_automations
 from .const import *
+from .const import (
+    CONF_TASK_MODELLING_NAME,
+    CONF_TASK_MODELLING_STORE_NAME,
+    CONF_TASK_MODELLING_STORE_VERSION,
+    CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY,
+)
 from .hass_utils import find_group, find_sensor
-from .models import MARK_DONE_SERVICE_SCHEMA, Automation, TaskExpression
-from .models.task_expression_sensor import TaskExpressionSensor
+from .models import Automation
 from .sensor import (
     GAMEOBJECT_ECASCRIPT_SCHEMA,
     SERVICE_UPDATE_FROM_UNITY,
     UPDATES_FROM_UNITY_SCHEMA,
 )
+from .task_modeling.task_expression import MARK_DONE_SERVICE_SCHEMA, TaskExpression
 from .views import (
     AutomationsView,
     ContextObjectsView,
@@ -33,25 +40,6 @@ from .views import (
     TaskExpressionView,
     VirtualObjectsView,
 )
-
-# from .sequence_manager import (
-#     SequenceManager,
-#     REMOVE_SEQUENCE_SCHEMA,
-#     ADD_SEQUENCE_SCHEMA,
-#     START_SEQUENCE_SCHEMA,
-# )
-
-# from .iteration_manager import (
-#     IterationManager,
-#     START_ITERATION_SCHEMA,
-# )
-
-# from .choice_manager import (
-#     ChoiceManager,
-#     PERFORM_CHOICE_SCHEMA,
-#     REGISTER_CHOICES_SCHEMA
-# )
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,10 +80,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     server_unity_url = conf.get(CONF_SERVER_UNITY_URL)
     server_unity_token = conf.get(CONF_SERVER_UNITY_TOKEN)
     sensors = conf.get(CONF_UNITY_ENTITIES)
-
     failed_updates = list()
 
-    # get data from configuration and create entities
+    # load eca objects defined within configuration.yaml file
     hass.data[DOMAIN] = {}
     if sensors:
         for game_object_config in sensors:
@@ -104,6 +91,51 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     "sensor", DOMAIN, game_object_config, config
                 )
             )
+
+    # load order independence counters from db
+    task_modelling_store = Store(
+        hass, CONF_TASK_MODELLING_STORE_VERSION, CONF_TASK_MODELLING_STORE_NAME
+    )
+    if task_modelling_store:
+        task_modelling_store_data = await task_modelling_store.async_load() or {}
+        if (CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY not in task_modelling_store_data):
+            task_modelling_store_data[CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY] = []
+
+
+        hass.async_create_task(
+            hass.helpers.discovery.async_load_platform(
+                "sensor",
+                DOMAIN,
+                {
+                    CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY: task_modelling_store_data.get(CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY),
+                },
+                {},
+            )
+        )
+
+    t_expr = TaskExpression(hass)
+    await t_expr.restore_expressions()
+
+
+    async def handle_increment_counter(call):
+        entity_id = call.data.get("entity_id")
+        _LOGGER.info(f"Incrementing counter for entity_id: {entity_id}")
+        if not entity_id:
+            _LOGGER.error("Missing entity_id in increment_counter service call")
+            return
+
+        counter = hass.data[CONF_TASK_MODELLING_ENTITIES].get(entity_id)
+        if not counter:
+            _LOGGER.error(f"Counter with entity_id {entity_id} not found")
+            return
+
+        await counter.increment()
+
+    hass.services.async_register(
+        DOMAIN,
+        service="increment_counter",
+        service_func=handle_increment_counter,
+    )
 
     ## Send update to Unity
     async def handle_send_update_to_server_unity(call: ServiceCall) -> None:
@@ -431,10 +463,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     #     schema=PERFORM_CHOICE_SCHEMA,
     # )
 
-
     async def handle_task_expression_mark_done(call):
         task_expression = TaskExpression(hass)
-        await task_expression.mark_done(call.data["entity_id"], call.data["name"], call.data["type"])
+        await task_expression.mark_done(
+            call.data["entity_id"],
+            call.data["name"],
+            call.data["type"],
+            call.data.get("part_of", None),
+        )
 
     hass.services.async_register(
         DOMAIN,
@@ -443,10 +479,4 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         schema=MARK_DONE_SERVICE_SCHEMA,
     )
 
-
-
-
-
     return True
-
-

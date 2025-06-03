@@ -11,6 +11,7 @@ from homeassistant.helpers import config_validation as cv, entity_platform
 from .const import *
 from .eca_classes import ECABoolean, ECAColor, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
+from .task_modeling import CounterOrderIndependence
 from .utils import MappedClasses, eca_script_action, update_deque
 
 _LOGGER = logging.getLogger(__name__)
@@ -110,13 +111,37 @@ CONFIG_SCHEMA = vol.Schema(
 async def async_setup_platform(
     hass, config, async_add_entities, discovery_info=None
 ) -> None:
+    if not discovery_info:
+        return None
+
+
+    # Task Expressions #
+    if CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY in discovery_info:
+        counters_names = discovery_info.pop(CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY)
+
+        if counters_names:
+            entities = []
+            for name in counters_names:
+                entities.append(CounterOrderIndependence(hass, name))
+
+            async_add_entities(entities, True)
+
+            # Salva le entità in hass.data
+            hass.data.setdefault(CONF_TASK_MODELLING_ENTITIES, {})
+            for entity in entities:
+                hass.data[CONF_TASK_MODELLING_ENTITIES][entity.entity_id] = entity
+
+
+
+
+
     ECA_SCRIPTS = MappedClasses.get_eca_scripts()
     if ECA_SCRIPTS is None:
         ECA_SCRIPTS = MappedClasses.mapping_classes(hass)
 
     if discovery_info is None:
         print("discovery_info is none")
-        return
+        return None
 
     eca_script = discovery_info.get(CONF_PLATFORM_ECA_SCRIPT)
     eca_class = (
@@ -125,7 +150,7 @@ async def async_setup_platform(
         else None
     )
     if not eca_class:
-        return
+        return None
     eca_scripts = list()
     attributes = discovery_info.get(CONF_PLATFORM_ATTRIBUTES, {})
     if attributes:
@@ -139,6 +164,7 @@ async def async_setup_platform(
     for service_def in eca_class.service_definitions:
         platform.async_register_entity_service(*service_def)
 
+    return True
 
 def get_classes_subclassing(to_string: bool = False) -> list[any]:
     current_module = inspect.getmodule(inspect.currentframe())
@@ -2753,6 +2779,7 @@ class ECABottle(ECAEntity):
     async def async_close_cap(self) -> None:
         """Close the bottle cap."""
         _LOGGER.info("Performed close cap action")
+
 
 
 CURRENT_MODULE = sys.modules[__name__]

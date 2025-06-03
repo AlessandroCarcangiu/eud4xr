@@ -1,49 +1,84 @@
-- action:
-    - data:
-        entity_id: sensor.bottle_ecabottle
-      service: eud4xr.close_cap
-    - alias: order.order_test
-      service: eud4xr.mark_done
-      data:
-        entity_id: automation.close_cap
-        name: order_test
-        type: order
-  alias: close_cap
+- alias: r1
+  action:
+  - alias: order_test
+    service: eud4xr.increment_counter
+    data:
+      entity_id: sensor.order_test
+  - alias: order.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r1
   condition: []
-  description: ""
-  id: "1747831641076"
-  mode: single
   trigger: []
-- action:
-    - data:
-        amount: 30
-        entity_id: sensor.bottle_ecabottle
-      service: eud4xr.empty
-    - alias: order.order_test
-      service: eud4xr.mark_done
-      data:
-        entity_id: automation.empty
-        name: order_test
-        type: order
-  alias: empty
+- alias: r2
+  action:
+  - alias: order_test
+    service: eud4xr.increment_counter
+    data:
+      entity_id: sensor.order_test
+  - alias: order.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r2
   condition: []
-  description: ""
-  id: "1747831707730"
-  mode: single
   trigger: []
-- action:
-    - data:
-        entity_id: sensor.bottle_ecabottle
-      service: eud4xr.open_cap
-    - alias: order.order_test
-      service: eud4xr.mark_done
-      data:
-        entity_id: automation.open_cap
-        name: order_test
-        type: order
-  alias: open_cap
+- alias: r3
+  action:
+  - alias: order_test
+    service: eud4xr.increment_counter
+    data:
+      entity_id: sensor.order_test
+  - alias: order.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r3
   condition: []
-  description: ""
-  id: "1747831743618"
-  mode: single
+  trigger: []
+- alias: r4
+  action:
+  - alias: sequence.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r5
+  - alias: sequence.sequenza_test
+    service: automation.turn_on
+    data:
+      entity_id: automation.r6
+  - alias: sequence.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r4
+  condition:
+  - condition: state
+    entity_id: sensor.order_test
+    state: '3'
+    alias: sequence.sequenza_test
+  trigger: []
+- alias: r5
+  action:
+  - alias: sequence.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r4
+  - alias: sequence.sequenza_test
+    service: automation.turn_on
+    data:
+      entity_id: automation.r6
+  - alias: sequence.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r5
+  condition:
+  - condition: state
+    entity_id: sensor.order_test
+    state: '3'
+    alias: sequence.sequenza_test
+  trigger: []
+- alias: r6
+  action:
+  - alias: sequence.sequenza_test
+    service: automation.turn_off
+    data:
+      entity_id: automation.r6
+  condition: []
   trigger: []
