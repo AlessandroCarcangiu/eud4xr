@@ -26,9 +26,9 @@ class TaskExpression:
         self.sequences = None
         self.choices = None
         self.orders = None
-        self.EXPRESSIONS_FILE_PATH = os.path.join(
-            hass.config.config_dir, "expressions.yaml"
-        )
+        self.iterations = None
+        self.conditionals = None
+
         self.AUTOMATIONS_FILE_PATH = os.path.join(
             hass.config.config_dir, "automations.yaml"
         )
@@ -57,14 +57,25 @@ class TaskExpression:
             for item in expressions.get("choices", [])
         }
         self.orders = {
-            item["name"]: {
-                "order": item["order"],
-                "total": item.get("total", len(item["order"])),
-                "done": item.get("done", 0),
-                "done_list": item.get("done_list", []),
-            }
+            item["name"]: {"order": item["order"]}
             for item in expressions.get("orders", [])
         }
+        self.iterations = {
+            item["name"]: {
+                "iteration": item["iteration"],
+            }
+            for item in expressions.get("iterations", [])
+        }
+        self.conditionals = (
+            {
+                item["name"]: {
+                    "conditional": item["conditional"],
+                }
+                for item in expressions.get("conditionals", [])
+            }
+            if "conditionals" in expressions
+            else {}
+        )
 
     async def _save_expressions_to_store(self):
         store = Store(
@@ -84,6 +95,14 @@ class TaskExpression:
             "choices": [
                 {"name": name, "choice": ch["choice"]}
                 for name, ch in self.choices.items()
+            ],
+            "iterations": [
+                {"name": name, "iteration": it["iteration"]}
+                for name, it in self.iterations.items()
+            ],
+            "conditionals": [
+                {"name": name, "conditional": cond["conditional"]}
+                for name, cond in (self.conditionals or {}).items()
             ],
         }
         data[CONF_TASK_MODELLING_EXPRESSIONS] = expressions
@@ -464,6 +483,104 @@ class TaskExpression:
             )
         )
 
+    async def create_iteration(self, name, iteration):
+        if self.iterations is None:
+            await self.async_initialize()
+
+        if name in self.iterations:
+            raise ValueError(f"L'iterazione '{name}' esiste già.")
+
+        if not isinstance(iteration, dict):
+            raise ValueError(
+                "Iteration deve essere un oggetto con 'n_steps' e 'expression'."
+            )
+
+        n_steps = iteration.get("n_steps")
+        expression = iteration.get("expression")
+
+        if not (isinstance(n_steps, int) and n_steps > 0):
+            raise ValueError("'n_steps' deve essere un intero positivo.")
+        if not (isinstance(expression, str) or isinstance(expression, dict)):
+            raise ValueError(
+                "'expression' deve essere una automazione (stringa) o una espressione (dict)."
+            )
+
+        self.iterations[name] = {
+            "iteration": iteration,
+        }
+
+        if isinstance(expression, str):
+            await self._add_condition_to_automation(
+                automation_entity_id=expression,
+                condition={
+                    "condition": "numeric_state",
+                    "entity_id": f"sensor.{name}",
+                    "below": n_steps,
+                },
+                alias=f"iteration.{name}",
+            )
+            await self._add_action_increment_to_automation(
+                automation_entity_id=expression,
+                sensor_entity_id=f"sensor.{name}",
+                alias=name,
+            )
+
+        await self.create_order_independence_counter(name)
+        await self._save_expressions_to_store()
+
+    async def create_conditional(self, name, conditional):
+        if self.conditionals is None:
+            await self.async_initialize()
+
+        if name in self.conditionals:
+            raise ValueError(f"La condizione '{name}' esiste già.")
+        if not isinstance(conditional, dict):
+            raise ValueError("La condizione deve essere un dizionario.")
+
+        self.conditionals[name] = {
+            "conditional": conditional,
+        }
+
+        await self._save_expressions_to_store()
+
+        if_trigger = conditional.get("if").get("trigger")
+        else_trigger = conditional.get("else").get("trigger")
+        if not isinstance(if_trigger, str):
+            raise ValueError(
+                "Il trigger 'if' deve essere una stringa che rappresenta un ID automazione."
+            )
+        if not isinstance(else_trigger, str):
+            raise ValueError(
+                "Il trigger 'else' deve essere una stringa che rappresenta un ID automazione."
+            )
+
+        for automation_id in [
+            conditional.get("if").get("do"),
+            conditional.get("else").get("do"),
+        ]:
+            await self._deactivate_automation(automation_id)
+        await self._add_action_turn_off_to_automation(
+            if_trigger, else_trigger, name, type_="conditional"
+        )
+        await self._add_action_turn_off_to_automation(
+            else_trigger, if_trigger, name, type_="conditional"
+        )
+        for automation_id in conditional.get("if").get("do"):
+            await self._add_action_turn_on_to_automation(
+                if_trigger, automation_id, name, type_="conditional"
+            )
+        for automation_id in conditional.get("else").get("do"):
+            await self._add_action_turn_on_to_automation(
+                else_trigger, automation_id, name, type_="conditional"
+            )
+        for automation_id in [if_trigger, else_trigger]:
+            await self._add_action_turn_off_to_automation(
+                source=automation_id,
+                target=automation_id,
+                name=name,
+                type_="conditional",
+            )
+
     async def delete_sequence(self, name):
         if self.sequences is None:
             await self.async_initialize()
@@ -568,6 +685,68 @@ class TaskExpression:
         del self.orders[name]
         await self._save_expressions_to_store()
         await self.remove_counter_from_store(name)
+
+    async def delete_iteration(self, name):
+        if self.iterations is None:
+            await self.async_initialize()
+
+        if name not in self.iterations:
+            raise ValueError(f"L'iterazione '{name}' non esiste.")
+        data = self.iterations[name]
+        iteration = data["iteration"]
+
+        expression = (
+            iteration.get("expression") if isinstance(iteration, dict) else iteration
+        )
+
+        if isinstance(expression, str):
+            await self._remove_condition_from_automation(
+                source=expression, condition_alias=f"iteration.{name}"
+            )
+            await self._remove_action_from_automation(
+                source=expression,
+                service="eud4xr.increment_counter",
+                target=f"sensor.{name}",
+            )
+
+        del self.iterations[name]
+        await self._save_expressions_to_store()
+        await self.remove_counter_from_store(name)
+
+    async def delete_conditional(self, name):
+        if self.conditionals is None:
+            await self.async_initialize()
+
+        if name not in self.conditionals:
+            raise ValueError(f"La condizione '{name}' non esiste.")
+        data = self.conditionals[name]
+        conditional = data["conditional"]
+
+        if_trigger = conditional.get("if").get("trigger")
+        else_trigger = conditional.get("else").get("trigger")
+
+        for automation_id in [if_trigger, else_trigger]:
+            await self._remove_action_from_automation(
+                source=automation_id,
+                service="automation.turn_on",
+                target=automation_id,
+            )
+        for automation_id in [if_trigger, else_trigger]:
+            await self._remove_action_from_automation(
+                source=automation_id,
+                service="automation.turn_off",
+            )
+
+        for automation_id in [
+            conditional.get("if").get("do"),
+            conditional.get("else").get("do"),
+            if_trigger,
+            else_trigger,
+        ]:
+            await self._activate_automation(automation_id)
+
+        del self.conditionals[name]
+        await self._save_expressions_to_store()
 
     async def remove_counter_from_store(self, counter_name: str):
         entity_id = f"sensor.{counter_name}"
@@ -715,41 +894,6 @@ class TaskExpression:
                 break
         else:
             raise ValueError(f"L'automazione '{source}' non è stata trovata.")
-
-        await self.hass.async_add_executor_job(self._write_automations, automations)
-        await self.hass.services.async_call("automation", "reload", {}, blocking=True)
-
-    async def _add_action_mark_done_to_automation(
-        self, automation_entity_id, name, type_, part_of=None
-    ):
-        source_alias = automation_entity_id.split(".")[-1]
-        automations = await self.hass.async_add_executor_job(
-            self._load_automations_from_file
-        )
-
-        for automation in automations:
-            if automation.get("alias") == source_alias:
-                automation.setdefault("action", [])
-                data = {
-                    "entity_id": automation_entity_id,
-                    "name": name,
-                    "type": type_,
-                }
-                if part_of:
-                    data["part_of"] = part_of
-
-                automation["action"].append(
-                    {
-                        "alias": f"{type_}.{name}",
-                        "service": "eud4xr.mark_done",
-                        "data": data,
-                    }
-                )
-                break
-        else:
-            raise ValueError(
-                f"L'automazione '{automation_entity_id}' non è stata trovata."
-            )
 
         await self.hass.async_add_executor_job(self._write_automations, automations)
         await self.hass.services.async_call("automation", "reload", {}, blocking=True)

@@ -1,84 +1,24 @@
 - alias: r1
-  action:
-  - alias: order_test
-    service: eud4xr.increment_counter
-    data:
-      entity_id: sensor.order_test
-  - alias: order.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r1
+  action: []
   condition: []
   trigger: []
 - alias: r2
-  action:
-  - alias: order_test
-    service: eud4xr.increment_counter
-    data:
-      entity_id: sensor.order_test
-  - alias: order.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r2
+  action: []
   condition: []
   trigger: []
 - alias: r3
-  action:
-  - alias: order_test
-    service: eud4xr.increment_counter
-    data:
-      entity_id: sensor.order_test
-  - alias: order.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r3
+  action: []
   condition: []
   trigger: []
 - alias: r4
-  action:
-  - alias: sequence.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r5
-  - alias: sequence.sequenza_test
-    service: automation.turn_on
-    data:
-      entity_id: automation.r6
-  - alias: sequence.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r4
-  condition:
-  - condition: state
-    entity_id: sensor.order_test
-    state: '3'
-    alias: sequence.sequenza_test
+  action: []
+  condition: []
   trigger: []
 - alias: r5
-  action:
-  - alias: sequence.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r4
-  - alias: sequence.sequenza_test
-    service: automation.turn_on
-    data:
-      entity_id: automation.r6
-  - alias: sequence.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r5
-  condition:
-  - condition: state
-    entity_id: sensor.order_test
-    state: '3'
-    alias: sequence.sequenza_test
+  action: []
+  condition: []
   trigger: []
 - alias: r6
-  action:
-  - alias: sequence.sequenza_test
-    service: automation.turn_off
-    data:
-      entity_id: automation.r6
+  action: []
   condition: []
   trigger: []

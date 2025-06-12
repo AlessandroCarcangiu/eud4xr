@@ -458,6 +458,8 @@ class TaskExpressionView(HomeAssistantView):
         sequence = data.get("sequence")
         choice = data.get("choice")
         order = data.get("order")
+        iteration = data.get("iteration")
+        conditional = data.get("conditional")
 
         # Comandi di debug
         if cmd is not None:
@@ -481,7 +483,6 @@ class TaskExpressionView(HomeAssistantView):
             return self.json_message("Campo 'name' mancante o non valido", 400)
 
         if sequence is not None:
-            # accetta stringhe e dict inline di scelta o espressioni annidate
             if not isinstance(sequence, list) or not all(
                 is_valid_expression_element(i) for i in sequence
             ):
@@ -529,10 +530,44 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(f"Errore interno: {e!s}", 500)
             return self.json_message(f"Ordine '{name}' creato con successo", 200)
 
-        return self.json_message("Fornire il campo 'sequence', 'choice' o 'order'", 400)
+        if iteration is not None:
+            if not isinstance(iteration, dict):
+                return self.json_message(
+                    "Campo 'iteration' deve essere un oggetto contenente 'n_steps' e 'expression'", 400
+                )
+            n_steps = iteration.get("n_steps")
+            expression = iteration.get("expression")
+
+            if not (isinstance(n_steps, int) and n_steps > 0):
+                return self.json_message("'n_steps' deve essere un intero positivo", 400)
+
+            if not (isinstance(expression, str) or isinstance(expression, dict)):
+                return self.json_message(
+                    "'expression' deve essere una automazione (stringa) o una espressione (dict)", 400
+                )
+
+            try:
+                await self.task_expression.create_iteration(name, iteration)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Iterazione '{name}' creata con successo", 200)
+
+        if conditional is not None:
+            # Nessuna validazione, viene passato direttamente l'oggetto condition
+            try:
+                await self.task_expression.create_conditional(name, conditional)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Condizione '{name}' creata con successo", 200)
+
+        return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
 
     async def delete(self, request):
-        """Cancella una sequenza, una scelta o un ordine"""
+        """Cancella una sequenza, una scelta, un ordine, una iterazione o una condizione"""
         try:
             data = await request.json()
         except Exception:
@@ -541,6 +576,8 @@ class TaskExpressionView(HomeAssistantView):
         sequence = data.get("sequence")
         choice   = data.get("choice")
         order    = data.get("order")
+        iteration = data.get("iteration")
+        conditional = data.get("conditional")
 
         if sequence is not None:
             try:
@@ -569,7 +606,25 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(f"Errore interno: {e!s}", 500)
             return self.json_message(f"Ordine '{order}' eliminato con successo", 200)
 
-        return self.json_message("Fornire il campo 'sequence', 'choice' o 'order'", 400)
+        if iteration is not None:
+            try:
+                await self.task_expression.delete_iteration(iteration)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Iterazione '{iteration}' eliminata con successo", 200)
+
+        if conditional is not None:
+            try:
+                await self.task_expression.delete_conditional(conditional)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Condizione '{conditional}' eliminata con successo", 200)
+
+        return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
 
     async def put(self, request):
         try:
@@ -581,6 +636,8 @@ class TaskExpressionView(HomeAssistantView):
         sequence = data.get("sequence")
         choice   = data.get("choice")
         order    = data.get("order")
+        iteration = data.get("iteration")
+        conditional = data.get("conditional")
 
         if not isinstance(name, str):
             return self.json_message("Campo 'name' mancante o non valido", 400)
@@ -621,6 +678,40 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(f"Errore interno: {e!s}", 500)
             return self.json_message(f"Ordine '{name}' aggiornato con successo", 200)
 
-        return self.json_message("Fornire il campo 'sequence', 'choice' o 'order'", 400)
 
+        if iteration is not None:
+            if not isinstance(iteration, dict):
+                return self.json_message(
+                    "Campo 'iteration' deve essere un oggetto contenente 'n_steps' e 'expression'", 400
+                )
+            n_steps = iteration.get("n_steps")
+            expression = iteration.get("expression")
 
+            if not (isinstance(n_steps, int) and n_steps > 0):
+                return self.json_message("'n_steps' deve essere un intero positivo", 400)
+
+            if not (isinstance(expression, str) or isinstance(expression, dict)):
+                return self.json_message(
+                    "'expression' deve essere una automazione (stringa) o una espressione (dict)", 400
+                )
+
+            try:
+                await self.task_expression.delete_iteration(name)
+                await self.task_expression.create_iteration(name, iteration)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Iterazione '{name}' creata con successo", 200)
+
+        if conditional is not None:
+            try:
+                await self.task_expression.delete_conditional(name)
+                await self.task_expression.create_conditional(name, conditional)
+            except ValueError as e:
+                return self.json_message(str(e), 400)
+            except Exception as e:
+                return self.json_message(f"Errore interno: {e!s}", 500)
+            return self.json_message(f"Condizione '{name}' aggiornata con successo", 200)
+
+        return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
