@@ -450,7 +450,7 @@ class TaskExpressionView(HomeAssistantView):
 
     async def get(self, request):
         try:
-            expressions = await self.task_expression.getExpressions()
+            expressions = await self.task_expression.get_expressions_from_store()
             return self.json(expressions, status_code=200)
         except Exception as e:
             return self.json_message(f"Errore interno: {e!s}", 500)

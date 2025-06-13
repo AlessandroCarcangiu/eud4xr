@@ -77,7 +77,7 @@ class TaskExpression:
             else {}
         )
 
-    async def getExpressions(self):
+    async def get_expressions_from_store(self):
         """Restituisce le espressioni caricate nello store in formato json"""
         store = Store(
             self.hass, CONF_TASK_MODELLING_STORE_VERSION, CONF_TASK_MODELLING_STORE_NAME
