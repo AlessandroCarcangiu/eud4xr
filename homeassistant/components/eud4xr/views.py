@@ -448,6 +448,14 @@ class TaskExpressionView(HomeAssistantView):
     def json_message(self, message: str, status_code: int = 200):
         return self.json({"message": message}, status_code=status_code)
 
+    async def get(self, request):
+        try:
+            expressions = await self.task_expression.getExpressions()
+            return self.json(expressions, status_code=200)
+        except Exception as e:
+            return self.json_message(f"Errore interno: {e!s}", 500)
+
+
     async def post(self, request):
         try:
             data = await request.json()

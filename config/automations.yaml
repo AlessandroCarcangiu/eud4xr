@@ -1,6 +1,30 @@
 - alias: r1
-  action: []
-  condition: []
+  action:
+  - alias: conditional.conditional_example
+    service: automation.turn_off
+    data:
+      entity_id: automation.r4
+  - alias: conditional.conditional_example
+    service: automation.turn_on
+    data:
+      entity_id: automation.r2
+  - alias: conditional.conditional_example
+    service: automation.turn_on
+    data:
+      entity_id: automation.r3
+  - alias: conditional.conditional_example
+    service: automation.turn_off
+    data:
+      entity_id: automation.r1
+  - alias: iteration_example
+    service: eud4xr.increment_counter
+    data:
+      entity_id: sensor.iteration_example
+  condition:
+  - condition: numeric_state
+    entity_id: sensor.iteration_example
+    below: 4
+    alias: iteration.iteration_example
   trigger: []
 - alias: r2
   action: []
@@ -11,7 +35,31 @@
   condition: []
   trigger: []
 - alias: r4
-  action: []
+  action:
+  - alias: conditional.conditional_example
+    service: automation.turn_off
+    data:
+      entity_id: automation.r1
+  - alias: conditional.conditional_example
+    service: automation.turn_on
+    data:
+      entity_id: automation.r5
+  - alias: conditional.conditional_example
+    service: automation.turn_on
+    data:
+      entity_id: automation.r6
+  - alias: conditional.conditional_example
+    service: automation.turn_on
+    data:
+      entity_id: automation.r7
+  - alias: conditional.conditional_example
+    service: automation.turn_on
+    data:
+      entity_id: automation.r8
+  - alias: conditional.conditional_example
+    service: automation.turn_off
+    data:
+      entity_id: automation.r4
   condition: []
   trigger: []
 - alias: r5
