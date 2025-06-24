@@ -1,21 +1,17 @@
-from collections import deque
 import inspect
 import logging
 import sys
-
 import voluptuous as vol
-
+from collections import deque
 from homeassistant.const import CONF_SENSORS
 from homeassistant.helpers import config_validation as cv, entity_platform
-
 from .const import *
 from .eca_classes import ECABoolean, ECAColor, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
-from .task_modeling import CounterOrderIndependence
+from .task_modelling import CounterOrderIndependence
 from .utils import MappedClasses, eca_script_action, update_deque
 
 _LOGGER = logging.getLogger(__name__)
-
 
 
 DEQUE_FRAMED_OBJECTS = deque([], maxlen=MAX_LENGTH_CIRCULAR_LIST)
@@ -25,19 +21,11 @@ DEQUE_POINTED_OBJECTS = deque([], maxlen=MAX_LENGTH_CIRCULAR_LIST)
 DEQUE_INTERACTED_OBJECTS = deque([], maxlen=MAX_LENGTH_CIRCULAR_LIST)
 
 
-# PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-#     vol.Required(CONF_PLATFORM_ECA_SCRIPT): cv.string,
-#     vol.Required(CONF_PLATFORM_UNITY_ID): cv.string,
-#     vol.Required(CONF_NAME): cv.string,
-#     vol.Required(CONF_PLATFORM_ATTRIBUTES, default={}): dict
-# })
-
 SENSOR_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_PLATFORM_ECA_SCRIPT): cv.string,
         vol.Required(CONF_PLATFORM_GAME_OBJECT): cv.string,
         vol.Required(CONF_PLATFORM_UNITY_ID): cv.string,
-        # vol.Required(CONF_NAME): cv.string,
         vol.Optional(CONF_PLATFORM_ATTRIBUTES): dict,
     }
 )
@@ -47,23 +35,10 @@ GAMEOBJECT_ECASCRIPT_SCHEMA = vol.Schema(
         vol.Required(CONF_PLATFORM_ECA_SCRIPT): cv.string,
         vol.Required(CONF_PLATFORM_GAME_OBJECT): cv.string,
         vol.Required(CONF_PLATFORM_UNITY_ID): cv.string,
-        # vol.Required(CONF_NAME): cv.string,
         vol.Optional(CONF_PLATFORM_ATTRIBUTES): dict,
-        # cv.schema_with_slug_keys(
-        #    cv.string
-        # ),
     }
 )
 
-# NOTIFICATION_ACTION_FROM_UNITY_SCHEMA = vol.Schema(
-#     {
-#         vol.Required(CONF_PLATFORM_UNITY_ID): cv.string,
-#         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_VERB): cv.string,
-#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE): cv.string,
-#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER): cv.string,
-#         vol.Optional(CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS): dict,
-#     }
-# )
 NOTIFICATION_ACTION_FROM_UNITY_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_PLATFORM_UNITY_ID): cv.string,
@@ -84,7 +59,6 @@ NOTIFICATION_UPDATE_FROM_UNITY_SCHEMA = vol.Schema(
 )
 
 UPDATES_FROM_UNITY_SCHEMA = vol.Schema(
-    # {vol.Required(CONF_UPDATES): vol.All(cv.ensure_list, [NOTIFICATION_UPDATE_FROM_UNITY_SCHEMA])}
     {
         vol.Required(CONF_SERVICE_UPDATE_FROM_UNITY_UPDATE): vol.Or(
             NOTIFICATION_UPDATE_FROM_UNITY_SCHEMA, NOTIFICATION_ACTION_FROM_UNITY_SCHEMA
@@ -114,7 +88,6 @@ async def async_setup_platform(
     if not discovery_info:
         return None
 
-
     # Task Expressions #
     if CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY in discovery_info:
         counters_names = discovery_info.pop(CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY)
@@ -131,10 +104,7 @@ async def async_setup_platform(
             for entity in entities:
                 hass.data[CONF_TASK_MODELLING_ENTITIES][entity.entity_id] = entity
 
-
-
-
-
+    # ECA Objects #
     ECA_SCRIPTS = MappedClasses.get_eca_scripts()
     if ECA_SCRIPTS is None:
         ECA_SCRIPTS = MappedClasses.mapping_classes(hass)
@@ -165,6 +135,7 @@ async def async_setup_platform(
         platform.async_register_entity_service(*service_def)
 
     return True
+
 
 def get_classes_subclassing(to_string: bool = False) -> list[any]:
     current_module = inspect.getmodule(inspect.currentframe())
@@ -2779,7 +2750,6 @@ class ECABottle(ECAEntity):
     async def async_close_cap(self) -> None:
         """Close the bottle cap."""
         _LOGGER.info("Performed close cap action")
-
 
 
 CURRENT_MODULE = sys.modules[__name__]

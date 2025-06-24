@@ -1,14 +1,11 @@
-from collections import OrderedDict
 import logging
 import math
-
-from aiohttp.web import Response
 import numpy as np
-
+from aiohttp.web import Response
+from collections import OrderedDict
 from homeassistant.components import HomeAssistant
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import State
-
 from .automations import (
     async_add_update_automation,
     async_get_automation,
@@ -23,13 +20,14 @@ from .const import (
     API_GET_MULTIMEDIA_FILES,
     API_GET_VIRTUAL_DEVICES,
     API_GET_VIRTUAL_OBJECTS,
-    API_SEND_EXPRESSION,
+    API_EXPRESSION,
     MIN_DISTANCE,
 )
 from .hass_utils import get_entity_instance_by_entity_id
-from .models import Automation
-from .task_modeling import TaskExpression
+from .automation import Automation
+from .task_modelling import TaskExpression
 from .utils import MappedClasses
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -328,16 +326,6 @@ class FindCloseObjectsView(HomeAssistantView):
         if dx > 0.5 or dx < 0.5:
             directions.append("a fianco")
         return " e ".join(directions) if directions else "nella stessa posizione"
-        # diffs = {'z': abs(dz), 'y': abs(dy), 'x': abs(dx)}
-        # dominant_axis = max(diffs, key=diffs.get)
-        # # Determinazione della direzione principale
-        # if dominant_axis == 'z':
-        #     direction = "sopra" if dz > 0 else "sotto"
-        # elif dominant_axis == 'y':
-        #     direction = "davanti" if dy > 0 else "dietro"
-        # elif dominant_axis == 'x':
-        #     direction = "a destra" if dx > 0 else "a sinistra"
-        # return direction
 
     def get_eca_object_instance(self, group_name: str) -> object:
         group_ecaobject = None
@@ -437,26 +425,30 @@ def is_valid_expression_element(element):
 
 
 class TaskExpressionView(HomeAssistantView):
-    url = f"/api/eud4xr/{API_SEND_EXPRESSION}"
-    name = f"api:{API_SEND_EXPRESSION}"
+    url = f"/api/eud4xr/{API_EXPRESSION}"
+    name = f"api:{API_EXPRESSION}"
     requires_auth = True
 
-    def __init__(self, hass):
+    def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
         self.task_expression = TaskExpression(hass)
 
-    def json_message(self, message: str, status_code: int = 200):
+    def json_message(self, message: str, status_code: int = 200) -> dict:
         return self.json({"message": message}, status_code=status_code)
 
-    async def get(self, request):
+    async def get(self, request) -> dict:
         try:
             expressions = await self.task_expression.get_expressions_from_store()
-            return self.json(expressions, status_code=200)
+            return self.json(
+                {
+                    "expressions": expressions
+                },
+                status_code=200
+            )
         except Exception as e:
             return self.json_message(f"Errore interno: {e!s}", 500)
 
-
-    async def post(self, request):
+    async def post(self, request) -> dict:
         try:
             data = await request.json()
         except Exception:
@@ -574,7 +566,7 @@ class TaskExpressionView(HomeAssistantView):
 
         return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
 
-    async def delete(self, request):
+    async def delete(self, request) -> dict:
         """Cancella una sequenza, una scelta, un ordine, una iterazione o una condizione"""
         try:
             data = await request.json()

@@ -1,9 +1,10 @@
 import logging
 import time
-
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_registry import RegistryEntry
+
 
 from .const import (
     CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT,
@@ -67,42 +68,6 @@ class ECAEntity(Entity):
         """Return the state of the game object."""
         return self._state
 
-    # def generate_payload(
-    #     self,
-    #     verb: str,
-    #     variable_name: str = "",
-    #     modifier_string: str = "",
-    #     on_event: bool = False,
-    #     **kwargs,
-    # ) -> dict:
-    #     data = {CONF_SERVICE_UPDATE_FROM_UNITY_VERB: verb}
-    #     if variable:
-    #         data["CONF_SERVICE_UPDATE_FROM_UNITY_VARIABLE"] = variable_name.lower()
-    #     if modifier_string:
-    #         data[CONF_SERVICE_UPDATE_FROM_UNITY_MODIFIER] = modifier_string.lower()
-    #     data[CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT] = (
-    #         self.game_object.lower().split("@")[0] if on_event else self.game_object
-    #     )
-    #     parameters = dict()
-    #     for k, v in kwargs.items():
-    #         if v:
-    #             if isinstance(v, RegistryEntry):
-    #                 parameters[k] = (
-    #                     str(v.original_name.split("@")).lower()
-    #                     if on_event
-    #                     else str(v.game_object)
-    #                 )
-    #             else:
-    #                 value = (
-    #                     ", ".join([str(i).lower() for i in v])
-    #                     if isinstance(v, list)
-    #                     else str(v).lower()
-    #                 )
-    #                 parameters[k] = value
-    #     if parameters:
-    #         data[CONF_SERVICE_UPDATE_FROM_UNITY_PARAMETERS] = parameters
-
-    #     return data
     def generate_payload(
         self,
         verb: str,

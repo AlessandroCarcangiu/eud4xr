@@ -37,7 +37,7 @@ class Automation:
             "id": self.id,
             "trigger": [self.trigger.to_dict()],
             "conditions": conditions,
-            "actions": [a.to_dict() for a in self.actions],
+            "actions": [a.to_dict() for a in self.actions] if self.actions else self.actions,
             "alias": self.alias,
             "description": self.description,
             "mode": "single"
@@ -50,8 +50,6 @@ class Automation:
             "id":data.get("id"),
             "trigger":YAMLAction.from_dict(data.get("trigger")),
             "actions":[YAMLAction.from_dict(a) for a in data.get("actions")],
-            #"trigger": cls.safe_action_to_yaml(data.get("trigger")),
-            #"actions":[cls.safe_action_to_yaml(a) for a in data.get("actions")],
             "alias":data.get("alias"),
             "description":data.get("description"),
         }
@@ -82,19 +80,20 @@ class Automation:
         # trigger = ActionClass.from_yaml(hass, data.get("trigger"), is_trigger=True)
         trigger = cls.safe_action_from_yaml(hass, data.get("trigger"), is_trigger=True)
         # actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]
-        actions = [cls.safe_action_from_yaml(hass, a) for a in data.get("action")]
-        data_conditions = data.get("condition")
-        conditions = [
-            SimpleCondition.from_yaml(hass, c) if c["condition"] == "template" else CompositeCondition.from_yaml(hass, c)
-            for c in data_conditions
-        ]
+        automation_actions = data.get("action")
+        actions = [cls.safe_action_from_yaml(hass, a) for a in automation_actions] if automation_actions else None
+        automation_conditions = data.get("condition")
+        conditions = None
+        if automation_conditions:
+            conditions = [
+                SimpleCondition.from_yaml(hass, c) if c["condition"] == "template" else CompositeCondition.from_yaml(hass, c)
+                for c in automation_conditions
+            ]
 
-        if len(conditions) > 1:
-            conditions = CompositeCondition("and", conditions)
-        elif len(conditions) == 1:
-            conditions = conditions[0]
-        else:
-            conditions = None
+            if len(conditions) > 1:
+                conditions = CompositeCondition("and", conditions)
+            elif len(conditions) == 1:
+                conditions = conditions[0]
 
         return cls(
             trigger=trigger,

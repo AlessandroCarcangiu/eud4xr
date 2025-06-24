@@ -7,7 +7,7 @@ from homeassistant.components.sensor import SensorEntity
 
 class TaskExpressionSensor(SensorEntity):
 
-    def __init__(self, hass):
+    def __init__(self, hass) -> None:
         self.hass = hass
         self._state = {"orders": [], "sequences": [], "choices": []}
         self._attr_name = "Task Expression Sensor"

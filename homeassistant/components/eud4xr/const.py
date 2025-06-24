@@ -19,6 +19,7 @@ SERVICE_ADD_VIRTUAL_OBJECT = "add_virtual_object"
 SERVICE_UPDATE_FROM_UNITY = "receive_update_from_unity"
 SERVICE_ADD_UPDATE_AUTOMATION = "add_update_automation"
 SERVICE_REMOVE_AUTOMATION = "remove_automation"
+SERVICE_INCREMENT_COUNTER = "increment_counter"
 
 # endpoints
 API_GET_AUTOMATIONS = "automations"
@@ -28,7 +29,7 @@ API_GET_CONTEXT_OBJECTS = "context_objects"
 API_GET_VIRTUAL_OBJECTS = "virtual_objects"
 API_GET_MULTIMEDIA_FILES = "multimedia_files"
 API_GET_CLOSE_OBJECTS = "find_close_objects"
-API_SEND_EXPRESSION = "send_expression"
+API_EXPRESSION = "expressions"
 
 
 # unity services
@@ -62,7 +63,7 @@ CONF_SERVICE_UPDATE_FROM_UNITY_NEW_VALUE = "new_value"
 # CONF automation
 CONF_SERVICE_ADD_UPDATE_AUTOMATION_DATA = "data"
 CONF_SERVICE_REMOVE_AUTOMATION_ID = "automation_id"
-
+# CONF task modelling
 CONF_TASK_MODELLING_NAME = "task_modelling"
 CONF_TASK_MODELLING_STORE_NAME = "task_modelling"
 CONF_TASK_MODELLING_STORE_VERSION = "1"

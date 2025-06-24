@@ -1,72 +1,110 @@
-- alias: r1
-  action:
-  - alias: conditional.conditional_example
-    service: automation.turn_off
-    data:
-      entity_id: automation.r4
-  - alias: conditional.conditional_example
-    service: automation.turn_on
-    data:
-      entity_id: automation.r2
-  - alias: conditional.conditional_example
-    service: automation.turn_on
-    data:
-      entity_id: automation.r3
-  - alias: conditional.conditional_example
-    service: automation.turn_off
-    data:
-      entity_id: automation.r1
-  - alias: iteration_example
-    service: eud4xr.increment_counter
-    data:
-      entity_id: sensor.iteration_example
+- id: '1747831641076'
+  alias: r1
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
   condition:
-  - condition: numeric_state
-    entity_id: sensor.iteration_example
-    below: 4
-    alias: iteration.iteration_example
-  trigger: []
-- alias: r2
-  action: []
-  condition: []
-  trigger: []
-- alias: r3
-  action: []
-  condition: []
-  trigger: []
-- alias: r4
   action:
-  - alias: conditional.conditional_example
-    service: automation.turn_off
-    data:
-      entity_id: automation.r1
-  - alias: conditional.conditional_example
-    service: automation.turn_on
-    data:
-      entity_id: automation.r5
-  - alias: conditional.conditional_example
-    service: automation.turn_on
-    data:
-      entity_id: automation.r6
-  - alias: conditional.conditional_example
-    service: automation.turn_on
-    data:
-      entity_id: automation.r7
-  - alias: conditional.conditional_example
-    service: automation.turn_on
-    data:
-      entity_id: automation.r8
-  - alias: conditional.conditional_example
-    service: automation.turn_off
-    data:
-      entity_id: automation.r4
-  condition: []
-  trigger: []
-- alias: r5
-  action: []
-  condition: []
-  trigger: []
-- alias: r6
-  action: []
-  condition: []
-  trigger: []
+  mode: single
+- id: '1747831641077'
+  alias: r2
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641078'
+  alias: r3
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641079'
+  alias: r4
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641080'
+  alias: r5
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641081'
+  alias: r6
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641082'
+  alias: r7
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641083'
+  alias: r8
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641084'
+  alias: r9
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single
+- id: '1747831641085'
+  alias: r10
+  description: ''
+  trigger:
+  - platform: event
+    event_type: eud4xr
+    event_data:
+      message: test
+  condition:
+  action:
+  mode: single

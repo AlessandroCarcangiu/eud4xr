@@ -78,9 +78,4 @@ class CounterIteration(Entity):
         else:
             self._state = False
 
-
         self.async_write_ha_state()
-
-
-
-
