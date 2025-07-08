@@ -137,7 +137,8 @@ class TaskExpression:
             await self.async_initialize()
 
         if name in self.sequences:
-            raise ValueError(f"La sequenza '{name}' esiste già.")
+            #se la sequenza esiste già viene eliminata per poter essere ricreata
+            await self.delete_sequence(name)
 
         if not isinstance(sequence, list) or len(sequence) < 2:
             raise ValueError("La sequenza deve contenere almeno due elementi.")
@@ -179,7 +180,7 @@ class TaskExpression:
             "sequence": sequence_processed,
         }
 
-        await self._save_expressions_to_store()
+
         prev = False
 
         for i, element in enumerate(sequence):
@@ -237,6 +238,9 @@ class TaskExpression:
                                 f"sequence.{name}",
                             )
             prev = isinstance(element, dict) and "order" in element
+
+        #una volta creata la sequenza, si aggiungono le condizioni alle automazioni
+        await self._save_expressions_to_store()
 
     async def _add_condition_to_automation(
         self, automation_entity_id, condition, alias
@@ -428,7 +432,9 @@ class TaskExpression:
             await self.async_initialize()
 
         if name in self.choices:
-            raise ValueError(f"La scelta '{name}' esiste già.")
+            # Se la scelta esiste già, viene eliminata per poter essere ricreata
+            await self.delete_choice(name)
+
         if not isinstance(choice, list) or not all(isinstance(a, str) for a in choice):
             raise ValueError(
                 "La scelta deve essere una lista di ID automazioni (stringhe)."
@@ -440,7 +446,6 @@ class TaskExpression:
             "choice": choice,
         }
 
-        await self._save_expressions_to_store()
 
         for i, automation_id in enumerate(choice):
             for j, other_id in enumerate(choice):
@@ -449,12 +454,18 @@ class TaskExpression:
                         source=automation_id, target=other_id, name=name, type_="choice"
                     )
 
+        # Se la
+        await self._save_expressions_to_store()
+
+
     async def create_order(self, name, order):
         if self.orders is None:
             await self.async_initialize()
 
         if name in self.orders:
-            raise ValueError(f"L'ordine '{name}' esiste già.")
+            # Se l'ordine esiste già, viene eliminato per poter essere ricreato
+            await self.delete_order(name)
+
         if not isinstance(order, list) or not all(isinstance(a, str) for a in order):
             raise ValueError(
                 "L'ordine deve essere una lista di ID automazioni (stringhe)."
@@ -462,11 +473,8 @@ class TaskExpression:
         if len(order) < 2:
             raise ValueError("L'ordine deve contenere almeno due automazioni.")
 
-        self.orders[name] = {
-            "order": order,
-        }
 
-        await self._save_expressions_to_store()
+
         for automation_id in order:
             await self._add_action_turn_off_to_automation(
                 source=automation_id,
@@ -479,7 +487,11 @@ class TaskExpression:
                 sensor_entity_id=f"sensor.{name}",
                 alias=name,
             )
+        self.orders[name] = {
+            "order": order,
+        }
         await self.create_order_independence_counter(name)
+        await self._save_expressions_to_store()
 
     async def create_order_independence_counter(self, name):
         await self.hass.async_create_task(
@@ -496,7 +508,7 @@ class TaskExpression:
             await self.async_initialize()
 
         if name in self.iterations:
-            raise ValueError(f"L'iterazione '{name}' esiste già.")
+            await self.delete_iteration(name)
 
         if not isinstance(iteration, dict):
             raise ValueError(
@@ -513,9 +525,6 @@ class TaskExpression:
                 "'expression' deve essere una automazione (stringa) o una espressione (dict)."
             )
 
-        self.iterations[name] = {
-            "iteration": iteration,
-        }
 
         if isinstance(expression, str):
             await self._add_condition_to_automation(
@@ -534,6 +543,9 @@ class TaskExpression:
             )
 
         await self.create_order_independence_counter(name)
+        self.iterations[name] = {
+            "iteration": iteration,
+        }
         await self._save_expressions_to_store()
 
     async def create_conditional(self, name, conditional):
@@ -541,15 +553,12 @@ class TaskExpression:
             await self.async_initialize()
 
         if name in self.conditionals:
-            raise ValueError(f"La condizione '{name}' esiste già.")
+            # Se la condizione esiste già, viene eliminata per poter essere ricreata
+            await self.delete_conditional(name)
         if not isinstance(conditional, dict):
             raise ValueError("La condizione deve essere un dizionario.")
 
-        self.conditionals[name] = {
-            "conditional": conditional,
-        }
 
-        await self._save_expressions_to_store()
 
         if_trigger = conditional.get("if").get("trigger")
         else_trigger = conditional.get("else").get("trigger")
@@ -588,6 +597,11 @@ class TaskExpression:
                 name=name,
                 type_="conditional",
             )
+        self.conditionals[name] = {
+            "conditional": conditional,
+        }
+
+        await self._save_expressions_to_store()
 
     async def delete_sequence(self, name):
         if self.sequences is None:
@@ -736,13 +750,32 @@ class TaskExpression:
         for automation_id in [if_trigger, else_trigger]:
             await self._remove_action_from_automation(
                 source=automation_id,
+                service="automation.turn_off",
+                target=automation_id,
+            )
+
+        await self._remove_action_from_automation(
+            source=if_trigger,
+            service="automation.turn_off",
+            target=else_trigger,
+        )
+        await self._remove_action_from_automation(
+            source=else_trigger,
+            service="automation.turn_off",
+            target=if_trigger,
+        )
+
+        for automation_id in conditional.get("if").get("do"):
+            await self._remove_action_from_automation(
+                source=if_trigger,
                 service="automation.turn_on",
                 target=automation_id,
             )
-        for automation_id in [if_trigger, else_trigger]:
+        for automation_id in conditional.get("else").get("do"):
             await self._remove_action_from_automation(
-                source=automation_id,
-                service="automation.turn_off",
+                source=else_trigger,
+                service="automation.turn_on",
+                target=automation_id,
             )
 
         for automation_id in [

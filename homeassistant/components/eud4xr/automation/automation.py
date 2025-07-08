@@ -37,7 +37,7 @@ class Automation:
             "id": self.id,
             "trigger": [self.trigger.to_dict()],
             "conditions": conditions,
-            "actions": [a.to_dict() for a in self.actions] if self.actions else self.actions,
+            "actions": [a.to_dict() if isinstance(a, ECAAction) else a for a in self.actions] if self.actions else self.actions,
             "alias": self.alias,
             "description": self.description,
             "mode": "single"
@@ -114,12 +114,15 @@ class Automation:
         return data
 
     @staticmethod
-    def safe_action_from_yaml(hass: HomeAssistant, data: dict, **kwargs) -> ECAAction | SafeAction:
+    def safe_action_from_yaml(hass: HomeAssistant, data: dict, **kwargs) -> ECAAction | SafeAction | dict:
         action = None
         try:
             d = copy.deepcopy(data)
             action = ECAAction.from_yaml(hass=hass, data=d, **kwargs)
         except Exception:
-            d = copy.deepcopy(data)
-            action = SafeAction.from_yaml(d)
+            try:
+                d = copy.deepcopy(data)
+                action = SafeAction.from_yaml(d)
+            except:
+                action = data
         return action

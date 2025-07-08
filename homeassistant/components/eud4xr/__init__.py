@@ -30,6 +30,7 @@ from .views import (
     MultimediaFilesView,
     TaskExpressionView,
     VirtualObjectsView,
+    ObjectsView
 )
 from .task_modelling import MARK_DONE_SERVICE_SCHEMA, TaskExpression, TaskExpressionSensor
 
@@ -95,8 +96,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
         )
 
-    t_expr = TaskExpression(hass)
-    await t_expr.restore_expressions()
+        async def on_hass_started(event):
+            t_expr = TaskExpression(hass)
+            await t_expr.restore_expressions()
+
+    hass.bus.async_listen_once("homeassistant_started", on_hass_started)
+
+    # t_expr = TaskExpression(hass)
+    # await t_expr.restore_expressions()
 
     ## Send update to Unity
     async def handle_send_update_to_server_unity(call: ServiceCall) -> None:
@@ -367,14 +374,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.bus.async_listen("event_sensor_registered", handle_failed_update_list)
 
     # views
-    hass.http.register_view(AutomationsView(hass))
-    # hass.http.register_view(ListFramedVirtualDevicesView(hass))
     hass.http.register_view(ListECACapabilitiesView(hass))
+    
     hass.http.register_view(ContextObjectsView(hass))
-    hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(MultimediaFilesView(hass))
     hass.http.register_view(FindCloseObjectsView(hass))
+
+    hass.http.register_view(AutomationsView(hass))
     hass.http.register_view(TaskExpressionView(hass))
+
+    hass.http.register_view(VirtualObjectsView(hass))
+    hass.http.register_view(ObjectsView(hass))
 
     async def handle_task_expression_mark_done(call):
         task_expression = TaskExpression(hass)

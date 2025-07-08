@@ -104,7 +104,7 @@ class Service:
                 json_structure["obj"] = "{{un valore, o un altro oggetto, coinvolti nell'azione}}"
 
         return {
-            "Service's name": kwargs["verb"],
+            #"Service's name": kwargs["verb"],
             **data,
             "When to use me?": self.description,
             "JSON format": json_structure

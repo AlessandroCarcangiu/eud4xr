@@ -1,6 +1,9 @@
 import logging
 import math
 import numpy as np
+import traceback
+import sys
+
 from aiohttp.web import Response
 from collections import OrderedDict
 from homeassistant.components import HomeAssistant
@@ -22,9 +25,11 @@ from .const import (
     API_GET_VIRTUAL_OBJECTS,
     API_EXPRESSION,
     MIN_DISTANCE,
+    API_GET_OBJECTS
 )
 from .hass_utils import get_entity_instance_by_entity_id
 from .automation import Automation
+from .filters import get_real_smart_entities, get_virtual_entities
 from .task_modelling import TaskExpression
 from .utils import MappedClasses
 
@@ -264,6 +269,20 @@ class VirtualObjectsView(HomeAssistantView):
         return self.json({"objects": objects if objects else objects_all})
 
 
+class ObjectsView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_GET_OBJECTS}"
+    name = f"api:{API_GET_OBJECTS}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        real_objects = await get_real_smart_entities(self.hass)
+        virtual_objects = await get_virtual_entities(self.hass)
+        return self.json({**real_objects, **virtual_objects})
+
+
 class MultimediaFilesView(HomeAssistantView):
     url = f"/api/eud4xr/{API_GET_MULTIMEDIA_FILES}"
     name = f"api:{API_GET_MULTIMEDIA_FILES}"
@@ -448,7 +467,7 @@ class TaskExpressionView(HomeAssistantView):
         except Exception as e:
             return self.json_message(f"Errore interno: {e!s}", 500)
 
-    async def post(self, request) -> dict:
+    async def post(self, request):
         try:
             data = await request.json()
         except Exception:
@@ -566,7 +585,7 @@ class TaskExpressionView(HomeAssistantView):
 
         return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
 
-    async def delete(self, request) -> dict:
+    async def delete(self, request):
         """Cancella una sequenza, una scelta, un ordine, una iterazione o una condizione"""
         try:
             data = await request.json()
@@ -623,95 +642,5 @@ class TaskExpressionView(HomeAssistantView):
             except Exception as e:
                 return self.json_message(f"Errore interno: {e!s}", 500)
             return self.json_message(f"Condizione '{conditional}' eliminata con successo", 200)
-
-        return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
-
-    async def put(self, request):
-        try:
-            data = await request.json()
-        except Exception:
-            return self.json_message("Payload JSON non valido", 400)
-
-        name = data.get("name")
-        sequence = data.get("sequence")
-        choice   = data.get("choice")
-        order    = data.get("order")
-        iteration = data.get("iteration")
-        conditional = data.get("conditional")
-
-        if not isinstance(name, str):
-            return self.json_message("Campo 'name' mancante o non valido", 400)
-
-        if sequence is not None:
-            if not isinstance(sequence, list) or not all(is_valid_expression_element(i) for i in sequence):
-                return self.json_message("Campo 'sequence' deve essere una lista di automazioni o espressioni", 400)
-            try:
-                await self.task_expression.delete_sequence(name)
-                await self.task_expression.create_sequence(name, sequence)
-            except ValueError as e:
-                return self.json_message(str(e), 400)
-            except Exception as e:
-                return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Sequenza '{name}' aggiornata con successo", 200)
-
-        if choice is not None:
-            if not isinstance(choice, list) or not all(is_valid_expression_element(i) for i in choice):
-                return self.json_message("Campo 'choice' deve essere una lista di automazioni o espressioni", 400)
-            try:
-                await self.task_expression.delete_choice(name)
-                await self.task_expression.create_choice(name, choice)
-            except ValueError as e:
-                return self.json_message(str(e), 400)
-            except Exception as e:
-                return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Scelta '{name}' aggiornata con successo", 200)
-
-        if order is not None:
-            if not isinstance(order, list) or not all(is_valid_expression_element(i) for i in order):
-                return self.json_message("Campo 'order' deve essere una lista di automazioni o espressioni", 400)
-            try:
-                await self.task_expression.delete_order(name)
-                await self.task_expression.create_order(name, order)
-            except ValueError as e:
-                return self.json_message(str(e), 400)
-            except Exception as e:
-                return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Ordine '{name}' aggiornato con successo", 200)
-
-
-        if iteration is not None:
-            if not isinstance(iteration, dict):
-                return self.json_message(
-                    "Campo 'iteration' deve essere un oggetto contenente 'n_steps' e 'expression'", 400
-                )
-            n_steps = iteration.get("n_steps")
-            expression = iteration.get("expression")
-
-            if not (isinstance(n_steps, int) and n_steps > 0):
-                return self.json_message("'n_steps' deve essere un intero positivo", 400)
-
-            if not (isinstance(expression, str) or isinstance(expression, dict)):
-                return self.json_message(
-                    "'expression' deve essere una automazione (stringa) o una espressione (dict)", 400
-                )
-
-            try:
-                await self.task_expression.delete_iteration(name)
-                await self.task_expression.create_iteration(name, iteration)
-            except ValueError as e:
-                return self.json_message(str(e), 400)
-            except Exception as e:
-                return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Iterazione '{name}' creata con successo", 200)
-
-        if conditional is not None:
-            try:
-                await self.task_expression.delete_conditional(name)
-                await self.task_expression.create_conditional(name, conditional)
-            except ValueError as e:
-                return self.json_message(str(e), 400)
-            except Exception as e:
-                return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Condizione '{name}' aggiornata con successo", 200)
 
         return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)

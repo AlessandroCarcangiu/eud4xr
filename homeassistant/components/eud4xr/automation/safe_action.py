@@ -38,7 +38,7 @@ class SafeAction:
         )
 
     @classmethod
-    def from_yaml(cls, data: dict) -> 'SafeAction':
+    def from_yaml(cls, data: dict):
         '''It converts eca actions from hass format to natural language:
         '''
         if isinstance(data, list):
@@ -47,7 +47,6 @@ class SafeAction:
             action_data = data["event_data"]
         else:
             action_data = {**data["data"], "action": data.get("action")}
-        #action_data = data[0]["event_data"] if isinstance(data, list) else if "event_data" in data data["event_data"]
         return SafeAction(**action_data)
 
     @classmethod
