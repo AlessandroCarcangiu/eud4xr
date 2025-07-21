@@ -301,7 +301,7 @@ class ECAObject(ECAEntity):
 
     @eca_script_action(verb="shows")
     async def async_shows(self) -> None:
-        """Shows maakes the object visible if it is not already."""
+        """Shows makes the object visible if it is not already."""
         _LOGGER.info("Performed shows action")
 
     @eca_script_action(verb="hides")
