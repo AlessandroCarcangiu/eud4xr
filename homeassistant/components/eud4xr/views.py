@@ -692,4 +692,5 @@ class IotDeviceView(HomeAssistantView):
         )
 
         # Filter sensors only ECAObject with isInsideCamera = true
+        print(f"Filtered states: {len(states)}")
         return self.json(states)
