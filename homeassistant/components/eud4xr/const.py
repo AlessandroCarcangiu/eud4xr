@@ -71,3 +71,7 @@ CONF_TASK_MODELLING_STORE_VERSION = "1"
 CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY = "order_independence_counters"
 CONF_TASK_MODELLING_ENTITIES = "task_modelling_entities"
 CONF_TASK_MODELLING_EXPRESSIONS = "task_modelling_expressions"
+
+
+### Jacopo ha osato crearne uno
+GET_IOT_DEVICE_INFO = "getIotDeviceInfo"

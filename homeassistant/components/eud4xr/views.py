@@ -1,14 +1,15 @@
+from collections import OrderedDict
 import logging
 import math
-import numpy as np
-import traceback
-import sys
 
 from aiohttp.web import Response
-from collections import OrderedDict
+import numpy as np
+
 from homeassistant.components import HomeAssistant
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import State
+
+from .automation import Automation
 from .automations import (
     async_add_update_automation,
     async_get_automation,
@@ -16,23 +17,22 @@ from .automations import (
     async_remove_automation,
 )
 from .const import (
+    API_EXPRESSION,
     API_GET_AUTOMATIONS,
     API_GET_CLOSE_OBJECTS,
     API_GET_CONTEXT_OBJECTS,
     API_GET_ECA_CAPABILITIES,
     API_GET_MULTIMEDIA_FILES,
+    API_GET_OBJECTS,
     API_GET_VIRTUAL_DEVICES,
     API_GET_VIRTUAL_OBJECTS,
-    API_EXPRESSION,
+    GET_IOT_DEVICE_INFO,
     MIN_DISTANCE,
-    API_GET_OBJECTS
 )
-from .hass_utils import get_entity_instance_by_entity_id
-from .automation import Automation
 from .filters import get_real_smart_entities, get_virtual_entities
+from .hass_utils import get_entity_instance_by_entity_id
 from .task_modelling import TaskExpression
 from .utils import MappedClasses
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -404,7 +404,6 @@ class FindCloseObjectsView(HomeAssistantView):
 
 
 def is_valid_expression_element(element):
-
     if isinstance(element, str):
         return True
 
@@ -458,12 +457,7 @@ class TaskExpressionView(HomeAssistantView):
     async def get(self, request) -> dict:
         try:
             expressions = await self.task_expression.get_expressions_from_store()
-            return self.json(
-                {
-                    "expressions": expressions
-                },
-                status_code=200
-            )
+            return self.json({"expressions": expressions}, status_code=200)
         except Exception as e:
             return self.json_message(f"Errore interno: {e!s}", 500)
 
@@ -552,17 +546,21 @@ class TaskExpressionView(HomeAssistantView):
         if iteration is not None:
             if not isinstance(iteration, dict):
                 return self.json_message(
-                    "Campo 'iteration' deve essere un oggetto contenente 'n_steps' e 'expression'", 400
+                    "Campo 'iteration' deve essere un oggetto contenente 'n_steps' e 'expression'",
+                    400,
                 )
             n_steps = iteration.get("n_steps")
             expression = iteration.get("expression")
 
             if not (isinstance(n_steps, int) and n_steps > 0):
-                return self.json_message("'n_steps' deve essere un intero positivo", 400)
+                return self.json_message(
+                    "'n_steps' deve essere un intero positivo", 400
+                )
 
             if not (isinstance(expression, str) or isinstance(expression, dict)):
                 return self.json_message(
-                    "'expression' deve essere una automazione (stringa) o una espressione (dict)", 400
+                    "'expression' deve essere una automazione (stringa) o una espressione (dict)",
+                    400,
                 )
 
             try:
@@ -583,7 +581,10 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(f"Errore interno: {e!s}", 500)
             return self.json_message(f"Condizione '{name}' creata con successo", 200)
 
-        return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
+        return self.json_message(
+            "Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'",
+            400,
+        )
 
     async def delete(self, request):
         """Cancella una sequenza, una scelta, un ordine, una iterazione o una condizione"""
@@ -593,8 +594,8 @@ class TaskExpressionView(HomeAssistantView):
             return self.json_message("Payload JSON non valido", 400)
 
         sequence = data.get("sequence")
-        choice   = data.get("choice")
-        order    = data.get("order")
+        choice = data.get("choice")
+        order = data.get("order")
         iteration = data.get("iteration")
         conditional = data.get("conditional")
 
@@ -605,7 +606,9 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(str(e), 400)
             except Exception as e:
                 return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Sequenza '{sequence}' eliminata con successo", 200)
+            return self.json_message(
+                f"Sequenza '{sequence}' eliminata con successo", 200
+            )
 
         if choice is not None:
             try:
@@ -632,7 +635,9 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(str(e), 400)
             except Exception as e:
                 return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Iterazione '{iteration}' eliminata con successo", 200)
+            return self.json_message(
+                f"Iterazione '{iteration}' eliminata con successo", 200
+            )
 
         if conditional is not None:
             try:
@@ -641,6 +646,50 @@ class TaskExpressionView(HomeAssistantView):
                 return self.json_message(str(e), 400)
             except Exception as e:
                 return self.json_message(f"Errore interno: {e!s}", 500)
-            return self.json_message(f"Condizione '{conditional}' eliminata con successo", 200)
+            return self.json_message(
+                f"Condizione '{conditional}' eliminata con successo", 200
+            )
 
-        return self.json_message("Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'", 400)
+        return self.json_message(
+            "Fornire il campo 'sequence', 'choice', 'order', 'iteration' o 'conditional'",
+            400,
+        )
+
+
+class IotDeviceView(HomeAssistantView):
+    url = f"/api/eud4xr/{GET_IOT_DEVICE_INFO}"
+    name = f"api:{GET_IOT_DEVICE_INFO}"
+    methods = ["GET"]
+
+    # Do a Request get to api/states
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        # Get the list of sensors in Home Assistant
+        states = self.hass.states.async_all()
+
+        # Initials of the sensor names wanted
+        sensors_wanted_list = [
+            # Shelly
+            "sensor.shellydw2-",
+            "binary_sensor.shellydw2-",
+            # Netatmo
+            "sensor.netatmoeud4xr_",
+            "binary_sensor.netatmoeud4xr_",
+            # Xiaomi
+            "fan.xiaomi_cpa4",
+            "sensor.xiaomi_cpa4",
+        ]
+        states = list(
+            filter(
+                lambda s: any(
+                    sensor_wanted in s.entity_id
+                    for sensor_wanted in sensors_wanted_list
+                ),
+                states,
+            )
+        )
+
+        # Filter sensors only ECAObject with isInsideCamera = true
+        return self.json(states)

@@ -1,38 +1,44 @@
-import aiohttp
 import copy
-import logging
-import voluptuous as vol
 from datetime import datetime
+import logging
 
-from homeassistant.helpers.storage import Store
+import aiohttp
+import voluptuous as vol
+
 from homeassistant.components.group import Group, expand_entity_ids
 from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
+from .automation import Automation
 from .automations import async_list_automations
 from .const import *
 from .hass_utils import find_group, find_sensor
-from .automation import Automation
 from .sensor import (
     GAMEOBJECT_ECASCRIPT_SCHEMA,
     SERVICE_UPDATE_FROM_UNITY,
     UPDATES_FROM_UNITY_SCHEMA,
 )
+from .task_modelling import (
+    MARK_DONE_SERVICE_SCHEMA,
+    TaskExpression,
+    TaskExpressionSensor,
+)
 from .views import (
     AutomationsView,
     ContextObjectsView,
     FindCloseObjectsView,
+    IotDeviceView,
     ListECACapabilitiesView,
     ListFramedVirtualDevicesView,
     MultimediaFilesView,
+    ObjectsView,
     TaskExpressionView,
     VirtualObjectsView,
-    ObjectsView
 )
-from .task_modelling import MARK_DONE_SERVICE_SCHEMA, TaskExpression, TaskExpressionSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,15 +88,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     )
     if task_modelling_store:
         task_modelling_store_data = await task_modelling_store.async_load() or {}
-        if (CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY not in task_modelling_store_data):
-            task_modelling_store_data[CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY] = []
+        if (
+            CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY
+            not in task_modelling_store_data
+        ):
+            task_modelling_store_data[
+                CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY
+            ] = []
 
         hass.async_create_task(
             hass.helpers.discovery.async_load_platform(
                 "sensor",
                 DOMAIN,
                 {
-                    CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY: task_modelling_store_data.get(CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY),
+                    CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY: task_modelling_store_data.get(
+                        CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY
+                    ),
                 },
                 {},
             )
@@ -375,7 +388,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # views
     hass.http.register_view(ListECACapabilitiesView(hass))
-    
+
     hass.http.register_view(ContextObjectsView(hass))
     hass.http.register_view(MultimediaFilesView(hass))
     hass.http.register_view(FindCloseObjectsView(hass))
@@ -385,6 +398,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(ObjectsView(hass))
+    hass.http.register_view(IotDeviceView(hass))
 
     async def handle_task_expression_mark_done(call):
         task_expression = TaskExpression(hass)
