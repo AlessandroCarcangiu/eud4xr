@@ -69,9 +69,8 @@ class ECAEntity(Entity):
         """Return the state of the game object."""
         return self._state
 
-    def to_dict(self, hass) -> dict:
-        # properties
-        properties = []
+    def get_properties(self) -> list:
+        properties = list()
         signature = inspect.signature(self.__init__)
         for param_name, param in list(filter(lambda x: x[0] not in ["self", "kwargs"], signature.parameters.items())):
             valore = getattr(self, param_name)
@@ -80,14 +79,15 @@ class ECAEntity(Entity):
                 "type": getattr(param.annotation, "__name__", str(param.annotation)),
                 "current value": valore
             })
-        # services
-        services = {}
+        return properties
+
+    def get_services(self) -> list:
+        services = list()
         eca_script_methods = [
             (name, method)
             for name, method in inspect.getmembers(self.__class__, inspect.isfunction)
             if hasattr(method, "_is_eca_script_action")
         ]
-
         from .utils import Service
         for name, method in eca_script_methods:
             service_params = dict()
@@ -96,17 +96,24 @@ class ECAEntity(Entity):
                 #value = self.__mapping_parameter(param_name, param, hass)
                 service_params[param_name] = str(param.annotation.__name__)
 
-            services[getattr(method, "kwargs")["verb"]] = Service(
+            s = Service(
                 method = method,
-
                 eca_action=f"eud4xr.{name.replace('async_','')}",
-
                 params=service_params,
-
                 description=inspect.getdoc(method)
             ).to_dict()
+            # services[getattr(method, "kwargs")["verb"]] = s
+            services.append({
+                "service_of_component": self.game_object,
+                **s,
+            })
+        return services
 
-
+    def to_dict(self, hass) -> dict:
+        # properties
+        properties = self.get_properties()
+        # services
+        services = self.get_services()
         return {
             "properties": properties,
             "services": services

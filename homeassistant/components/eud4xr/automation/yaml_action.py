@@ -37,15 +37,18 @@ class YAMLAction:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'YAMLAction':
-        return cls(
-            verb=data.get("verb"),
-            subject=data.get("subject"),
-            obj=data.get("obj"),
-            variable=data.get("variable"),
-            modifier=data.get("modifier"),
-            value=data.get("value")
-        )
+    def from_dict(cls, data: dict) -> any:
+        keys = ["subject", "verb", "obj", "variable", "modifier", "value"]
+        if set(data.keys()).issubset(keys):
+            return cls(
+                verb=data.get("verb"),
+                subject=data.get("subject"),
+                obj=data.get("obj"),
+                variable=data.get("variable"),
+                modifier=data.get("modifier"),
+                value=data.get("value")
+            )
+        return data
 
     def to_yaml(self, hass: HomeAssistant, as_event: bool = False) -> dict:
         '''It converts eca actions from natural language to hass format.

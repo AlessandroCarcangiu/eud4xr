@@ -1,4 +1,6 @@
+import asyncio
 import logging
+import time
 import uuid
 
 import voluptuous as vol
@@ -6,6 +8,8 @@ import yaml
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_registry as er
+
 
 from .const import (
     AUTOMATION_PATH,
@@ -23,6 +27,18 @@ RECEIVED_AUTOMATION_SCHEMA = vol.Schema(
 REMOVE_AUTOMATION_SCHEMA = vol.Schema(
     {vol.Required(CONF_SERVICE_REMOVE_AUTOMATION_ID): cv.string}
 )
+
+
+async def wait_for_automation_states(hass: HomeAssistant, expected_ids: list[str], timeout: float = 50.0):
+    start = time.monotonic()
+    while time.monotonic() - start < timeout:
+        automations = hass.states.async_all("automation")
+        found_ids = {a.attributes.get("id") for a in automations if a.attributes.get("id")}
+        if all(i in found_ids for i in expected_ids):
+            return automations
+        print("dormo")
+        await asyncio.sleep(0.1)
+    raise TimeoutError(f"Timeout: le automazioni {expected_ids} non sono apparse in hass.states")
 
 
 def get_automations(hass: HomeAssistant, as_list: bool = False) -> dict | list:
@@ -76,6 +92,19 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
             existing_automations[automation_id] = automation_data
         # update and reload automation.yaml file
         await update_automation_and_reload(hass, existing_automations)
+
+        # # update entity_id
+        # try:
+        #     await wait_for_automation_states(hass, existing_automations.keys())
+        # finally:
+        #     automations = hass.states.async_all("automation")
+        # for id, values in existing_automations.items():
+        #     result = next((a for a in automations if a.attributes.get("id") == id), None)
+        #     if result:
+        #         entity_id = f"automation.{id.replace("-", "_").replace(" ", "_")}"
+        #         if entity_id != result.entity_id:
+        #             registry = er.async_get(hass)
+        #             registry.async_update_entity(entity_id=result.entity_id, new_entity_id=entity_id)
 
         hass.bus.async_fire("event_automation_reloaded")
 
