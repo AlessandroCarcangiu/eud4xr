@@ -33,7 +33,7 @@ from .views import (
     AutomationsView,
     ContextObjectsView,
     FindCloseObjectsView,
-    IotDeviceView,
+    UpdateIotDeviceIsFramedView,
     ListECACapabilitiesView,
     ListFramedVirtualDevicesView,
     MultimediaFilesView,
@@ -404,7 +404,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(ObjectsView(hass))
-    hass.http.register_view(IotDeviceView(hass))
+    hass.http.register_view(UpdateIotDeviceIsFramedView(hass))
 
     async def handle_task_expression_mark_done(call):
         task_expression = TaskExpression(hass)

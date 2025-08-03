@@ -76,4 +76,4 @@ CONF_TASK_MODELLING_EXPRESSIONS = "task_modelling_expressions"
 
 
 ### Jacopo ha osato crearne uno
-GET_IOT_DEVICE_INFO = "getIotDeviceInfo"
+UPDATE_IOTDevice_VISIBILITY_FROM_UNITY = "update_iotdevice_visibility_from_unity"

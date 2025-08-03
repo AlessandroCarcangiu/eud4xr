@@ -28,7 +28,7 @@ from .const import (
     API_GET_OBJECTS,
     API_GET_VIRTUAL_DEVICES,
     API_GET_VIRTUAL_OBJECTS,
-    GET_IOT_DEVICE_INFO,
+    UPDATE_IOTDevice_VISIBILITY_FROM_UNITY,
     MIN_DISTANCE,
 )
 from .filters import get_devices_data, get_virtual_entities
@@ -663,16 +663,60 @@ class TaskExpressionView(HomeAssistantView):
         )
 
 
-class IotDeviceView(HomeAssistantView):
-    url = f"/api/eud4xr/{GET_IOT_DEVICE_INFO}"
-    name = f"api:{GET_IOT_DEVICE_INFO}"
-    methods = ["GET"]
+class UpdateIotDeviceIsFramedView(HomeAssistantView):
+    url = f"/api/eud4xr/{UPDATE_IOTDevice_VISIBILITY_FROM_UNITY}"
+    name = f"api:{UPDATE_IOTDevice_VISIBILITY_FROM_UNITY}"
+    methods = ["PUT"]
 
     # Do a Request get to api/states
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
 
-    async def get(self, request):
+    async def put(self, request):
+        data = await request.json()
+        print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
+
+        # region Data Checks
+        if not isinstance(data, dict):
+            return self.json_message("Invalid data: expected a JSON object", 400)
+
+        required_keys = {"sensor_name", "isFramed", "position"}
+        if not required_keys.issubset(data):
+            return self.json_message(
+                "Missing one or more required keys. The required keys are: "
+                + ", ".join(required_keys),
+                400,
+            )
+
+        if not isinstance(data["sensor_name"], str):
+            return self.json_message(
+                "Invalid type for 'sensor_name': expected string", 400
+            )
+
+        if not isinstance(data["isFramed"], bool):
+            return self.json_message(
+                "Invalid type for 'isFramed': expected boolean", 400
+            )
+
+        position = data["position"]
+        if not isinstance(position, dict):
+            return self.json_message(
+                "Invalid type for 'position': expected object with x, y, z", 400
+            )
+
+        if not all(k in position for k in ("x", "y", "z")):
+            return self.json_message(
+                "Missing one or more keys in 'position': x, y, z required", 400
+            )
+
+        if not all(isinstance(position[k], (int, float)) for k in ("x", "y", "z")):
+            return self.json_message(
+                "Invalid type in 'position': x, y, z must be numbers", 400
+            )
+        # endregion Data Checks
+
+        # Proceed with logic if validation passes...
+
         # Get the list of sensors in Home Assistant
         states = self.hass.states.async_all()
 
@@ -688,7 +732,7 @@ class IotDeviceView(HomeAssistantView):
             "fan.xiaomi_cpa4",
             "sensor.xiaomi_cpa4",
         ]
-        states = list(
+        filtered_states = list(
             filter(
                 lambda s: any(
                     sensor_wanted in s.entity_id
@@ -697,6 +741,18 @@ class IotDeviceView(HomeAssistantView):
                 states,
             )
         )
+        filtered_states = states  # TODO Delete
+
+        print(f"Filtered sensors: {filtered_states[30]}")
+
+        # Get the first device
+        iot_device = next(
+            (s for s in filtered_states if s.entity_id == data["sensor_name"]),
+            None,
+        )
+        if not iot_device:
+            return self.json_message(f"Sensor {data['sensor_name']} not found", 404)
+        print(f"Found iot_device: {iot_device}")
 
         # Filter sensors only ECAObject with isInsideCamera = true
         return self.json(states)
