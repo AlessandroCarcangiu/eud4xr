@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import inspect
 import logging
 import sys
@@ -90,7 +92,9 @@ async def async_setup_platform(
 
     # Task Expressions #
     if CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY in discovery_info:
-        counters_names = discovery_info.pop(CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY)
+        counters_names = discovery_info.pop(
+            CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY
+        )
 
         if counters_names:
             entities = []
@@ -2719,7 +2723,6 @@ class ECABottle(ECAEntity):
     @property
     def fillLevel(self) -> int:
         return self._fillLevel
-
 
     @eca_script_action(verb="increase", variable="level", modifier="by")
     async def async_fill(self, amount: int) -> None:

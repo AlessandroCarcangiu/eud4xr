@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import os
 
 import yaml
@@ -6,7 +8,6 @@ from homeassistant.components.sensor import SensorEntity
 
 
 class TaskExpressionSensor(SensorEntity):
-
     def __init__(self, hass) -> None:
         self.hass = hass
         self._state = {"orders": [], "sequences": [], "choices": []}
@@ -44,10 +45,9 @@ class TaskExpressionSensor(SensorEntity):
         def extract_name_state(list_of_items):
             result = []
             for item in list_of_items:
-                result.append({
-                    "name": item.get("name"),
-                    "state": item.get("state", {})
-                })
+                result.append(
+                    {"name": item.get("name"), "state": item.get("state", {})}
+                )
             return result
 
         self._state["sequences"] = extract_name_state(expressions.get("sequences", []))

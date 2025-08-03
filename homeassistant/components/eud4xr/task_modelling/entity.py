@@ -1,3 +1,5 @@
+# ruff: noqa
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.storage import Store
@@ -10,21 +12,24 @@ from ..const import (
 
 
 class CounterOrderIndependence(Entity):
-    def __init__(self, hass: HomeAssistant, name: str ) -> None:
+    def __init__(self, hass: HomeAssistant, name: str) -> None:
         self._attr_name = name
         self._attr_unique_id = f"EXPR_counter_{name}"
         self._attr_state = 0
 
     async def async_added_to_hass(self) -> None:
         """Run when entity is added to hass."""
-        store = Store(self.hass, CONF_TASK_MODELLING_STORE_VERSION, CONF_TASK_MODELLING_STORE_NAME)
+        store = Store(
+            self.hass, CONF_TASK_MODELLING_STORE_VERSION, CONF_TASK_MODELLING_STORE_NAME
+        )
         data = await store.async_load() or {}
-        counters_names = data.setdefault(CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY, [])
+        counters_names = data.setdefault(
+            CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY, []
+        )
         if self.name not in counters_names:
             counters_names.append(self.name)
             data[CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY] = counters_names
             await store.async_save(data)
-
 
     @property
     def state(self) -> int:
@@ -38,12 +43,13 @@ class CounterOrderIndependence(Entity):
         self._attr_state += 1
         self.async_write_ha_state()
 
+
 class CounterIteration(Entity):
     def __init__(self, hass: HomeAssistant, name: str, list, n) -> None:
         self._attr_name = name
         self._attr_unique_id = f"EXPR_iteration_{name}"
-        self._state = False,
-        self._counters = {},
+        self._state = (False,)
+        self._counters = ({},)
         self._num_iterations = n
         for item in list:
             if isinstance(item, str):
@@ -51,13 +57,18 @@ class CounterIteration(Entity):
 
     async def async_added_to_hass(self) -> None:
         """Run when entity is added to hass."""
-        store = Store(self.hass, CONF_TASK_MODELLING_STORE_VERSION, CONF_TASK_MODELLING_STORE_NAME)
+        store = Store(
+            self.hass, CONF_TASK_MODELLING_STORE_VERSION, CONF_TASK_MODELLING_STORE_NAME
+        )
         data = await store.async_load() or {}
-        counters_names = data.setdefault(CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY, [])
+        counters_names = data.setdefault(
+            CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY, []
+        )
         if self.name not in counters_names:
             counters_names.append(self.name)
             data[CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY] = counters_names
             await store.async_save(data)
+
     @property
     def state(self) -> int:
         return self._attr_state

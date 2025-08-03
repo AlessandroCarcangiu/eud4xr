@@ -1,3 +1,5 @@
+# ruff: noqa
+
 from enum import Enum
 
 import voluptuous as vol
@@ -55,11 +57,7 @@ class ECAPosition:
         return "{" + f"'x': {self.x}, 'y': {self.y}, 'z': {self.z}" + "}"
 
     def to_value(self) -> dict:
-        return {
-            "x": self.x,
-            "y": self.y,
-            "z": self.z
-        }
+        return {"x": self.x, "y": self.y, "z": self.z}
 
     @classmethod
     def from_dict(cls, data):

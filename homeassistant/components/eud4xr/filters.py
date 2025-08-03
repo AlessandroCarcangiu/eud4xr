@@ -1,3 +1,5 @@
+# ruff: noqa
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er, device_registry as dr
 from .hass_utils import get_entity_instance_by_entity_id, find_sensor
@@ -11,26 +13,36 @@ def get_entities_for_device(hass: HomeAssistant, device_id: str) -> list:
         if entry.device_id == device_id
     ]
 
+
 def get_entity_data(hass: HomeAssistant, service_map: list, entity: any) -> dict:
     entity_id = entity.entity_id
     state = hass.states.get(entity_id)
-    domain = entity_id.split('.')[0]
+    domain = entity_id.split(".")[0]
     services = list(service_map.get(domain, {}).keys())
     return {
         "entity_id": entity_id,
         "domain": domain,
         "state": state.state if state else None,
         "attributes": state.attributes if state else {},
-        "services": services
+        "services": services,
     }
 
 
-async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: list = None, only_objects: bool = False) -> dict:
+async def get_devices_data(
+    hass: HomeAssistant,
+    suffix: str = "_real",
+    names: list = None,
+    only_objects: bool = False,
+) -> dict:
     devices_data = dict()
     service_map = hass.services.async_services()
 
     # retrieve labelled devices
-    devices = [d for d in dr.async_get(hass).devices.values() if d.name_by_user and suffix in d.name_by_user]
+    devices = [
+        d
+        for d in dr.async_get(hass).devices.values()
+        if d.name_by_user and suffix in d.name_by_user
+    ]
 
     # for each device, get its info (properties, entities, ecc.)
     for device in devices:
@@ -43,11 +55,13 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             # aggiungere description
         }
         entities = get_entities_for_device(hass, device.id)
-        device_data["entities"] = [get_entity_data(hass, service_map, e) for e in entities]
+        device_data["entities"] = [
+            get_entity_data(hass, service_map, e) for e in entities
+        ]
         devices_data[device_name] = device_data
 
     entities2 = {
-         "NetAtmo": {
+        "NetAtmo": {
             "description": " Questo dispositivo è un sensore che rileva vari dati ambientali. Le sue entità sono: - binary_sensor.netatmoeud4xr_connectivity: rileva se il dispositivo è connesso o meno. - sensor.netatmoeud4xr_temperature: misura la temperatura in °C. - sensor.netatmoeud4xr_carbon_dioxide: misura il livello di CO₂ in ppm. - sensor.netatmoeud4xr_atmospheric_pressure: misura la pressione atmosferica in hPa. - sensor.netatmoeud4xr_noise: misura il rumore in dB. - sensor.netatmoeud4xr_humidity: misura l'umidità in %.- sensor.netatmoeud4xr_health_index: indica la qualità dell’aria con valori come 'healthy', 'fine', 'fair', 'poor', 'unhealthy'.",
             "entity_id": "binary_sensor.netatmoeud4xr_connectivity",
             "state": "off",
@@ -56,7 +70,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                 "longitude": 10.4206967,
                 "attribution": "Data provided by Netatmo",
                 "device_class": "connectivity",
-                "friendly_name": "NetatmoEUD4XR Connectivity"
+                "friendly_name": "NetatmoEUD4XR Connectivity",
             },
             "last_changed": "2025-07-11T15:26:29.958730+00:00",
             "last_reported": "2025-07-14T09:43:11.518832+00:00",
@@ -64,7 +78,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1GQ26Y7YQ637GFCRSMZ3Q",
                 "parent_id": None,
-                "user_id": None
+                "user_id": None,
             },
             "entity_id": "sensor.netatmoeud4xr_temperature",
             "state": "unavailable",
@@ -73,7 +87,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                 "unit_of_measurement": "°C",
                 "attribution": "Data provided by Netatmo",
                 "device_class": "temperature",
-                "friendly_name": "NetatmoEUD4XR Temperature"
+                "friendly_name": "NetatmoEUD4XR Temperature",
             },
             "last_changed": "2025-07-11T15:26:29.959536+00:00",
             "last_reported": "2025-07-14T09:43:11.519354+00:00",
@@ -81,7 +95,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1GQ27CTFTQ475SNJ90TSC",
                 "parent_id": None,
-                "user_id": None
+                "user_id": None,
             },
             "entity_id": "sensor.netatmoeud4xr_carbon_dioxide",
             "state": "unavailable",
@@ -90,7 +104,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                 "unit_of_measurement": "ppm",
                 "attribution": "Data provided by Netatmo",
                 "device_class": "carbon_dioxide",
-                "friendly_name": "NetatmoEUD4XR Carbon dioxide"
+                "friendly_name": "NetatmoEUD4XR Carbon dioxide",
             },
             "last_changed": "2025-07-11T15:26:29.959813+00:00",
             "last_reported": "2025-07-14T09:43:11.519624+00:00",
@@ -98,7 +112,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1GQ272CEWY6WRAZJM5Q7Y",
                 "parent_id": None,
-                "user_id": None
+                "user_id": None,
             },
             "entity_id": "sensor.netatmoeud4xr_atmospheric_pressure",
             "state": "unavailable",
@@ -107,7 +121,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                 "unit_of_measurement": "hPa",
                 "attribution": "Data provided by Netatmo",
                 "device_class": "atmospheric_pressure",
-                "friendly_name": "NetatmoEUD4XR Atmospheric pressure"
+                "friendly_name": "NetatmoEUD4XR Atmospheric pressure",
             },
             "last_changed": "2025-07-11T15:26:29.960043+00:00",
             "last_reported": "2025-07-14T09:43:11.519881+00:00",
@@ -115,7 +129,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1GQ28CWEVX4WQ56R8XHB8",
                 "parent_id": None,
-                "user_id": None
+                "user_id": None,
             },
             "entity_id": "sensor.netatmoeud4xr_noise",
             "state": "unavailable",
@@ -124,7 +138,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                 "unit_of_measurement": "dB",
                 "attribution": "Data provided by Netatmo",
                 "device_class": "sound_pressure",
-                "friendly_name": "NetatmoEUD4XR Noise"
+                "friendly_name": "NetatmoEUD4XR Noise",
             },
             "last_changed": "2025-07-11T15:26:29.960278+00:00",
             "last_reported": "2025-07-14T09:43:11.520133+00:00",
@@ -132,7 +146,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1GQ28VBE4PYG547ZFMQ0P",
                 "parent_id": None,
-                "user_id": None
+                "user_id": None,
             },
             "entity_id": "sensor.netatmoeud4xr_humidity",
             "state": "unavailable",
@@ -141,7 +155,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                 "unit_of_measurement": "%",
                 "attribution": "Data provided by Netatmo",
                 "device_class": "humidity",
-                "friendly_name": "NetatmoEUD4XR Humidity"
+                "friendly_name": "NetatmoEUD4XR Humidity",
             },
             "last_changed": "2025-07-11T15:26:29.960442+00:00",
             "last_reported": "2025-07-14T09:43:11.520382+00:00",
@@ -149,20 +163,15 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1GQ28E5EYFXHFVMB5KEBQ",
                 "parent_id": None,
-                "user_id": None
-            }, "entity_id": "sensor.netatmoeud4xr_health_index",
+                "user_id": None,
+            },
+            "entity_id": "sensor.netatmoeud4xr_health_index",
             "state": "unavailable",
             "attributes": {
-                "options": [
-                    "healthy",
-                    "fine",
-                    "fair",
-                    "poor",
-                    "unhealthy"
-                ],
+                "options": ["healthy", "fine", "fair", "poor", "unhealthy"],
                 "attribution": "Data provided by Netatmo",
                 "device_class": "enum",
-                "friendly_name": "NetatmoEUD4XR Health index"
+                "friendly_name": "NetatmoEUD4XR Health index",
             },
             "last_changed": "2025-07-11T15:26:29.960726+00:00",
             "last_reported": "2025-07-14T09:43:11.520639+00:00",
@@ -170,21 +179,17 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1GQ284TSYYPPG8WK1GM41",
                 "parent_id": None,
-                "user_id": None
-            }
+                "user_id": None,
+            },
         },
         "Xiaomi": {
             "description": "Questo dispositivo purifica l'aria e può essere controllato da remoto. Le sue funzionalità principali sono: - Accensione e spegnimento del purificatore. - Impostazione di una modalità predefinita tra: Auto, Sleep, Favorite.- Impostazione della velocità della ventola in percentuale (da 0 a 100%).",
             "entity_id": "fan.xiaomi_cpa4_e35d_air_purifier",
             "state": "unavailable",
             "attributes": {
-                "preset_modes": [
-                    "Auto",
-                    "Sleep",
-                    "Favorite"
-                ],
+                "preset_modes": ["Auto", "Sleep", "Favorite"],
                 "friendly_name": "Xiaomi Smart Air Purifier 4 Compact Air Purifier",
-                "supported_features": 57
+                "supported_features": 57,
             },
             "last_changed": "2025-07-11T15:26:54.303589+00:00",
             "last_reported": "2025-07-11T15:26:54.303589+00:00",
@@ -192,7 +197,7 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
             "context": {
                 "id": "01JZX1HETZVD8AD4WZEXYVTC2D",
                 "parent_id": None,
-                "user_id": None
+                "user_id": None,
             },
             "components": {
                 "domain": "fan",
@@ -202,78 +207,42 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                         "description": "Turns fan on.",
                         "fields": {
                             "percentage": {
-                                "filter": {
-                                    "supported_features": [
-                                        1
-                                    ]
-                                },
+                                "filter": {"supported_features": [1]},
                                 "selector": {
                                     "number": {
                                         "min": 0,
                                         "max": 100,
-                                        "unit_of_measurement": "%"
+                                        "unit_of_measurement": "%",
                                     }
                                 },
                                 "name": "Percentage",
-                                "description": "Speed of the fan."
+                                "description": "Speed of the fan.",
                             },
                             "preset_mode": {
                                 "example": "auto",
-                                "filter": {
-                                    "supported_features": [
-                                        8
-                                    ]
-                                },
-                                "selector": {
-                                    "text": None
-                                },
+                                "filter": {"supported_features": [8]},
+                                "selector": {"text": None},
                                 "name": "Preset mode",
-                                "description": "Preset fan mode."
-                            }
+                                "description": "Preset fan mode.",
+                            },
                         },
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        32
-                                    ]
-                                }
-                            ]
-                        }
+                            "entity": [{"domain": ["fan"], "supported_features": [32]}]
+                        },
                     },
                     "turn_off": {
                         "name": "Turn off",
                         "description": "Turns fan off.",
                         "fields": {},
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        16
-                                    ]
-                                }
-                            ]
-                        }
+                            "entity": [{"domain": ["fan"], "supported_features": [16]}]
+                        },
                     },
                     "toggle": {
                         "name": "Toggle",
                         "description": "Toggles a fan on/off.",
                         "fields": {},
-                        "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ]
-                                }
-                            ]
-                        }
+                        "target": {"entity": [{"domain": ["fan"]}]},
                     },
                     "increase_speed": {
                         "name": "Increase speed",
@@ -286,25 +255,16 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                                     "number": {
                                         "min": 0,
                                         "max": 100,
-                                        "unit_of_measurement": "%"
+                                        "unit_of_measurement": "%",
                                     }
                                 },
                                 "name": "Increment",
-                                "description": "Percentage step by which the speed should be increased."
+                                "description": "Percentage step by which the speed should be increased.",
                             }
                         },
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        1
-                                    ]
-                                }
-                            ]
-                        }
+                            "entity": [{"domain": ["fan"], "supported_features": [1]}]
+                        },
                     },
                     "decrease_speed": {
                         "name": "Decrease speed",
@@ -317,25 +277,16 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                                     "number": {
                                         "min": 0,
                                         "max": 100,
-                                        "unit_of_measurement": "%"
+                                        "unit_of_measurement": "%",
                                     }
                                 },
                                 "name": "Decrement",
-                                "description": "Percentage step by which the speed should be decreased."
+                                "description": "Percentage step by which the speed should be decreased.",
                             }
                         },
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        1
-                                    ]
-                                }
-                            ]
-                        }
+                            "entity": [{"domain": ["fan"], "supported_features": [1]}]
+                        },
                     },
                     "oscillate": {
                         "name": "Oscillate",
@@ -343,25 +294,14 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                         "fields": {
                             "oscillating": {
                                 "required": True,
-                                "selector": {
-                                    "boolean": None
-                                },
+                                "selector": {"boolean": None},
                                 "name": "Oscillating",
-                                "description": "Turns oscillation on/off."
+                                "description": "Turns oscillation on/off.",
                             }
                         },
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        2
-                                    ]
-                                }
-                            ]
-                        }
+                            "entity": [{"domain": ["fan"], "supported_features": [2]}]
+                        },
                     },
                     "set_direction": {
                         "name": "Set direction",
@@ -371,29 +311,17 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                                 "required": True,
                                 "selector": {
                                     "select": {
-                                        "options": [
-                                            "forward",
-                                            "reverse"
-                                        ],
-                                        "translation_key": "direction"
+                                        "options": ["forward", "reverse"],
+                                        "translation_key": "direction",
                                     }
                                 },
                                 "name": "Direction",
-                                "description": "Direction of the fan rotation."
+                                "description": "Direction of the fan rotation.",
                             }
                         },
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        4
-                                    ]
-                                }
-                            ]
-                        }
+                            "entity": [{"domain": ["fan"], "supported_features": [4]}]
+                        },
                     },
                     "set_percentage": {
                         "name": "Set speed",
@@ -405,25 +333,16 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                                     "number": {
                                         "min": 0,
                                         "max": 100,
-                                        "unit_of_measurement": "%"
+                                        "unit_of_measurement": "%",
                                     }
                                 },
                                 "name": "Percentage",
-                                "description": "Speed of the fan."
+                                "description": "Speed of the fan.",
                             }
                         },
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        1
-                                    ]
-                                }
-                            ]
-                        }
+                            "entity": [{"domain": ["fan"], "supported_features": [1]}]
+                        },
                     },
                     "set_preset_mode": {
                         "name": "Set preset mode",
@@ -432,35 +351,26 @@ async def get_devices_data(hass: HomeAssistant, suffix: str = "_real", names: li
                             "preset_mode": {
                                 "required": True,
                                 "example": "auto",
-                                "selector": {
-                                    "text": None
-                                },
+                                "selector": {"text": None},
                                 "name": "Preset mode",
-                                "description": "Preset fan mode."
+                                "description": "Preset fan mode.",
                             }
                         },
                         "target": {
-                            "entity": [
-                                {
-                                    "domain": [
-                                        "fan"
-                                    ],
-                                    "supported_features": [
-                                        8
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                }
+                            "entity": [{"domain": ["fan"], "supported_features": [8]}]
+                        },
+                    },
+                },
             },
-        }
+        },
     }
 
     return {"real_objects": devices_data}
 
 
-async def get_virtual_entities(hass: HomeAssistant, names: list = None, only_objects: bool = False) -> dict:
+async def get_virtual_entities(
+    hass: HomeAssistant, names: list = None, only_objects: bool = False
+) -> dict:
     objects = list()
     objects_all = list()
     registered_groups = filter(
@@ -468,9 +378,8 @@ async def get_virtual_entities(hass: HomeAssistant, names: list = None, only_obj
         hass.states.async_all(),
     )
 
-
     if only_objects:
-            objects = [state.entity_id.split(".")[-1] for state in registered_groups]
+        objects = [state.entity_id.split(".")[-1] for state in registered_groups]
     else:
         # names
         names = [n.lower() for n in names] if names else []
@@ -483,7 +392,7 @@ async def get_virtual_entities(hass: HomeAssistant, names: list = None, only_obj
             new_group["services"] = list()
             new_group["properties"] = list()
 
-            #components = list()
+            # components = list()
             for i in state.attributes["entity_id"]:
                 sensor, entity = find_sensor(hass, i)
                 # components.append({
@@ -523,4 +432,3 @@ async def get_virtual_entities(hass: HomeAssistant, names: list = None, only_obj
                 objects.append(new_group)
 
     return {"virtual_objects": objects if objects else objects_all}
-

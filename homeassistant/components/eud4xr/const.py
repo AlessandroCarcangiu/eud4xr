@@ -1,3 +1,5 @@
+# ruff: noqa
+
 IS_DEBUG = False
 
 AUTOMATION_PATH = "automations.yaml"

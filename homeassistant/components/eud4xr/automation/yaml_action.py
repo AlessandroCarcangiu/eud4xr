@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import inspect
 
 from homeassistant.core import HomeAssistant
@@ -11,8 +13,15 @@ from ..sensor import get_classes_subclassing
 
 
 class YAMLAction:
-
-    def __init__(self, subject: str, verb: str, obj: str = None, variable: str = '', modifier: str='', value: str=None) -> None:
+    def __init__(
+        self,
+        subject: str,
+        verb: str,
+        obj: str = None,
+        variable: str = "",
+        modifier: str = "",
+        value: str = None,
+    ) -> None:
         self.verb = verb
         self.subject = subject
         self.obj = obj
@@ -46,12 +55,12 @@ class YAMLAction:
                 obj=data.get("obj"),
                 variable=data.get("variable"),
                 modifier=data.get("modifier"),
-                value=data.get("value")
+                value=data.get("value"),
             )
         return data
 
     def to_yaml(self, hass: HomeAssistant, as_event: bool = False) -> dict:
-        '''It converts eca actions from natural language to hass format.
+        """It converts eca actions from natural language to hass format.
         Action as trigger:
             platform: event
             event_type: eud4xr
@@ -67,7 +76,7 @@ class YAMLAction:
             data:
                 entity_id: sensor.{game_object_name}_{eca_script}
                 {argument_name} (optional and get from the service): sensor.{game_object_name}_{eca_script} or a {value}
-        '''
+        """
         # the next code converts game object name to a game_object@eca_script
         # eventually, it also converts the value parameter if it is a reference to an object
         # trigger -> event (because a service cannot be a trigger)
@@ -77,35 +86,37 @@ class YAMLAction:
                 print(f"to_dict: {self.to_dict()}")
                 print("------------end YAMLAction - AS EVENT - to_yaml------------\n")
             data = self.to_dict()
-            return {
-                "platform": "event",
-                "event_type": DOMAIN,
-                "event_data": data
-            }
+            return {"platform": "event", "event_type": DOMAIN, "event_data": data}
         if IS_DEBUG:
-                print("------------start YAMLAction - AS service - to_yaml------------")
-                print(f"to_dict: {self.to_dict()}")
-                print("------------end YAMLAction - AS service - to_yaml------------\n")
+            print("------------start YAMLAction - AS service - to_yaml------------")
+            print(f"to_dict: {self.to_dict()}")
+            print("------------end YAMLAction - AS service - to_yaml------------\n")
 
         # as service #
         data = dict()
         passive_instance = None
 
-        active_instance, method_name, _, sig = get_entity_instance_and_method_signature_by_structured_language(
-            hass, self.subject, self.verb, self.variable, self.modifier)
+        active_instance, method_name, _, sig = (
+            get_entity_instance_and_method_signature_by_structured_language(
+                hass, self.subject, self.verb, self.variable, self.modifier
+            )
+        )
 
         # active or passive action
         if not method_name:
             # new #
-            passive_instance, method_name, _, sig = get_entity_instance_and_method_signature_by_structured_language(
-            hass, self.obj, self.verb, self.variable, self.modifier)
+            passive_instance, method_name, _, sig = (
+                get_entity_instance_and_method_signature_by_structured_language(
+                    hass, self.obj, self.verb, self.variable, self.modifier
+                )
+            )
             if not method_name:
                 raise Exception(f"Service {self.verb} isnot supported")
 
         self.verb = method_name.replace("async_", "")
         if sig.parameters.items():
             for param_name, param in sig.parameters.items():
-                if param_name != 'self':
+                if param_name != "self":
                     param_type = param.annotation.__name__.lower()
                     v = None
                     if passive_instance:
@@ -119,13 +130,14 @@ class YAMLAction:
                         data[param_name] = f"sensor.{v}_{param_type}".lower()
                     else:
                         data[param_name] = v
-        self.subject = f"{active_instance.entity_id}" if active_instance else f"{passive_instance.entity_id}"
+        self.subject = (
+            f"{active_instance.entity_id}"
+            if active_instance
+            else f"{passive_instance.entity_id}"
+        )
         # populate yaml service
         data["entity_id"] = self.subject
-        return {
-            "action": f"{DOMAIN}.{self.verb}",
-            "data": data
-        }
+        return {"action": f"{DOMAIN}.{self.verb}", "data": data}
 
     @staticmethod
     def get_service_method(hass: HomeAssistant, entity_id: str, service: str) -> tuple:

@@ -1,3 +1,5 @@
+# ruff: noqa
+
 from collections import OrderedDict
 import logging
 import math

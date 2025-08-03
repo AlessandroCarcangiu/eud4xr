@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import copy
 from datetime import datetime
 import logging

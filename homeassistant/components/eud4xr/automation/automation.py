@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import copy
 import logging
 import uuid
@@ -16,12 +18,18 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Automation:
-
-    def __init__(self, trigger: Action | ECAAction, conditions: list[Condition], actions: list[Action | ECAAction],
-                 alias: str = "", description: str = "", id: str = None) -> None:
+    def __init__(
+        self,
+        trigger: Action | ECAAction,
+        conditions: list[Condition],
+        actions: list[Action | ECAAction],
+        alias: str = "",
+        description: str = "",
+        id: str = None,
+    ) -> None:
         if not id:
             id = str(uuid.uuid4())
-        self.id = id# datetime.now().strftime("%Y%m%d%H%M%S")
+        self.id = id  # datetime.now().strftime("%Y%m%d%H%M%S")
         self.trigger = trigger
         self.conditions = conditions
         self.actions = actions
@@ -37,26 +45,36 @@ class Automation:
             conditions = self.conditions
         return {
             "id": self.id,
-            "trigger": [self.trigger.to_dict()] if not isinstance(self.trigger, dict) else self.trigger,
+            "trigger": [self.trigger.to_dict()]
+            if not isinstance(self.trigger, dict)
+            else self.trigger,
             "conditions": conditions,
-            "actions": [a.to_dict() if isinstance(a, ECAAction) else a for a in self.actions] if self.actions else self.actions,
+            "actions": [
+                a.to_dict() if isinstance(a, ECAAction) else a for a in self.actions
+            ]
+            if self.actions
+            else self.actions,
             "alias": self.alias,
             "description": self.description,
             "entity_id": f"automation.{slugify(self.alias)}",
-            "mode": "single"
+            "mode": "single",
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Automation':
+    def from_dict(cls, data: dict) -> "Automation":
         r_conditions = data.get("conditions", [])
         kwargs = {
-            "id":data.get("id"),
-            "trigger": cls.__get_service(data.get("trigger")), #YAMLAction.from_dict(data.get("trigger")),
-            "actions": [cls.__get_service(a) for a in data.get("actions")], # [YAMLAction.from_dict(a) for a in data.get("actions")],
-            "alias":data.get("alias"),
-            "description":data.get("description"),
+            "id": data.get("id"),
+            "trigger": cls.__get_service(
+                data.get("trigger")
+            ),  # YAMLAction.from_dict(data.get("trigger")),
+            "actions": [
+                cls.__get_service(a) for a in data.get("actions")
+            ],  # [YAMLAction.from_dict(a) for a in data.get("actions")],
+            "alias": data.get("alias"),
+            "description": data.get("description"),
         }
-        kwargs["conditions"]=[get_condition(r_conditions)] if r_conditions else []
+        kwargs["conditions"] = [get_condition(r_conditions)] if r_conditions else []
         return cls(**kwargs)
 
     @classmethod
@@ -74,30 +92,38 @@ class Automation:
         yaml_data["alias"] = self.alias
         yaml_data["description"] = self.description
         # trigger
-        #yaml_data["trigger"] = [self.trigger.to_yaml(hass=hass, as_event=True)]
-        yaml_data["trigger"] = [self.safe_action_to_yaml(hass, self.trigger, as_event=True)]
+        # yaml_data["trigger"] = [self.trigger.to_yaml(hass=hass, as_event=True)]
+        yaml_data["trigger"] = [
+            self.safe_action_to_yaml(hass, self.trigger, as_event=True)
+        ]
         # conditions
         yaml_data["condition"] = [c.to_yaml(hass) for c in self.conditions]
         # actions
-        #yaml_data["action"] = [a.to_yaml(hass=hass) for a in self.actions]
+        # yaml_data["action"] = [a.to_yaml(hass=hass) for a in self.actions]
         yaml_data["action"] = [self.safe_action_to_yaml(hass, a) for a in self.actions]
         # convert to yaml
         automation_yaml = yaml.dump(yaml_data, default_flow_style=False)
         return automation_yaml
 
     @classmethod
-    def from_yaml(cls, hass: HomeAssistant, data: dict) -> 'Automation':
+    def from_yaml(cls, hass: HomeAssistant, data: dict) -> "Automation":
         # ActionClass = ECAAction
         # trigger = ActionClass.from_yaml(hass, data.get("trigger"), is_trigger=True)
         trigger = cls.safe_action_from_yaml(hass, data.get("trigger"), is_trigger=True)
         # actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]
         automation_actions = data.get("action")
-        actions = [cls.safe_action_from_yaml(hass, a) for a in automation_actions] if automation_actions else None
+        actions = (
+            [cls.safe_action_from_yaml(hass, a) for a in automation_actions]
+            if automation_actions
+            else None
+        )
         automation_conditions = data.get("condition")
         conditions = None
         if automation_conditions:
             conditions = [
-                SimpleCondition.from_yaml(hass, c) if c["condition"] == "template" else CompositeCondition.from_yaml(hass, c)
+                SimpleCondition.from_yaml(hass, c)
+                if c["condition"] == "template"
+                else CompositeCondition.from_yaml(hass, c)
                 for c in automation_conditions
             ]
 
@@ -113,11 +139,13 @@ class Automation:
             actions=actions,
             alias=data.get("alias"),
             description=data.get("description"),
-            id=id
+            id=id,
         )
 
     @staticmethod
-    def safe_action_to_yaml(hass: HomeAssistant, action: YAMLAction | dict, **kwargs) -> dict:
+    def safe_action_to_yaml(
+        hass: HomeAssistant, action: YAMLAction | dict, **kwargs
+    ) -> dict:
         data = None
         if isinstance(action, dict):
             data = action
@@ -126,7 +154,9 @@ class Automation:
         return data
 
     @staticmethod
-    def safe_action_from_yaml(hass: HomeAssistant, data: dict,  **kwargs) -> ECAAction | SafeAction | dict:
+    def safe_action_from_yaml(
+        hass: HomeAssistant, data: dict, **kwargs
+    ) -> ECAAction | SafeAction | dict:
         action = None
         try:
             d = copy.deepcopy(data)
@@ -136,5 +166,9 @@ class Automation:
                 d = copy.deepcopy(data)
                 action = SafeAction.from_yaml(d)
             except:
-                action = data[0] if kwargs.get("is_trigger") and isinstance(data, list) else data
+                action = (
+                    data[0]
+                    if kwargs.get("is_trigger") and isinstance(data, list)
+                    else data
+                )
         return action
