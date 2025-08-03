@@ -1,10 +1,10 @@
 import copy
 import logging
 import uuid
-
 import yaml
 
 from homeassistant.core import HomeAssistant
+from homeassistant.util import slugify
 
 from .action import Action
 from .condition import CompositeCondition, Condition, SimpleCondition, get_condition
@@ -19,11 +19,13 @@ class Automation:
 
     def __init__(self, trigger: Action | ECAAction, conditions: list[Condition], actions: list[Action | ECAAction],
                  alias: str = "", description: str = "", id: str = None) -> None:
-        self.id = id if id else str(uuid.uuid4())# datetime.now().strftime("%Y%m%d%H%M%S")
+        if not id:
+            id = str(uuid.uuid4())
+        self.id = id# datetime.now().strftime("%Y%m%d%H%M%S")
         self.trigger = trigger
         self.conditions = conditions
         self.actions = actions
-        self.alias = alias
+        self.alias = slugify(alias)
         self.description = description
 
     def to_dict(self) -> dict:
@@ -35,11 +37,12 @@ class Automation:
             conditions = self.conditions
         return {
             "id": self.id,
-            "trigger": [self.trigger.to_dict()],
+            "trigger": [self.trigger.to_dict()] if not isinstance(self.trigger, dict) else self.trigger,
             "conditions": conditions,
             "actions": [a.to_dict() if isinstance(a, ECAAction) else a for a in self.actions] if self.actions else self.actions,
             "alias": self.alias,
             "description": self.description,
+            "entity_id": f"automation.{slugify(self.alias)}",
             "mode": "single"
         }
 
@@ -48,13 +51,21 @@ class Automation:
         r_conditions = data.get("conditions", [])
         kwargs = {
             "id":data.get("id"),
-            "trigger":YAMLAction.from_dict(data.get("trigger")),
-            "actions":[YAMLAction.from_dict(a) for a in data.get("actions")],
+            "trigger": cls.__get_service(data.get("trigger")), #YAMLAction.from_dict(data.get("trigger")),
+            "actions": [cls.__get_service(a) for a in data.get("actions")], # [YAMLAction.from_dict(a) for a in data.get("actions")],
             "alias":data.get("alias"),
             "description":data.get("description"),
         }
         kwargs["conditions"]=[get_condition(r_conditions)] if r_conditions else []
         return cls(**kwargs)
+
+    @classmethod
+    def __get_service(cls, service_data: dict) -> YAMLAction | list:
+        try:
+            result = YAMLAction.from_dict(service_data)
+        except Exception as e:
+            result = service_data
+        return result
 
     def to_yaml(self, hass: HomeAssistant) -> str:
         yaml_data = dict()
@@ -95,26 +106,27 @@ class Automation:
             elif len(conditions) == 1:
                 conditions = conditions[0]
 
+        id = data.get("id")
         return cls(
             trigger=trigger,
             conditions=conditions,
             actions=actions,
             alias=data.get("alias"),
             description=data.get("description"),
-            id=data.get("id")
+            id=id
         )
 
     @staticmethod
-    def safe_action_to_yaml(hass: HomeAssistant, action: YAMLAction, **kwargs) -> dict:
+    def safe_action_to_yaml(hass: HomeAssistant, action: YAMLAction | dict, **kwargs) -> dict:
         data = None
-        try:
+        if isinstance(action, dict):
+            data = action
+        else:
             data = action.to_yaml(hass, **kwargs)
-        except Exception:
-            data = SafeAction.to_yaml(action.to_dict())
         return data
 
     @staticmethod
-    def safe_action_from_yaml(hass: HomeAssistant, data: dict, **kwargs) -> ECAAction | SafeAction | dict:
+    def safe_action_from_yaml(hass: HomeAssistant, data: dict,  **kwargs) -> ECAAction | SafeAction | dict:
         action = None
         try:
             d = copy.deepcopy(data)
@@ -124,5 +136,5 @@ class Automation:
                 d = copy.deepcopy(data)
                 action = SafeAction.from_yaml(d)
             except:
-                action = data
+                action = data[0] if kwargs.get("is_trigger") and isinstance(data, list) else data
         return action

@@ -29,7 +29,7 @@ from .const import (
     GET_IOT_DEVICE_INFO,
     MIN_DISTANCE,
 )
-from .filters import get_real_smart_entities, get_virtual_entities
+from .filters import get_devices_data, get_virtual_entities
 from .hass_utils import get_entity_instance_by_entity_id
 from .task_modelling import TaskExpression
 from .utils import MappedClasses
@@ -60,6 +60,11 @@ class AutomationsView(HomeAssistantView):
     async def get(self, request):
         # get id
         automation_id = request.match_info.get("id")
+
+        # # update entity_id
+        # automations = self.hass.states.async_all("automation")
+        # for a in automations:
+        #     print(a.attributes.get("id"))
 
         # retrieve
         if automation_id:
@@ -278,7 +283,7 @@ class ObjectsView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request):
-        real_objects = await get_real_smart_entities(self.hass)
+        real_objects = await get_devices_data(self.hass)
         virtual_objects = await get_virtual_entities(self.hass)
         return self.json({**real_objects, **virtual_objects})
 

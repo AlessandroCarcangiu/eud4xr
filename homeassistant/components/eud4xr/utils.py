@@ -89,7 +89,7 @@ class Service:
         # third solution
         data = {}
         if self.params:
-            data["Requested Parameter"] = self.params[list(self.params.keys())[0]]
+            data["requested_parameter"] = self.params[list(self.params.keys())[0]]
 
         json_structure = {
             "subject": "{{l'oggetto che compie l'azione}}",
@@ -104,10 +104,10 @@ class Service:
                 json_structure["obj"] = "{{un valore, o un altro oggetto, coinvolti nell'azione}}"
 
         return {
-            #"Service's name": kwargs["verb"],
+            "verb": kwargs["verb"],
             **data,
-            "When to use me?": self.description,
-            "JSON format": json_structure
+            "description": self.description,
+            "format": json_structure
         }
 
 
