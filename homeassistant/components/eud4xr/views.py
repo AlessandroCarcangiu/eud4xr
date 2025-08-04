@@ -89,6 +89,7 @@ class AutomationsView(HomeAssistantView):
         _LOGGER.error("The request must specify an id in the url")
 
 
+# TODO J - Lavorare qui
 class ListFramedVirtualDevicesView(HomeAssistantView):
     """class State:
 
@@ -118,34 +119,61 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
 
     async def get(self, request):
         def filter_sensors(s: State):
-            # Check if:
-            # 0) The entity is a sensor and its state == "active"
-            # 1) It has the attribute device_class == eca_entity
-            # 2) @Type is equal to "ECAObject"
-            # 3) The attribute "isInsideCamera" is "yes"
-            # If all the conditions are met, return True. Otherwise, return False
             # print(f"\nsensor: {s}\n")
+            def is_virtual_eud4xr_sensor(sensor: State) -> bool:
+                # Check if:
+                # 0) The entity is a sensor and its state == "active"
+                # 1) It has the attribute device_class == eca_entity
+                # 2) @Type is equal to "ECAObject"
+                # 3) The attribute "isInsideCamera" is "yes"
+                # If all the conditions are met, return True. Otherwise, return False
+                # print(f"\nsensor: {s}\n")
+                # 0) The entity is not a sensor
+                if s.domain != "sensor" or s.state != "active":
+                    return False
 
-            # 0) The entity is not a sensor
-            if s.domain != "sensor" or s.state != "active":
+                # 1) It has the attribute "friendly_name"
+                if not s.attributes or s.attributes.get("device_class") != "eca_entity":
+                    return False
+
+                # 2) @Type is equal to "ECAObject"
+                friendly_name = s.attributes["friendly_name"]
+                ecatype = friendly_name.split("@")
+                if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
+                    return False
+
+                # 3) The attribute "isInsideCamera" is "yes"
+                if s.attributes["isInsideCamera"] != "yes":
+                    return False
+
+                # If all the conditions are met, return True
+                return True
+
+            def is_iot_device(s: State) -> bool:
+                print(f"\nsensor: {s}\n")
                 return False
+                # # 0) The entity is not a sensor
+                # if s.domain != "sensor" or s.state != "active":
+                #     return False
 
-            # 1) It has the attribute "friendly_name"
-            if not s.attributes or s.attributes.get("device_class") != "eca_entity":
-                return False
+                # # 1) It has the attribute "friendly_name"
+                # if not s.attributes or s.attributes.get("device_class") != "eca_entity":
+                #     return False
 
-            # 2) @Type is equal to "ECAObject"
-            friendly_name = s.attributes["friendly_name"]
-            ecatype = friendly_name.split("@")
-            if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
-                return False
+                # # 2) @Type is equal to "ECAObject"
+                # friendly_name = s.attributes["friendly_name"]
+                # ecatype = friendly_name.split("@")
+                # if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
+                #     return False
 
-            # 3) The attribute "isInsideCamera" is "yes"
-            if s.attributes["isInsideCamera"] != "yes":
-                return False
+                # # 3) The attribute "isInsideCamera" is "yes"
+                # if s.attributes["isInsideCamera"] != "yes":
+                #     return False
 
-            # If all the conditions are met, return True
-            return True
+                # # If all the conditions are met, return True
+                # return True
+
+            return is_virtual_eud4xr_sensor(s) or is_iot_device(s)
 
         # Get the list of sensors in Home Assistant
         states = self.hass.states.async_all()
@@ -203,6 +231,7 @@ class ContextObjectsView(HomeAssistantView):
             DEQUE_FRAMED_OBJECTS,
             DEQUE_INTERACTED_OBJECTS,
             DEQUE_POINTED_OBJECTS,
+            DICT_IOT_DEVICES,
         )
 
         return self.json(
@@ -210,6 +239,7 @@ class ContextObjectsView(HomeAssistantView):
                 "framed_objects": list(DEQUE_FRAMED_OBJECTS),
                 "pointed_objects": list(DEQUE_POINTED_OBJECTS),
                 "interacted_with_objects": list(DEQUE_INTERACTED_OBJECTS),
+                # TODO J - Do we add LIST_IOT_DEVICES here?
             }
         )
 
@@ -316,6 +346,7 @@ class MultimediaFilesView(HomeAssistantView):
         )
 
 
+# TODO J - Lavorare qui
 class FindCloseObjectsView(HomeAssistantView):
     url = f"/api/eud4xr/{API_GET_CLOSE_OBJECTS}"
     name = f"api:{API_GET_CLOSE_OBJECTS}"
@@ -389,15 +420,38 @@ class FindCloseObjectsView(HomeAssistantView):
                                 ref.position, group_ecaobject.position
                             ),
                         }
+            #  TODO J - Aggiunto questo: check also distances with iot devices
+            from .sensor import (
+                DICT_IOT_DEVICES,
+            )  # TODO J - Do we add LIST_IOT_DEVICES here?
 
+            for iot_device, iot_data in DICT_IOT_DEVICES.items():
+                if iot_device != object_name:
+                    distances[iot_device] = {
+                        "distance": self.get_distance(
+                            ref.position, iot_data["position"]
+                        ),
+                        "directions": self.get_direction(
+                            ref.position, iot_data["position"]
+                        ),
+                    }
+        else:
+            return self.json_message(
+                f"Object '{object_name}' not found or does not have a position", 404
+            )
         # keep in distances: i) very close objects (distance < 1) + ii) framed/pointed/grabbed objects
+        # TODO J - Why is this import not at the top?
         from .sensor import (
             DEQUE_FRAMED_OBJECTS,
             DEQUE_INTERACTED_OBJECTS,
             DEQUE_POINTED_OBJECTS,
         )
 
-        deques = [DEQUE_FRAMED_OBJECTS, DEQUE_POINTED_OBJECTS, DEQUE_INTERACTED_OBJECTS]
+        deques = [
+            DEQUE_FRAMED_OBJECTS,
+            DEQUE_POINTED_OBJECTS,
+            DEQUE_INTERACTED_OBJECTS,
+        ]  # TODO J - Do we add LIST_IOT_DEVICES here?
         distances = dict(
             filter(
                 lambda x: x[1]["distance"] < MIN_DISTANCE
@@ -585,7 +639,9 @@ class TaskExpressionView(HomeAssistantView):
             except ValueError as e:
                 return self.json_message(str(e), 400)
             except Exception as e:
-                return self.json_message(f"Errore interno: {e!s}", 500)
+                return self.json_message(
+                    f"Errore interno: {e!s}", 500
+                )  # TODO J - What is !s ?
             return self.json_message(f"Condizione '{name}' creata con successo", 200)
 
         return self.json_message(
@@ -673,6 +729,8 @@ class UpdateIotDeviceIsFramedView(HomeAssistantView):
         self.hass = hass
 
     async def put(self, request):
+        from .sensor import DICT_IOT_DEVICES
+
         data = await request.json()
         print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
 
@@ -716,44 +774,18 @@ class UpdateIotDeviceIsFramedView(HomeAssistantView):
         # endregion Data Checks
 
         # Proceed with logic if validation passes...
+        # If sensor_name is in DICT_IOT_DEVICES, update its isFramed and position
+        # If sensor_name is not in DICT_IOT_DEVICES, add it with the given isFramed and position
+        if data["sensor_name"] in DICT_IOT_DEVICES:
+            DICT_IOT_DEVICES[data["sensor_name"]]["isFramed"] = data["isFramed"]
+            DICT_IOT_DEVICES[data["sensor_name"]]["position"] = data["position"]
+        else:
+            DICT_IOT_DEVICES[data["sensor_name"]] = {
+                "isFramed": data["isFramed"],
+                "position": data["position"],
+            }
 
-        # Get the list of sensors in Home Assistant
-        states = self.hass.states.async_all()
-
-        # Initials of the sensor names wanted
-        sensors_wanted_list = [
-            # Shelly
-            "sensor.shellydw2-",
-            "binary_sensor.shellydw2-",
-            # Netatmo
-            "sensor.netatmoeud4xr_",
-            "binary_sensor.netatmoeud4xr_",
-            # Xiaomi
-            "fan.xiaomi_cpa4",
-            "sensor.xiaomi_cpa4",
-        ]
-        filtered_states = list(
-            filter(
-                lambda s: any(
-                    sensor_wanted in s.entity_id
-                    for sensor_wanted in sensors_wanted_list
-                ),
-                states,
-            )
+        # Return all ok 200
+        return self.json_message(
+            f"Device '{data['sensor_name']}' updated successfully", 200
         )
-        filtered_states = states  # TODO Delete
-
-        print(f"Filtered sensors: {filtered_states[30]}")
-
-        # Get the first device
-        iot_device = next(
-            (s for s in filtered_states if s.entity_id == data["sensor_name"]),
-            None,
-        )
-        if not iot_device:
-            return self.json_message(f"Sensor {data['sensor_name']} not found", 404)
-        print(f"Found iot_device: {iot_device}")
-
-        # Filter sensors only ECAObject with isInsideCamera = true
-        print(f"Filtered states: {len(states)}")
-        return self.json(states)

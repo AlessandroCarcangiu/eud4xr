@@ -405,6 +405,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(ObjectsView(hass))
     hass.http.register_view(UpdateIotDeviceIsFramedView(hass))
+    hass.http.register_view(
+        ListFramedVirtualDevicesView(hass)
+    )  # TODO J - Perché non era presenta questa riga di codice?
 
     async def handle_task_expression_mark_done(call):
         task_expression = TaskExpression(hass)
