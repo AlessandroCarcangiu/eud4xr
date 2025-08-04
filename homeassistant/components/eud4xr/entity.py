@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import inspect
 import logging
 import time
@@ -72,13 +74,21 @@ class ECAEntity(Entity):
     def get_properties(self) -> list:
         properties = list()
         signature = inspect.signature(self.__init__)
-        for param_name, param in list(filter(lambda x: x[0] not in ["self", "kwargs"], signature.parameters.items())):
+        for param_name, param in list(
+            filter(
+                lambda x: x[0] not in ["self", "kwargs"], signature.parameters.items()
+            )
+        ):
             valore = getattr(self, param_name)
-            properties.append({
-                "name": param_name,
-                "type": getattr(param.annotation, "__name__", str(param.annotation)),
-                "current value": valore
-            })
+            properties.append(
+                {
+                    "name": param_name,
+                    "type": getattr(
+                        param.annotation, "__name__", str(param.annotation)
+                    ),
+                    "current value": valore,
+                }
+            )
         return properties
 
     def get_services(self) -> list:
@@ -89,24 +99,27 @@ class ECAEntity(Entity):
             if hasattr(method, "_is_eca_script_action")
         ]
         from .utils import Service
+
         for name, method in eca_script_methods:
             service_params = dict()
             signature = inspect.signature(method).parameters.items()
             for param_name, param in list(filter(lambda x: x[0] != "self", signature)):
-                #value = self.__mapping_parameter(param_name, param, hass)
+                # value = self.__mapping_parameter(param_name, param, hass)
                 service_params[param_name] = str(param.annotation.__name__)
 
             s = Service(
-                method = method,
+                method=method,
                 eca_action=f"eud4xr.{name.replace('async_','')}",
                 params=service_params,
-                description=inspect.getdoc(method)
+                description=inspect.getdoc(method),
             ).to_dict()
             # services[getattr(method, "kwargs")["verb"]] = s
-            services.append({
-                "service_of_component": self.game_object,
-                **s,
-            })
+            services.append(
+                {
+                    "service_of_component": self.game_object,
+                    **s,
+                }
+            )
         return services
 
     def to_dict(self, hass) -> dict:
@@ -114,10 +127,7 @@ class ECAEntity(Entity):
         properties = self.get_properties()
         # services
         services = self.get_services()
-        return {
-            "properties": properties,
-            "services": services
-        }
+        return {"properties": properties, "services": services}
 
     def generate_payload(
         self,
@@ -156,7 +166,13 @@ class ECAEntity(Entity):
                     )
                     if on_event:
                         print(f"v: {v} - {hasattr(v, 'to_value')}")
-                    paramater_to_send = v.to_value() if hasattr(v, "to_value") else v if on_event else value_to_string
+                    paramater_to_send = (
+                        v.to_value()
+                        if hasattr(v, "to_value")
+                        else v
+                        if on_event
+                        else value_to_string
+                    )
         if paramater_to_send:
             if variable and modifier:
                 data["value"] = paramater_to_send

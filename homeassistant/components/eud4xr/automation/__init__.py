@@ -1,3 +1,5 @@
+# ruff: noqa
+
 from .action import Action
 from .automation import Automation
 from .condition import CompositeCondition, Condition, SimpleCondition

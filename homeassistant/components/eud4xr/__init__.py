@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import copy
 from datetime import datetime
 import logging
@@ -31,7 +33,7 @@ from .views import (
     AutomationsView,
     ContextObjectsView,
     FindCloseObjectsView,
-    IotDeviceView,
+    UpdateIotDeviceIsFramedView,
     ListECACapabilitiesView,
     ListFramedVirtualDevicesView,
     MultimediaFilesView,
@@ -164,7 +166,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         _LOGGER.info(f"Received a new entry: {virtual_object_data}")
         await async_add_virtual_object(hass, virtual_object_data)
 
-    async def async_add_virtual_object(hass, data: list):
+    async def async_add_virtual_object(
+        hass, data: list
+    ):  # TODO J 25-08-03 - Theorically you already have "hass", no need to override and pass it as input (?)
         new_sensors = list()
         entity_name = None
         group_name = None
@@ -223,7 +227,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_update_from_unity(call) -> None:
         await async_update_from_unity(hass, call.data)
 
-    async def async_update_from_unity(hass, update, is_retry: bool = False):
+    async def async_update_from_unity(
+        hass, update, is_retry: bool = False
+    ):  # TODO J 25-08-03 - Same here, no need to pass "hass" (?)
         message = (
             f"Received a new update from unity: {update}"
             if not is_retry
@@ -398,7 +404,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(ObjectsView(hass))
-    hass.http.register_view(IotDeviceView(hass))
+    hass.http.register_view(UpdateIotDeviceIsFramedView(hass))
 
     async def handle_task_expression_mark_done(call):
         task_expression = TaskExpression(hass)

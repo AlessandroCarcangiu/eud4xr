@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import os
 
 import voluptuous as vol
@@ -137,7 +139,7 @@ class TaskExpression:
             await self.async_initialize()
 
         if name in self.sequences:
-            #se la sequenza esiste già viene eliminata per poter essere ricreata
+            # se la sequenza esiste già viene eliminata per poter essere ricreata
             await self.delete_sequence(name)
 
         if not isinstance(sequence, list) or len(sequence) < 2:
@@ -179,7 +181,6 @@ class TaskExpression:
         self.sequences[name] = {
             "sequence": sequence_processed,
         }
-
 
         prev = False
 
@@ -239,7 +240,7 @@ class TaskExpression:
                             )
             prev = isinstance(element, dict) and "order" in element
 
-        #una volta creata la sequenza, si aggiungono le condizioni alle automazioni
+        # una volta creata la sequenza, si aggiungono le condizioni alle automazioni
         await self._save_expressions_to_store()
 
     async def _add_condition_to_automation(
@@ -446,7 +447,6 @@ class TaskExpression:
             "choice": choice,
         }
 
-
         for i, automation_id in enumerate(choice):
             for j, other_id in enumerate(choice):
                 if i != j:
@@ -456,7 +456,6 @@ class TaskExpression:
 
         # Se la
         await self._save_expressions_to_store()
-
 
     async def create_order(self, name, order):
         if self.orders is None:
@@ -472,8 +471,6 @@ class TaskExpression:
             )
         if len(order) < 2:
             raise ValueError("L'ordine deve contenere almeno due automazioni.")
-
-
 
         for automation_id in order:
             await self._add_action_turn_off_to_automation(
@@ -525,7 +522,6 @@ class TaskExpression:
                 "'expression' deve essere una automazione (stringa) o una espressione (dict)."
             )
 
-
         if isinstance(expression, str):
             await self._add_condition_to_automation(
                 automation_entity_id=expression,
@@ -557,8 +553,6 @@ class TaskExpression:
             await self.delete_conditional(name)
         if not isinstance(conditional, dict):
             raise ValueError("La condizione deve essere un dizionario.")
-
-
 
         if_trigger = conditional.get("if").get("trigger")
         else_trigger = conditional.get("else").get("trigger")

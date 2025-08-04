@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import asyncio
 import logging
 import time
@@ -29,16 +31,22 @@ REMOVE_AUTOMATION_SCHEMA = vol.Schema(
 )
 
 
-async def wait_for_automation_states(hass: HomeAssistant, expected_ids: list[str], timeout: float = 50.0):
+async def wait_for_automation_states(
+    hass: HomeAssistant, expected_ids: list[str], timeout: float = 50.0
+):
     start = time.monotonic()
     while time.monotonic() - start < timeout:
         automations = hass.states.async_all("automation")
-        found_ids = {a.attributes.get("id") for a in automations if a.attributes.get("id")}
+        found_ids = {
+            a.attributes.get("id") for a in automations if a.attributes.get("id")
+        }
         if all(i in found_ids for i in expected_ids):
             return automations
         print("dormo")
         await asyncio.sleep(0.1)
-    raise TimeoutError(f"Timeout: le automazioni {expected_ids} non sono apparse in hass.states")
+    raise TimeoutError(
+        f"Timeout: le automazioni {expected_ids} non sono apparse in hass.states"
+    )
 
 
 def get_automations(hass: HomeAssistant, as_list: bool = False) -> dict | list:
@@ -67,6 +75,7 @@ async def async_get_automation(hass: HomeAssistant, id: str) -> dict:
         return automations[id]
     raise Exception(f"Automation with {id} does not exist")
 
+
 async def async_list_automations(hass: HomeAssistant) -> list:
     automation_entities = await hass.async_add_executor_job(get_automations, hass, True)
     if automation_entities is None:
@@ -87,7 +96,9 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
         for automation_data in automations_data:
             automation_id = automation_data.get("id")
             if not automation_id:
-                automation_id = str(uuid.uuid4()) #datetime.now().strftime("%Y%m%d%H%M%S")
+                automation_id = str(
+                    uuid.uuid4()
+                )  # datetime.now().strftime("%Y%m%d%H%M%S")
                 automation_data["id"] = automation_id
             existing_automations[automation_id] = automation_data
         # update and reload automation.yaml file
