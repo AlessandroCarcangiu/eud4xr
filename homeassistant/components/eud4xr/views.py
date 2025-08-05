@@ -150,11 +150,17 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
                 return True
 
             def is_iot_device(s: State) -> bool:
-                print(f"\nsensor: {s}\n")
-                return False
-                # # 0) The entity is not a sensor
-                # if s.domain != "sensor" or s.state != "active":
-                #     return False
+                # print(f"\nsensor: {s}\n")
+                print(
+                    f"sensor: {s.domain}, state: {s.state}, attributes: {s.attributes}, friendly_name: {s.attributes.get('friendly_name', 'N/A')}"
+                )
+
+                # 0) The entity is not a sensor
+                if (
+                    s.domain not in ["sensor", "binary_sensor", "fan"]
+                    or s.state != "active"
+                ):
+                    return False
 
                 # # 1) It has the attribute "friendly_name"
                 # if not s.attributes or s.attributes.get("device_class") != "eca_entity":
@@ -171,9 +177,13 @@ class ListFramedVirtualDevicesView(HomeAssistantView):
                 #     return False
 
                 # # If all the conditions are met, return True
-                # return True
+                return True
 
-            return is_virtual_eud4xr_sensor(s) or is_iot_device(s)
+            if is_virtual_eud4xr_sensor(s):
+                return True
+            return is_iot_device(
+                s
+            )  # Why this ugly code? At least I can focus only on this function and print its stuff only?
 
         # Get the list of sensors in Home Assistant
         states = self.hass.states.async_all()
