@@ -1,4 +1,6 @@
 # ruff: noqa
+from typing import TypedDict
+
 
 IS_DEBUG = False
 
@@ -33,6 +35,7 @@ API_GET_VIRTUAL_OBJECTS = "virtual_objects"
 API_GET_MULTIMEDIA_FILES = "multimedia_files"
 API_GET_CLOSE_OBJECTS = "find_close_objects"
 API_EXPRESSION = "expressions"
+API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY = "update_iotdevice_visibility_from_unity"
 
 
 # unity services
@@ -73,7 +76,3 @@ CONF_TASK_MODELLING_STORE_VERSION = "1"
 CONF_TASK_STORE_ORDER_INDEPENDENCE_COUNTERS_KEY = "order_independence_counters"
 CONF_TASK_MODELLING_ENTITIES = "task_modelling_entities"
 CONF_TASK_MODELLING_EXPRESSIONS = "task_modelling_expressions"
-
-
-### Jacopo ha osato crearne uno
-UPDATE_IOTDevice_VISIBILITY_FROM_UNITY = "update_iotdevice_visibility_from_unity"

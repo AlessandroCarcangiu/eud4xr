@@ -1,7 +1,6 @@
 # ruff: noqa
 
 from collections import OrderedDict
-from typing import TypedDict
 import logging
 import math
 
@@ -29,9 +28,14 @@ from .const import (
     API_GET_OBJECTS,
     API_GET_VIRTUAL_DEVICES,
     API_GET_VIRTUAL_OBJECTS,
-    UPDATE_IOTDevice_VISIBILITY_FROM_UNITY,
+    API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY,
     MIN_DISTANCE,
+    IS_DEBUG
 )
+from .eca_classes import (
+    ECAPosition
+)
+from .entity import EUD4XRIOTDevice
 from .filters import get_devices_data, get_virtual_entities
 from .hass_utils import get_entity_instance_by_entity_id
 from .task_modelling import TaskExpression
@@ -367,9 +371,6 @@ class FindCloseObjectsView(HomeAssistantView):
 
     @staticmethod
     def get_distance(a, b) -> float:
-        p1 = np.array((a["x"], a["y"], a["z"]))
-        p2 = np.array((b["x"], b["y"], b["z"]))
-        d1 = np.linalg.norm(p1 - p2)
         d2 = math.sqrt(
             (a["x"] - b["x"]) ** 2 + (a["y"] - b["y"]) ** 2 + (a["z"] - b["z"]) ** 2
         )
@@ -394,31 +395,19 @@ class FindCloseObjectsView(HomeAssistantView):
             directions.append("a fianco")
         return " e ".join(directions) if directions else "nella stessa posizione"
 
-    class PositionResult(TypedDict):
-        position: str
-
-    def get_entity_position_from_name(self, name: str) -> PositionResult:
+    def get_entity_position_from_name(self, name: str) -> any:
         def try_search_iotDevice(iot_name):
             from .sensor import DICT_IOT_DEVICES
             value = DICT_IOT_DEVICES.get(iot_name, None)
-            if value is not None:
-                # print(f"Found IoT device {iot_name} with position {value}")
-                output = {"position": value}
-            else:
-                # print(f"Not found IoT device {iot_name}")
-                output = None
-            return output
+            return value
 
         def try_search_virtualobject(group_name):
             group_ecaobject = None
             try:
                 group_ecaobject = get_entity_instance_by_entity_id(self.hass, f"sensor.{group_name}_ecaobject")
-                # print(f"Found group {group_name} as {group_ecaobject}")
-                # print(f"group_ecaobject.position: {group_ecaobject.position}")
             except Exception as e:
-                group_ecaobject = None  # print(f"not found {group_name} + {e}")
-                print(str(e))
-            return group_ecaobject.position
+                group_ecaobject = None
+            return group_ecaobject
 
         output_entity_position = try_search_iotDevice(name)
         if output_entity_position is None:
@@ -428,22 +417,20 @@ class FindCloseObjectsView(HomeAssistantView):
                 f"Object '{name}' not found neither as IoT device nor as virtual object."
                 "Please check the name and try again."
             )
-        return {"position": output_entity_position}
+        return output_entity_position
+
 
     async def get(self, request):
         from .sensor import (DICT_IOT_DEVICES,DEQUE_FRAMED_OBJECTS,DEQUE_INTERACTED_OBJECTS,DEQUE_POINTED_OBJECTS)
-        DO_LOG = True
 
         object_name = request.query.get("name", "").lower()
         ref = self.get_entity_position_from_name(object_name)
-        if DO_LOG: print(f"Object name: {object_name}, ECAObject: {ref}, hasattr: {hasattr(ref, 'position')}")
+        if IS_DEBUG: print(f"Object name: {object_name}, ECAObject: {ref}, hasattr: {hasattr(ref, 'position')}")
 
-        # if ref and hasattr(ref, "position"):
         if not ref:
             raise ValueError("Object not found or has no position attribute.")
 
         distances = dict()
-        cached_refposition = ref["position"]
 
         # virtual objects
         registered_groups = list(
@@ -452,23 +439,24 @@ class FindCloseObjectsView(HomeAssistantView):
                 self.hass.states.async_all(),
             )
         )
-        if DO_LOG: print(f"Registered groups: {[g.entity_id for g in registered_groups]}")
-        common_list = [] # Add groups and DICT_IOT_DEVICES.names
+        if IS_DEBUG: print(f"Registered groups: {[g.entity_id for g in registered_groups]}")
+        # Add groups and DICT_IOT_DEVICES.names
+        common_list = []
         common_list.extend(g.entity_id.split(".")[-1] for g in registered_groups)
         common_list.extend(iot_device_name for iot_device_name in DICT_IOT_DEVICES.keys())
 
         for curr_entity_name in common_list:
-            if DO_LOG: print(f"Entity: {curr_entity_name}")
+            if IS_DEBUG: print(f"Entity: {curr_entity_name}")
             if object_name != curr_entity_name:
                 group_ecaobject = self.get_entity_position_from_name(curr_entity_name)
-                if DO_LOG: print(f"Group name: {curr_entity_name}, ECAObject: {group_ecaobject}")
+                if IS_DEBUG: print(f"Group name: {curr_entity_name}, ECAObject: {group_ecaobject}")
                 if group_ecaobject:
                     distances[curr_entity_name] = {
                         "distance": self.get_distance(
-                            cached_refposition, group_ecaobject["position"]
+                            ref.position, group_ecaobject.position
                         ),
                         "directions": self.get_direction(
-                            cached_refposition, group_ecaobject["position"]
+                            ref.position, group_ecaobject.position
                         ),
                     }
 
@@ -746,8 +734,8 @@ class TaskExpressionView(HomeAssistantView):
 
 
 class UpdateIotDeviceIsFramedView(HomeAssistantView):
-    url = f"/api/eud4xr/{UPDATE_IOTDevice_VISIBILITY_FROM_UNITY}"
-    name = f"api:{UPDATE_IOTDevice_VISIBILITY_FROM_UNITY}"
+    url = f"/api/eud4xr/{API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY}"
+    name = f"api:{API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY}"
     methods = ["POST"]
 
     # Do a Request get to api/states
@@ -760,49 +748,14 @@ class UpdateIotDeviceIsFramedView(HomeAssistantView):
         data = await request.json()
         print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
 
-        # region Data Checks
-        if not isinstance(data, dict):
-            return self.json_message("Invalid data: expected a JSON object", 400)
-
-        required_keys = {"sensor_name", "isFramed", "position"}
-        if not required_keys.issubset(data):
-            return self.json_message(
-                "Missing one or more required keys. The required keys are: "
-                + ", ".join(required_keys),
-                400,
-            )
-
-        if not isinstance(data["sensor_name"], str):
-            return self.json_message(
-                "Invalid type for 'sensor_name': expected string", 400
-            )
-
-        if not isinstance(data["isFramed"], bool):
-            return self.json_message(
-                "Invalid type for 'isFramed': expected boolean", 400
-            )
-
-        position = data["position"]
-        if not isinstance(position, dict):
-            return self.json_message(
-                "Invalid type for 'position': expected object with x, y, z", 400
-            )
-
-        if not all(k in position for k in ("x", "y", "z")):
-            return self.json_message(
-                "Missing one or more keys in 'position': x, y, z required", 400
-            )
-
-        if not all(isinstance(position[k], (int, float)) for k in ("x", "y", "z")):
-            return self.json_message(
-                "Invalid type in 'position': x, y, z must be numbers", 400
-            )
-        # endregion Data Checks
+        try:
+            iot_device = EUD4XRIOTDevice.from_dict(data)
+        except Exception as e:
+            raise self.json_message(e, 400)
 
         # update DICT_IOT_DEVICES and DEQUE_FRAMED_OBJECTS
-        device_name = data["sensor_name"].lower()
-        DICT_IOT_DEVICES[device_name] = data["position"]
-        update_deque(DEQUE_FRAMED_OBJECTS, device_name, data["isFramed"])
+        DICT_IOT_DEVICES[iot_device.sensor_name] = iot_device
+        update_deque(DEQUE_FRAMED_OBJECTS, iot_device.sensor_name, iot_device.isInsideCamera)
 
         # Return all ok 200
         return self.json_message(

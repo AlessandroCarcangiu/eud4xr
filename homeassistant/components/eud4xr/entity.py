@@ -8,6 +8,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_registry import RegistryEntry
 
+from .eca_classes import Vector3
+
 
 from .const import (
     CONF_SERVICE_UPDATE_FROM_UNITY_SUBJECT,
@@ -195,3 +197,56 @@ class ECAEntity(Entity):
         # generate ha event
         self.hass.bus.fire(DOMAIN, data)
         _LOGGER.info(f"Generated a new eud4xr event: {data}")
+
+
+class EUD4XRIOTDevice:
+
+    def __init__(self, sensor_name: str, position: Vector3, isInsideCamera: bool) -> None:
+        self._sensor_name = sensor_name.lower()
+        self._position = position
+        self._isInsideCamera = isInsideCamera
+
+    @property
+    def sensor_name(self) -> str:
+        return self._sensor_name
+
+    @property
+    def position(self) -> dict:
+        return self._position.to_value()
+
+    def set_position(self, new_position: Vector3) -> None:
+        self._position = new_position
+
+    @property
+    def isInsideCamera(self) -> bool:
+        return self._isInsideCamera
+
+    def set_isInsideCamera(self, new_isInsideCamera: bool) -> None:
+        self._isInsideCamera = new_isInsideCamera
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'EUD4XRIOTDevice':
+        if not isinstance(data, dict):
+            raise Exception("Invalid data: expected a JSON object")
+
+        required_keys = {"sensor_name", "isInsideCamera", "position"}
+        if not required_keys.issubset(data):
+            raise Exception(
+                "Missing one or more required keys. The required keys are: "
+                + ", ".join(required_keys),
+                400,
+            )
+
+        if not isinstance(data["sensor_name"], str):
+            raise Exception(
+                "Invalid type for 'sensor_name': expected string"
+            )
+
+        if not isinstance(data["isInsideCamera"], bool):
+            raise Exception(
+                "Invalid type for 'isInsideCamera': expected boolean"
+            )
+
+        position = Vector3.validate(data["position"])
+
+        return cls(data["sensor_name"], position, data["isInsideCamera"])

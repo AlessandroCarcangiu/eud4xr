@@ -100,6 +100,31 @@ class ECAScale(ECAPosition):
     pass
 
 
+class Vector3(ECAPosition):
+
+    @staticmethod
+    def validate(value):
+        if not isinstance(value, dict):
+            raise vol.Invalid("Expected a dictionary")
+        if not isinstance(value, dict):
+            raise Exception(
+                "Invalid type for 'position': expected object with x, y, z"
+            )
+
+        if not all(k in value for k in ("x", "y", "z")):
+            raise Exception(
+                "Missing one or more keys in 'position': x, y, z required"
+            )
+
+        if not all(isinstance(value[k], (int, float)) for k in ("x", "y", "z")):
+            raise Exception(
+                "Invalid type in 'position': x, y, z must be numbers"
+            )
+        x = value.get("x")
+        y = value.get("y")
+        z = value.get("z")
+        return Vector3(x, y, z)
+
 # class ECAPath:
 
 #     def __init__(self, points: List[ECAPosition]) -> None:
