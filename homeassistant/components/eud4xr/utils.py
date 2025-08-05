@@ -46,15 +46,28 @@ def eca_script_action(
     return decorator
 
 
-def update_deque(circular_list: deque):
+def update_deque(circular_list: deque, object_name: str, is_to_add: bool) -> None:
+    # remove game object name from circular list
+    if object_name in circular_list:
+        circular_list.remove(object_name)
+    # add game object to circular list if is_to_add is True (values is a string)
+    if is_to_add:
+        circular_list.append(object_name)
+
+
+def decorator_update_deque(circular_list: deque):
     def decorator(func):
         @wraps(func)
         def wrapper(self, value: any):
             game_object_name = self.game_object.split("@")[0]
-            if game_object_name in circular_list:
-                circular_list.remove(game_object_name.lower())
-            if bool(ECABoolean(ECABooleanEnum.get_value_by_str(value))):
-                circular_list.append(game_object_name.lower())
+            is_to_add = bool(ECABoolean(ECABooleanEnum.get_value_by_str(value)))
+            update_deque(circular_list, game_object_name, is_to_add)
+            # # remove game object name from circular list
+            # if game_object_name in circular_list:
+            #     circular_list.remove(game_object_name.lower())
+            # # add game object name if value is True (values is a string)
+            # if bool(ECABoolean(ECABooleanEnum.get_value_by_str(value))):
+            #     circular_list.append(game_object_name.lower())
             return func(self, value)
 
         return wrapper
