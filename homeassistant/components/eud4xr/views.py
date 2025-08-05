@@ -1,6 +1,7 @@
 # ruff: noqa
 
 from collections import OrderedDict
+from typing import TypedDict
 import logging
 import math
 
@@ -34,10 +35,7 @@ from .const import (
 from .filters import get_devices_data, get_virtual_entities
 from .hass_utils import get_entity_instance_by_entity_id
 from .task_modelling import TaskExpression
-from .utils import (
-    MappedClasses,
-    update_deque
-)
+from .utils import MappedClasses, update_deque
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,109 +90,108 @@ class AutomationsView(HomeAssistantView):
         _LOGGER.error("The request must specify an id in the url")
 
 
-# # TODO J - Lavorare qui
 # class ListFramedVirtualDevicesView(HomeAssistantView):
-    # """class State:
+# """class State:
 
-    # entity_id   str      e.g.    "person.giagobox",
+# entity_id   str      e.g.    "person.giagobox",
 
-    # state   str          e.g.    "unknown"
-    # domain  str          e.g.    "unknown"
+# state   str          e.g.    "unknown"
+# domain  str          e.g.    "unknown"
 
-    # context homeassistant.core.Context        e.g.    <homeassistant.core.Context object at 0x7fc10ebe68d0>
+# context homeassistant.core.Context        e.g.    <homeassistant.core.Context object at 0x7fc10ebe68d0>
 
-    # attributes  homeassistant.util.read_only_dict.ReadOnlyDict  e.g.    {'editable': True, 'id': 'giagobox', 'device_trackers': [], 'user_id': '5fa37f398b5648eb955ca701f38ab210', 'friendly_name': 'Giagobox'}
+# attributes  homeassistant.util.read_only_dict.ReadOnlyDict  e.g.    {'editable': True, 'id': 'giagobox', 'device_trackers': [], 'user_id': '5fa37f398b5648eb955ca701f38ab210', 'friendly_name': 'Giagobox'}
 
-    # last_changed    datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
-    # last_reported   datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
-    # last_updated    datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
+# last_changed    datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
+# last_reported   datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
+# last_updated    datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
 
-    # as_dict()    homeassistant.util.read_only_dict.ReadOnlyDict   e.g.   {'entity_id': 'person.giagobox', 'state': 'unknown', 'attributes': {'editable': True, 'id': 'giagobox', 'device_trackers': [], 'user_id': '5fa37f398b5648eb955ca701f38ab210', 'friendly_name': 'Giagobox'}, 'last_changed': '2024-11-14T15:59:51.742010+00:00', 'last_reported': '2024-11-14T15:59:53.029074+00:00', 'last_updated': '2024-11-14T15:59:53.029074+00:00', 'context': {'id': '01JCNPE265RWHYC4BXDVG69W88', 'parent_id': None, 'user_id': None}}
-    # as_dict_json    bytes   e.g.    b'{"entity_id":"person.giagobox","state":"unknown","attributes":{"editable":true,"id":"giagobox","device_trackers":[],"user_id":"5fa37f398b5648eb955ca701f38ab210","friendly_name":"Giagobox"},"last_changed":"2024-11-14T15:59:51.742010+00:00","last_reported":"2024-11-14T15:59:53.029074+00:00","last_updated":"2024-11-14T15:59:53.029074+00:00","context":{"id":"01JCNPE265RWHYC4BXDVG69W88","parent_id":null,"user_id":null}}'
-    # """
+# as_dict()    homeassistant.util.read_only_dict.ReadOnlyDict   e.g.   {'entity_id': 'person.giagobox', 'state': 'unknown', 'attributes': {'editable': True, 'id': 'giagobox', 'device_trackers': [], 'user_id': '5fa37f398b5648eb955ca701f38ab210', 'friendly_name': 'Giagobox'}, 'last_changed': '2024-11-14T15:59:51.742010+00:00', 'last_reported': '2024-11-14T15:59:53.029074+00:00', 'last_updated': '2024-11-14T15:59:53.029074+00:00', 'context': {'id': '01JCNPE265RWHYC4BXDVG69W88', 'parent_id': None, 'user_id': None}}
+# as_dict_json    bytes   e.g.    b'{"entity_id":"person.giagobox","state":"unknown","attributes":{"editable":true,"id":"giagobox","device_trackers":[],"user_id":"5fa37f398b5648eb955ca701f38ab210","friendly_name":"Giagobox"},"last_changed":"2024-11-14T15:59:51.742010+00:00","last_reported":"2024-11-14T15:59:53.029074+00:00","last_updated":"2024-11-14T15:59:53.029074+00:00","context":{"id":"01JCNPE265RWHYC4BXDVG69W88","parent_id":null,"user_id":null}}'
+# """
 
-    # url = f"/api/eud4xr/{API_GET_VIRTUAL_DEVICES}"
-    # name = f"api:{API_GET_VIRTUAL_DEVICES}"
-    # methods = ["GET"]
+# url = f"/api/eud4xr/{API_GET_VIRTUAL_DEVICES}"
+# name = f"api:{API_GET_VIRTUAL_DEVICES}"
+# methods = ["GET"]
 
-    # def __init__(self, hass: HomeAssistant) -> None:
-    #     self.hass = hass
+# def __init__(self, hass: HomeAssistant) -> None:
+#     self.hass = hass
 
-    # async def get(self, request):
-    #     def filter_sensors(s: State):
-    #         # print(f"\nsensor: {s}\n")
-    #         def is_virtual_eud4xr_sensor(sensor: State) -> bool:
-    #             # Check if:
-    #             # 0) The entity is a sensor and its state == "active"
-    #             # 1) It has the attribute device_class == eca_entity
-    #             # 2) @Type is equal to "ECAObject"
-    #             # 3) The attribute "isInsideCamera" is "yes"
-    #             # If all the conditions are met, return True. Otherwise, return False
-    #             # print(f"\nsensor: {s}\n")
-    #             # 0) The entity is not a sensor
-    #             if s.domain != "sensor" or s.state != "active":
-    #                 return False
+# async def get(self, request):
+#     def filter_sensors(s: State):
+#         # print(f"\nsensor: {s}\n")
+#         def is_virtual_eud4xr_sensor(sensor: State) -> bool:
+#             # Check if:
+#             # 0) The entity is a sensor and its state == "active"
+#             # 1) It has the attribute device_class == eca_entity
+#             # 2) @Type is equal to "ECAObject"
+#             # 3) The attribute "isInsideCamera" is "yes"
+#             # If all the conditions are met, return True. Otherwise, return False
+#             # print(f"\nsensor: {s}\n")
+#             # 0) The entity is not a sensor
+#             if s.domain != "sensor" or s.state != "active":
+#                 return False
 
-    #             # 1) It has the attribute "friendly_name"
-    #             if not s.attributes or s.attributes.get("device_class") != "eca_entity":
-    #                 return False
+#             # 1) It has the attribute "friendly_name"
+#             if not s.attributes or s.attributes.get("device_class") != "eca_entity":
+#                 return False
 
-    #             # 2) @Type is equal to "ECAObject"
-    #             friendly_name = s.attributes["friendly_name"]
-    #             ecatype = friendly_name.split("@")
-    #             if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
-    #                 return False
+#             # 2) @Type is equal to "ECAObject"
+#             friendly_name = s.attributes["friendly_name"]
+#             ecatype = friendly_name.split("@")
+#             if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
+#                 return False
 
-    #             # 3) The attribute "isInsideCamera" is "yes"
-    #             if s.attributes["isInsideCamera"] != "yes":
-    #                 return False
+#             # 3) The attribute "isInsideCamera" is "yes"
+#             if s.attributes["isInsideCamera"] != "yes":
+#                 return False
 
-    #             # If all the conditions are met, return True
-    #             return True
+#             # If all the conditions are met, return True
+#             return True
 
-    #         def is_iot_device(s: State) -> bool:
-    #             # print(f"\nsensor: {s}\n")
-    #             print(
-    #                 f"sensor: {s.domain}, state: {s.state}, attributes: {s.attributes}, friendly_name: {s.attributes.get('friendly_name', 'N/A')}"
-    #             )
+#         def is_iot_device(s: State) -> bool:
+#             # print(f"\nsensor: {s}\n")
+#             print(
+#                 f"sensor: {s.domain}, state: {s.state}, attributes: {s.attributes}, friendly_name: {s.attributes.get('friendly_name', 'N/A')}"
+#             )
 
-    #             # 0) The entity is not a sensor
-    #             if (
-    #                 s.domain not in ["sensor", "binary_sensor", "fan"]
-    #                 or s.state != "active"
-    #             ):
-    #                 return False
+#             # 0) The entity is not a sensor
+#             if (
+#                 s.domain not in ["sensor", "binary_sensor", "fan"]
+#                 or s.state != "active"
+#             ):
+#                 return False
 
-    #             # # 1) It has the attribute "friendly_name"
-    #             # if not s.attributes or s.attributes.get("device_class") != "eca_entity":
-    #             #     return False
+#             # # 1) It has the attribute "friendly_name"
+#             # if not s.attributes or s.attributes.get("device_class") != "eca_entity":
+#             #     return False
 
-    #             # # 2) @Type is equal to "ECAObject"
-    #             # friendly_name = s.attributes["friendly_name"]
-    #             # ecatype = friendly_name.split("@")
-    #             # if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
-    #             #     return False
+#             # # 2) @Type is equal to "ECAObject"
+#             # friendly_name = s.attributes["friendly_name"]
+#             # ecatype = friendly_name.split("@")
+#             # if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
+#             #     return False
 
-    #             # # 3) The attribute "isInsideCamera" is "yes"
-    #             # if s.attributes["isInsideCamera"] != "yes":
-    #             #     return False
+#             # # 3) The attribute "isInsideCamera" is "yes"
+#             # if s.attributes["isInsideCamera"] != "yes":
+#             #     return False
 
-    #             # # If all the conditions are met, return True
-    #             return True
+#             # # If all the conditions are met, return True
+#             return True
 
-    #         if is_virtual_eud4xr_sensor(s):
-    #             return True
-    #         return is_iot_device(
-    #             s
-    #         )  # Why this ugly code? At least I can focus only on this function and print its stuff only?
+#         if is_virtual_eud4xr_sensor(s):
+#             return True
+#         return is_iot_device(
+#             s
+#         )  # Why this ugly code? At least I can focus only on this function and print its stuff only?
 
-    #     # Get the list of sensors in Home Assistant
-    #     states = self.hass.states.async_all()
+#     # Get the list of sensors in Home Assistant
+#     states = self.hass.states.async_all()
 
-    #     states = list(filter(filter_sensors, states))
+#     states = list(filter(filter_sensors, states))
 
-    #     # Filter sensors only ECAObject with isInsideCamera = true
-    #     return self.json(states)
+#     # Filter sensors only ECAObject with isInsideCamera = true
+#     return self.json(states)
 
 
 class ListECACapabilitiesView(HomeAssistantView):
@@ -397,66 +394,85 @@ class FindCloseObjectsView(HomeAssistantView):
             directions.append("a fianco")
         return " e ".join(directions) if directions else "nella stessa posizione"
 
-    def get_object_instance(self, group_name: str) -> object:
-        # is iot devices?
-        from .sensor import DICT_IOT_DEVICES
+    class PositionResult(TypedDict):
+        position: str
 
-        # is eca object?
-        group_ecaobject = None
-        try:
-            group_ecaobject = get_entity_instance_by_entity_id(
-                self.hass, f"sensor.{group_name}_ecaobject"
+    def get_entity_position_from_name(self, name: str) -> PositionResult:
+        def try_search_iotDevice(iot_name):
+            from .sensor import DICT_IOT_DEVICES
+            value = DICT_IOT_DEVICES.get(iot_name, None)
+            if value is not None:
+                # print(f"Found IoT device {iot_name} with position {value}")
+                output = {"position": value}
+            else:
+                # print(f"Not found IoT device {iot_name}")
+                output = None
+            return output
+
+        def try_search_virtualobject(group_name):
+            group_ecaobject = None
+            try:
+                group_ecaobject = get_entity_instance_by_entity_id(self.hass, f"sensor.{group_name}_ecaobject")
+                # print(f"Found group {group_name} as {group_ecaobject}")
+                # print(f"group_ecaobject.position: {group_ecaobject.position}")
+            except Exception as e:
+                group_ecaobject = None  # print(f"not found {group_name} + {e}")
+                print(str(e))
+            return group_ecaobject.position
+
+        output_entity_position = try_search_iotDevice(name)
+        if output_entity_position is None:
+            output_entity_position = try_search_virtualobject(name)
+        if output_entity_position is None:
+            raise ValueError(
+                f"Object '{name}' not found neither as IoT device nor as virtual object."
+                "Please check the name and try again."
             )
-        except Exception as e:
-            print(f"not found {group_name} + {e}")
-        return group_ecaobject
+        return {"position": output_entity_position}
 
     async def get(self, request):
-        object_name = request.query.get("name", "").lower()
-        distances = dict()
-        ref = self.get_object_instance(object_name)
+        from .sensor import (DICT_IOT_DEVICES,DEQUE_FRAMED_OBJECTS,DEQUE_INTERACTED_OBJECTS,DEQUE_POINTED_OBJECTS)
+        DO_LOG = True
 
-        if ref and hasattr(ref, "position"):
-            # virtual objects
-            registered_groups = list(
-                filter(
-                    lambda state: state.entity_id.startswith("group."),
-                    self.hass.states.async_all(),
-                )
+        object_name = request.query.get("name", "").lower()
+        ref = self.get_entity_position_from_name(object_name)
+        if DO_LOG: print(f"Object name: {object_name}, ECAObject: {ref}, hasattr: {hasattr(ref, 'position')}")
+
+        # if ref and hasattr(ref, "position"):
+        if not ref:
+            raise ValueError("Object not found or has no position attribute.")
+
+        distances = dict()
+        cached_refposition = ref["position"]
+
+        # virtual objects
+        registered_groups = list(
+            filter(
+                lambda state: state.entity_id.startswith("group."),
+                self.hass.states.async_all(),
             )
-            for group in registered_groups:
-                group_name = group.entity_id.split(".")[-1]
-                if object_name != group_name:
-                    group_ecaobject = self.get_eca_object_instance(group_name)
-                    if group_ecaobject and hasattr(group_ecaobject, "position"):
-                        distances[group_name] = {
-                            "distance": self.get_distance(
-                                ref.position, group_ecaobject.position
-                            ),
-                            "directions": self.get_direction(
-                                ref.position, group_ecaobject.position
-                            ),
-                        }
-            # iot devices
-            from .sensor import (
-                DICT_IOT_DEVICES,
-            )
-            for iot_device_name, iot_device_position in DICT_IOT_DEVICES.items():
-                if iot_device_name != object_name:
-                    distances[iot_device_name] = {
+        )
+        if DO_LOG: print(f"Registered groups: {[g.entity_id for g in registered_groups]}")
+        common_list = [] # Add groups and DICT_IOT_DEVICES.names
+        common_list.extend(g.entity_id.split(".")[-1] for g in registered_groups)
+        common_list.extend(iot_device_name for iot_device_name in DICT_IOT_DEVICES.keys())
+
+        for curr_entity_name in common_list:
+            if DO_LOG: print(f"Entity: {curr_entity_name}")
+            if object_name != curr_entity_name:
+                group_ecaobject = self.get_entity_position_from_name(curr_entity_name)
+                if DO_LOG: print(f"Group name: {curr_entity_name}, ECAObject: {group_ecaobject}")
+                if group_ecaobject:
+                    distances[curr_entity_name] = {
                         "distance": self.get_distance(
-                            ref.position, iot_device_position
+                            cached_refposition, group_ecaobject["position"]
                         ),
                         "directions": self.get_direction(
-                            ref.position, iot_device_position
+                            cached_refposition, group_ecaobject["position"]
                         ),
                     }
+
         # keep in distances: i) very close objects (distance < 1) + ii) framed/pointed/grabbed objects
-        from .sensor import (
-            DEQUE_FRAMED_OBJECTS,
-            DEQUE_INTERACTED_OBJECTS,
-            DEQUE_POINTED_OBJECTS,
-        )
         deques = [
             DEQUE_FRAMED_OBJECTS,
             DEQUE_POINTED_OBJECTS,
