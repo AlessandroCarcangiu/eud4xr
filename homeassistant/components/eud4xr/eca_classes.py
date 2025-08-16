@@ -111,6 +111,24 @@ class Vector3(ECAPosition):
                 "Invalid type for 'position': expected object with x, y, z"
             )
 
+        #TODO The json below is accepted. Should we stricly check for ONLY the keys x, y, z?
+        # 'position': {
+        #   'x': -0.209391519,
+        #   'y': 1.95605624,
+        #   'z': -2.98058629,
+        #   'normalized': {
+        #       'x': -0.0586323962,
+        #       'y': 0.5477216,
+        #       'z': -0.8346036,
+        #       'normalized': {
+        #           'x': -0.0586324, 'y': 0.5477217, 'z': -0.834603667, 'magnitude': 1.0, 'sqrMagnitude': 1.00000012
+        #       },
+        #       'magnitude': 0.99999994,
+        #       'sqrMagnitude': 0.99999994
+        #   },
+        #   'magnitude': 3.57125974,
+        #   'sqrMagnitude': 12.7538958
+        # }
         if not all(k in value for k in ("x", "y", "z")):
             raise Exception(
                 "Missing one or more keys in 'position': x, y, z required"
