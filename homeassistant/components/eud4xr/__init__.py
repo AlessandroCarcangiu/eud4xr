@@ -38,6 +38,8 @@ from .views import (
     ObjectsView,
     TaskExpressionView,
     VirtualObjectsView,
+    TestUnityServer_ExistingEndpointView,
+    TestUnityServer_NonExistingEndPointView,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -135,7 +137,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post(
-                    f"{server_unity_url}{API_NOTIFY_UPDATE}", json=payload
+                    f"{server_unity_url}{API_UNITY_NOTIFY_UPDATE}", json=payload
                 ) as response:
                     if response.status == 200:
                         _LOGGER.info("Update successfully sent")
@@ -333,7 +335,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                         for a in await async_list_automations(hass)
                     ]
                     async with session.post(
-                        f"{server_unity_url}{API_NOTIFY_AUTOMATIONS}", json=automations
+                        f"{server_unity_url}{API_UNITY_NOTIFY_AUTOMATIONS}",
+                        json=automations,
                     ) as response:
                         if response.status == 200:
                             _LOGGER.info("Update successfully sent")
@@ -403,6 +406,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(ObjectsView(hass))
     hass.http.register_view(UpdateIotDeviceIsFramedView(hass))
+    hass.http.register_view(TestUnityServer_ExistingEndpointView(hass))
+    hass.http.register_view(TestUnityServer_NonExistingEndPointView(hass))
 
     async def handle_task_expression_mark_done(call):
         task_expression = TaskExpression(hass)

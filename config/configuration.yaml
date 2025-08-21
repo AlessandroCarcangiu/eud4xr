@@ -25,8 +25,8 @@ http:
     - 172.17.0.1
 
 eud4xr:
-  #server_unity_url: "https://fly-powerful-slug.ngrok-free.app" # change with your unity server url
-  server_unity_url: "http://localhost:5000"
+  server_unity_url: "http://192.168.1.18" # J # change with your unity server url
+  # server_unity_url: "http://localhost:5000"
   server_unity_token: "token"
   # unity_entities:
   #   - eca_script: "Sound"

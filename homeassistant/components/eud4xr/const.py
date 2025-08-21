@@ -39,8 +39,9 @@ API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY = "update_iotdevice_visibility_from_u
 
 
 # unity services
-API_NOTIFY_UPDATE = "/api/external_updates/"
-API_NOTIFY_AUTOMATIONS = "/api/automations/"
+API_UNITY_NOTIFY_UPDATE = "/api/external_updates/"
+API_UNITY_NOTIFY_AUTOMATIONS = "/api/automations/"
+API_UNITY_TEST = "/api/test/"
 
 # CONF domain
 CONF_SERVER_UNITY_URL = "server_unity_url"

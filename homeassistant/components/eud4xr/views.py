@@ -30,11 +30,10 @@ from .const import (
     API_GET_VIRTUAL_OBJECTS,
     API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY,
     MIN_DISTANCE,
-    IS_DEBUG
+    IS_DEBUG,
+    API_UNITY_TEST,
 )
-from .eca_classes import (
-    ECAPosition
-)
+from .eca_classes import ECAPosition
 from .entity import EUD4XRIOTDevice
 from .filters import get_devices_data, get_virtual_entities
 from .hass_utils import get_entity_instance_by_entity_id
@@ -761,3 +760,69 @@ class UpdateIotDeviceIsFramedView(HomeAssistantView):
         return self.json_message(
             f"Device '{data['sensor_name']}' updated successfully", 200
         )
+
+
+class TestUnityServer_ExistingEndpointView(HomeAssistantView):
+    API_GET_ECA_CAPABILITIES = "test"
+    url = f"/api/eud4xr/{API_GET_ECA_CAPABILITIES}"
+    name = f"api:{API_GET_ECA_CAPABILITIES}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        print("WTF ARE THE LOGS?")
+        import aiohttp
+
+        # Do an HTTP GET Request to "http://192.168.1.18:8080/api/hello"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "http://192.168.1.18:8080" + API_UNITY_TEST
+            ) as response:
+                # Raise exception if status >= 400
+                response.raise_for_status()
+
+                # Get response as text
+                data = await response.text()
+                print("Response:", data)
+
+                # if code is 200, return the data
+                if response.status == 200:
+                    return self.json_message(data, 200)
+                # Otherwise return bad request
+                return self.json_message("Failed to retrieve capabilities", 500)
+        print("BYE")
+
+
+class TestUnityServer_NonExistingEndPointView(HomeAssistantView):
+    API_GET_ECA_CAPABILITIES = "test-endpoint-non-existing"
+    url = f"/api/eud4xr/{API_GET_ECA_CAPABILITIES}"
+    name = f"api:{API_GET_ECA_CAPABILITIES}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        print("WTF ARE THE LOGS?")
+        import aiohttp
+
+        # Do an HTTP GET Request to "http://192.168.1.18:8080/api/hello"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "http://192.168.1.18:8080/api/test-non-existing-point"
+            ) as response:
+                # Raise exception if status >= 400
+                response.raise_for_status()
+
+                # Get response as text
+                data = await response.text()
+                print("Response:", data)
+
+                # if code is 200, return the data
+                if response.status == 200:
+                    return self.json_message(data, 200)
+                # Otherwise return bad request
+                return self.json_message("Failed to retrieve capabilities", 500)
+        print("BYE")
