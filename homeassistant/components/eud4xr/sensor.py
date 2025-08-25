@@ -1825,7 +1825,8 @@ class ECAHighlight(ECAEntity):
 
 class ECASound(ECAEntity):
     """
-
+    <b>ECASound</b> is a behavior that functions as a media player specifically designed for audio files.
+    It extends <see cref="ECABehaviour"/> to provide audio-related functionalities such as playback, volume control, and source management.
 
     Attributes:
     - source (str): Source is the audio filename that serves as the source for playback.
@@ -1945,6 +1946,124 @@ class ECASound(ECAEntity):
             -newSource:The new audio filename.
         """
         _LOGGER.info(f"Performed changes_source action - {newSource}")
+
+
+#region Taxonomy classes mr test
+class ECAXRGrabbable(ECAEntity):
+    """
+    <b>ECAXRGrabbable</b> is a custom ECA component that makes an object grabbable in XR.
+    It ensures ensures that grab and release events are mapped into the ECA system.
+    This class exposes the state variable <b>grabbed</b> and the actions
+    <b>starts-grabbing</b> and <b>stops-grabbing</b>, which allow automations
+    to reason about when a character interacts physically with this object.
+
+    Attributes:
+    - grabbed (ECABoolean): it indicates whether the object is currently being held by the player character.
+
+    """
+
+    def __init__(self, grabbed: ECABoolean, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._grabbed = grabbed
+        self._attr_should_poll = False
+
+    @property
+    def grabbed(self) -> ECABoolean:
+        return self._grabbed
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "grabbed": self.grabbed,
+            **super_extra_attributes,
+        }
+
+    @eca_script_action(verb="starts-grabbing")
+    async def async_starts_grabbing(self, c: ECACharacter) -> None:
+        """
+        <b>StartsGrabbing</b> is an action that occurs when the player character begins holding this object.
+        Argument:
+            -c: The "ECACharacter" that performs the grabbing action.
+        """
+        _LOGGER.info(f"Performed changes_source action - {c}")
+
+    @eca_script_action(verb="stops-grabbing")
+    async def async_stops_grabbing(self, c: ECACharacter) -> None:
+        """
+        <b>StopsGrabbing</b> is an action that occurs when the player character releases this object.
+        Argument:
+            -c: The "ECACharacter" that performs the releasing action.
+        """
+        _LOGGER.info(f"Performed changes_source action - {c}")
+
+
+class ECASprayBottle(ECAEntity):
+    """
+    <b>ECASprayBottle</b> is a virtual spray bottle that detects pinch gestures to trigger a spray action.
+    The spray action is triggered when both the index and middle fingers pinch beyond a configurable threshold.
+
+    Attributes:
+
+    """
+
+    def __init__(self, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._attr_should_poll = False
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            **super_extra_attributes,
+        }
+
+    @eca_script_action(verb="sprays")
+    async def async_sprays(self, c: ECACharacter) -> None:
+        """
+        <b>sprays</b> is an action that dispenses liquid from the spray bottle when triggered by a character,
+        typically through a hand pinch gesture. It also plays an audio cue when the spray starts.
+        Argument:
+            -c: The "ECACharacter" performing the spray action.
+        """
+        _LOGGER.info(f"Performed changes_source action - {c}")
+
+
+class ECAXRPointer(ECAEntity):
+    """
+    <b>ECAXRPointer</b> is a custom ECA component that makes the object owner pointable by the user represents an XR ray pointer interaction.
+
+    Attributes:
+    - isPointed: <b>isPointed</b> indicates whether this object is currently being pointed at by the player character's XR ray pointer.
+    """
+
+    def __init__(self, isPointed: ECABoolean, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._isPointed = isPointed
+        self._attr_should_poll = False
+
+    @property
+    def isPointed(self) -> ECABoolean:
+        return self._isPointed
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "isPointed": self.isPointed
+            **super_extra_attributes,
+        }
+
+    @eca_script_action(verb="sprays")
+    async def async_sprays(self, c: ECACharacter) -> None:
+        """
+        <b>sprays</b> is an action that dispenses liquid from the spray bottle when triggered by a character,
+        typically through a hand pinch gesture. It also plays an audio cue when the spray starts.
+        Argument:
+            -c: The "ECACharacter" performing the spray action.
+        """
+        _LOGGER.info(f"Performed changes_source action - {c}")
+#endregion
 
 
 ########## DO NOT DELETE IT
