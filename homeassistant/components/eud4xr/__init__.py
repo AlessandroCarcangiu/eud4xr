@@ -279,7 +279,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
                         else:
                             _LOGGER.warning(
-                                f"Received an old {update} for the Entity {sensor} - {sensor.last_updates[attribute]}"
+                                f"Received an old {update} for the Entity {sensor}. Delta timestamp: {sensor.last_updates[attribute]
+                            - update[CONF_SERVICE_UPDATE_FROM_UNITY_TIMESTAMP]} - Package's timestamp: {sensor.last_updates[attribute]}, latest timestamp: {update[CONF_SERVICE_UPDATE_FROM_UNITY_TIMESTAMP]}"
                             )
                         return True
                 else:

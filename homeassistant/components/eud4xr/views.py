@@ -32,6 +32,7 @@ from .const import (
     MIN_DISTANCE,
     IS_DEBUG,
     API_UNITY_TEST,
+    META_UNITY_SERVER_IP
 )
 from .eca_classes import ECAPosition
 from .entity import EUD4XRIOTDevice
@@ -772,13 +773,11 @@ class TestUnityServer_ExistingEndpointView(HomeAssistantView):
         self.hass = hass
 
     async def get(self, request):
-        print("WTF ARE THE LOGS?")
         import aiohttp
-
         # Do an HTTP GET Request to "http://192.168.1.18:8080/api/hello"
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                "http://192.168.1.18:8080" + API_UNITY_TEST
+                META_UNITY_SERVER_IP + API_UNITY_TEST
             ) as response:
                 # Raise exception if status >= 400
                 response.raise_for_status()
@@ -811,7 +810,7 @@ class TestUnityServer_NonExistingEndPointView(HomeAssistantView):
         # Do an HTTP GET Request to "http://192.168.1.18:8080/api/hello"
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                "http://192.168.1.18:8080/api/test-non-existing-point"
+                META_UNITY_SERVER_IP + "/api/test-non-existing-point"
             ) as response:
                 # Raise exception if status >= 400
                 response.raise_for_status()
