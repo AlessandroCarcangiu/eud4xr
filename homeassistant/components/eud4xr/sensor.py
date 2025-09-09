@@ -11,7 +11,7 @@ from .const import *
 from .eca_classes import ECABoolean, ECAColor, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
 from .task_modelling import CounterOrderIndependence
-from .utils import MappedClasses, eca_script_action, update_deque
+from .utils import MappedClasses, eca_script_action, decorator_update_deque
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -225,7 +225,7 @@ class ECAObject(ECAEntity):
         return self._isInsideCamera
 
     @isInsideCamera.setter
-    @update_deque(DEQUE_FRAMED_OBJECTS)
+    @decorator_update_deque(DEQUE_FRAMED_OBJECTS)
     def isInsideCamera(self, v: ECABoolean) -> None:
         self._isInsideCamera = v
 
@@ -1977,7 +1977,7 @@ class ECAXRGrabbable(ECAEntity):
         return self._grabbed
 
     @grabbed.setter
-    @update_deque(DEQUE_INTERACTED_OBJECTS)
+    @decorator_update_deque(DEQUE_INTERACTED_OBJECTS)
     def grabbed(self, v: ECABoolean) -> None:
         self._grabbed = v
 
@@ -2057,7 +2057,7 @@ class ECAXRPointer(ECAEntity):
         return self._isPointed
 
     @isPointed.setter
-    @update_deque(DEQUE_POINTED_OBJECTS)
+    @decorator_update_deque(DEQUE_POINTED_OBJECTS)
     def isPointed(self, v: ECABoolean) -> None:
         self._isPointed = v
 
