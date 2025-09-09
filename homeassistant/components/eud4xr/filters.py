@@ -2,6 +2,7 @@
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er, device_registry as dr
+from .const import CONF_UNUSEFUL_KEYS
 from .hass_utils import get_entity_instance_by_entity_id, find_sensor
 
 
@@ -13,6 +14,16 @@ def get_entities_for_device(hass: HomeAssistant, device_id: str) -> list:
         if entry.device_id == device_id
     ]
 
+def get_entity_attributes_by_state(state: any) -> dict:
+    attributes = dict()
+    if state:
+        attributes = state.attributes.copy()
+        # remove unuseful data
+        for k in CONF_UNUSEFUL_KEYS:
+            if k in attributes:
+                attributes.pop(k)
+    return attributes
+
 
 def get_entity_data(hass: HomeAssistant, service_map: list, entity: any) -> dict:
     entity_id = entity.entity_id
@@ -21,9 +32,9 @@ def get_entity_data(hass: HomeAssistant, service_map: list, entity: any) -> dict
     services = list(service_map.get(domain, {}).keys())
     return {
         "entity_id": entity_id,
-        "domain": domain,
+        #"domain": domain,
         "state": state.state if state else None,
-        "attributes": state.attributes if state else {},
+        "attributes": get_entity_attributes_by_state(state),
         "services": services,
     }
 
@@ -50,8 +61,8 @@ async def get_devices_data(
         device_data = {
             "device_id": device.id,
             "name": device_name,
-            "manufacturer": device.manufacturer,
-            "model": device.model,
+            #"manufacturer": device.manufacturer,
+            #"model": device.model,
             # aggiungere description
         }
         entities = get_entities_for_device(hass, device.id)
