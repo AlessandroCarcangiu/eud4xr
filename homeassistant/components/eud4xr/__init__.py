@@ -40,6 +40,7 @@ from .views import (
     VirtualObjectsView,
     TestUnityServer_ExistingEndpointView,
     TestUnityServer_NonExistingEndPointView,
+    RealObjectsCapabilitiesView
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -406,6 +407,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.http.register_view(VirtualObjectsView(hass))
     hass.http.register_view(ObjectsView(hass))
+    hass.http.register_view(RealObjectsCapabilitiesView(hass))
     hass.http.register_view(UpdateIotDeviceIsFramedView(hass))
     hass.http.register_view(TestUnityServer_ExistingEndpointView(hass))
     hass.http.register_view(TestUnityServer_NonExistingEndPointView(hass))
