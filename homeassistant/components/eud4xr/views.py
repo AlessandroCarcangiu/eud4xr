@@ -233,49 +233,6 @@ class ObjectsView(HomeAssistantView):
         return self.json({**real_objects, **virtual_objects})
 
 
-class RealObjectsCapabilitiesView(HomeAssistantView):
-    url = f"/api/eud4xr/{API_GET_RealObjects_Capabilities}"
-    name = f"api:{API_GET_RealObjects_Capabilities}"
-    methods = ["GET"]
-
-    def __init__(self, hass: HomeAssistant) -> None:
-        self.hass = hass
-
-    async def get(self, request):
-        real_objects = await get_devices_data(self.hass)
-
-        def map_real_devices(data: dict) -> dict:
-            output = {}
-
-            devices = data.get("real_objects", {})
-
-            for device_name, device_info in devices.items():
-                fullname = f"The {device_name}"
-
-                variables = []
-                actions = []
-
-                for entity in device_info.get("entities", []):
-                    # Collect friendly_name if present
-                    friendly_name = entity.get("attributes", {}).get("friendly_name")
-                    if friendly_name:
-                        variables.append(friendly_name)
-
-                    # Collect services if present
-                    entity_services = entity.get("services", [])
-                    actions.extend(entity_services)
-
-                output[device_name] = {
-                    "Fullname": fullname,
-                    "Variables": variables,
-                    "Actions": actions
-                }
-
-            return output
-        print(f"AAAAAAA:\n{real_objects}")
-        return self.json({**map_real_devices(real_objects)})
-
-
 class MultimediaFilesView(HomeAssistantView):
     url = f"/api/eud4xr/{API_GET_MULTIMEDIA_FILES}"
     name = f"api:{API_GET_MULTIMEDIA_FILES}"
@@ -705,6 +662,47 @@ class UpdateIotDeviceIsFramedView(HomeAssistantView):
 
 
 #region test endpoints
+class RealObjectsCapabilitiesView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_GET_RealObjects_Capabilities}"
+    name = f"api:{API_GET_RealObjects_Capabilities}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        real_objects = await get_devices_data(self.hass)
+
+        def map_real_devices(data: dict) -> dict:
+            output = {}
+
+            devices = data.get("real_objects", {})
+
+            for device_name, device_info in devices.items():
+                fullname = f"The {device_name}"
+
+                variables = []
+                actions = []
+
+                for entity in device_info.get("entities", []):
+                    # Collect friendly_name if present
+                    friendly_name = entity.get("attributes", {}).get("friendly_name")
+                    if friendly_name:
+                        variables.append(friendly_name)
+
+                    # Collect services if present
+                    entity_services = entity.get("services", [])
+                    actions.extend(entity_services)
+
+                output[device_name] = {
+                    "Fullname": fullname,
+                    "Variables": variables,
+                    "Actions": actions
+                }
+
+            return output
+        return self.json({**map_real_devices(real_objects)})
+    
 class TestUnityServer_ExistingEndpointView(HomeAssistantView):
     API_GET_ECA_CAPABILITIES = "test"
     url = f"/api/eud4xr/{API_GET_ECA_CAPABILITIES}"
