@@ -166,9 +166,13 @@ class Automation:
                 d = copy.deepcopy(data)
                 action = SafeAction.from_yaml(d)
             except:
-                action = (
-                    data[0]
-                    if kwargs.get("is_trigger") and isinstance(data, list)
-                    else data
-                )
+                try:
+                    action = (
+                        data[0]
+                        if kwargs.get("is_trigger") and isinstance(data, list)
+                        else data
+                    )
+                except Exception as e:
+                    _LOGGER.error(f"Potentially no action or trigger available. Data: {data}\nError detected: {e}")
+                    raise e
         return action

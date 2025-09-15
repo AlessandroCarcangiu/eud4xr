@@ -1,0 +1,105 @@
+- action:
+  - action: eud4xr.hides
+    data:
+      entity_id: sensor.secchio_ecaobject
+  alias: nascondi_secchio_quando_la_scopa_pulisce
+  condition:
+  - condition: template
+    value_template: '{{ state_attr("sensor.secchio_ecaobject", "visible") == "no"
+      }}'
+  description: "Questa automazione nasconde il secchio quando la scopa esegue l'azione\
+    \ di sweeping. L'evento che attiva questa automazione \xE8 quando la scopa sweeps,\
+    \ e l'azione eseguita \xE8 che il secchio viene nascosto."
+  id: 6b00cfed-f5c9-42e5-8608-ebbf2ab4d089
+  trigger:
+  - event_data:
+      subject: scopa
+      verb: sweeps
+    event_type: eud4xr
+    platform: event
+- action:
+  - service: turn_on
+    target:
+      entity_id: fan.xiaomi_cpa4_e35d_air_purifier
+  alias: attiva_purificatore_quando_spruzzino_visibile
+  condition: []
+  description: "Questa automazione attiva il purificatore d'aria quando lo spruzzino\
+    \ diventa visibile. L'evento che attiva questa automazione \xE8 quando lo spruzzino\
+    \ cambia il suo stato di visibilit\xE0 a \"s\xEC\", e l'azione eseguita \xE8 l'attivazione\
+    \ del purificatore d'aria."
+  id: d69b8056-8993-47a7-8974-1c364a379cab
+  trigger:
+  - event_data:
+      modifier: to
+      subject: spruzzino
+      value: 'yes'
+      variable: visible
+      verb: changes
+    event_type: eud4xr
+    platform: event
+- action:
+  - alias: sequence.Disattiva cubo 2 per CO2 bassa > Attiva ventilazione - CO2 alta
+    data:
+      entity_id: automation.r2
+    service: automation.turn_on
+  - alias: sequence.Disattiva cubo 2 per CO2 bassa > Attiva ventilazione - CO2 alta
+    data:
+      entity_id: automation.r1
+    service: automation.turn_off
+  alias: r1
+  condition: []
+  id: d69b8056-8993-47a7-8974-1c364a379ca1
+  trigger: []
+- action:
+  - alias: sequence.Disattiva cubo 2 per CO2 bassa > Attiva ventilazione - CO2 alta
+    data:
+      entity_id: automation.r2
+    service: automation.turn_off
+  alias: r2
+  condition: []
+  id: d69b8056-8993-47a7-8974-1c364a379ca2
+  trigger: []
+- action:
+  - alias: order.order independence
+    data:
+      entity_id: automation.r3
+    service: automation.turn_off
+  - alias: order independence
+    data:
+      entity_id: sensor.order independence
+    service: eud4xr.increment_counter
+  alias: r3
+  condition: []
+  id: d69b8056-8993-47a7-8974-1c364a379ca3
+  trigger: []
+- action:
+  - alias: order.order independence
+    data:
+      entity_id: automation.r4
+    service: automation.turn_off
+  - alias: order independence
+    data:
+      entity_id: sensor.order independence
+    service: eud4xr.increment_counter
+  alias: r4
+  condition: []
+  id: d69b8056-8993-47a7-8974-1c364a379ca4
+  trigger: []
+- action:
+  - alias: order.order independence
+    data:
+      entity_id: automation.r5
+    service: automation.turn_off
+  - alias: order independence
+    data:
+      entity_id: sensor.order independence
+    service: eud4xr.increment_counter
+  alias: r5
+  condition: []
+  id: d69b8056-8993-47a7-8974-1c364a379ca5
+  trigger: []
+- action: []
+  alias: r6
+  condition: []
+  id: d69b8056-8993-47a7-8974-1c364a379ca6
+  trigger: []

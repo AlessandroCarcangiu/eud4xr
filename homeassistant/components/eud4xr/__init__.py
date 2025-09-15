@@ -319,22 +319,20 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # listener update automation file
     @callback
-    async def handle_automation_reloaded(event):
-        print("Automation reloaded detected. Calling external service...")
+    async def handle_automation_updated(event):
+        _LOGGER.info("Automation update detected. Calling external service...")
         await notify_automations(hass)
 
     async def notify_automations(hass: HomeAssistant):
         try:
             async with aiohttp.ClientSession() as session:
-                automations = [
-                    Automation.from_yaml(hass, a).to_dict()
-                    for a in await async_list_automations(hass)
-                ]
+                automations = list()
+                for a in await async_list_automations(hass):
+                    try:
+                        automations.append(Automation.from_yaml(hass, a).to_dict())
+                    except Exception as e:
+                        _LOGGER.exception(f"Error on decoding automation {a} \nError throwed: {e}")
                 try:
-                    automations = [
-                        Automation.from_yaml(hass, a).to_dict()
-                        for a in await async_list_automations(hass)
-                    ]
                     async with session.post(
                         f"{server_unity_url}{API_UNITY_NOTIFY_AUTOMATIONS}",
                         json=automations,
@@ -352,6 +350,37 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     )
         except Exception as e:
             _LOGGER.error(f"Error on converting automations to json structure: {e}")
+
+    # listener update expression store
+    @callback
+    async def handle_expression_updated(event):
+        _LOGGER.info("Expression update detected. Calling external service...")
+        await notify_expressions(hass)
+
+    async def notify_expressions(hass: HomeAssistant):
+        try:
+            expressions = await TaskExpression(hass).get_expressions_from_store()
+            async with aiohttp.ClientSession() as session:
+                try:
+                    print(f"{server_unity_url}{API_UNITY_NOTIFY_EXPRESSIONS}")
+
+                    async with session.post(
+                        f"{server_unity_url}{API_UNITY_NOTIFY_EXPRESSIONS}",
+                        json={"expressions": expressions},
+                    ) as response:
+                        if response.status == 200:
+                            _LOGGER.info("Update successfully sent")
+                        else:
+                            _LOGGER.error(
+                                f"Error on notifying expressions to Unity: {response.status}"
+                            )
+
+                except Exception as e:
+                    _LOGGER.error(
+                        f"Error on conctating Unity while notifying expressions: {e}"
+                    )
+        except Exception as e:
+            _LOGGER.error(f"Error on converting expressions to json structure: {e}")
 
     # Task modelling Handlers #
     async def handle_increment_counter(call):
@@ -391,7 +420,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         service=SERVICE_INCREMENT_COUNTER,
         service_func=handle_increment_counter,
     )
-    hass.bus.async_listen("event_automation_reloaded", handle_automation_reloaded)
+    hass.bus.async_listen("event_automation_updated", handle_automation_updated)
+    hass.bus.async_listen("event_expression_updated", handle_expression_updated)
     hass.bus.async_listen("event_sensor_registered", handle_failed_update_list)
 
     # views

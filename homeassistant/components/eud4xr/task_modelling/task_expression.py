@@ -1,16 +1,18 @@
 # ruff: noqa
 
+import logging
 import os
-
 import voluptuous as vol
 import yaml
-
-from homeassistant.const import CONF_ENTITY_ID
 import homeassistant.helpers.config_validation as cv
+from homeassistant.const import CONF_ENTITY_ID
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.helpers.storage import Store
-
 from ..const import *
+
+
+_LOGGER = logging.getLogger(__name__)
+
 
 MARK_DONE_SERVICE_SCHEMA = vol.Schema(
     {
@@ -23,7 +25,8 @@ MARK_DONE_SERVICE_SCHEMA = vol.Schema(
 
 
 class TaskExpression:
-    def __init__(self, hass):
+
+    def __init__(self, hass) -> None:
         self.hass = hass
         self.sequences = None
         self.choices = None
@@ -118,6 +121,10 @@ class TaskExpression:
         data[CONF_TASK_MODELLING_EXPRESSIONS] = expressions
 
         await store.async_save(data)
+        # notify that the list of expressions has changed
+        self.hass.bus.async_fire("event_expression_updated")
+        _LOGGER.info("Expression successfully updated or added")
+
 
     def _load_automations_from_file(self):
         if not os.path.exists(self.AUTOMATIONS_FILE_PATH):

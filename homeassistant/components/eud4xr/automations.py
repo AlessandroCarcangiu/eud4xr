@@ -4,10 +4,8 @@ import asyncio
 import logging
 import time
 import uuid
-
 import voluptuous as vol
 import yaml
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
@@ -89,7 +87,7 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
         # convert input string into yaml
         automations_data = list()
         if isinstance(data, dict):
-            automations_data.append(automations_data)
+            automations_data.append(data)
         else:
             automations_data = [yaml.safe_load(d) for d in data]
         # append or update automations
@@ -103,22 +101,7 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
             existing_automations[automation_id] = automation_data
         # update and reload automation.yaml file
         await update_automation_and_reload(hass, existing_automations)
-
-        # # update entity_id
-        # try:
-        #     await wait_for_automation_states(hass, existing_automations.keys())
-        # finally:
-        #     automations = hass.states.async_all("automation")
-        # for id, values in existing_automations.items():
-        #     result = next((a for a in automations if a.attributes.get("id") == id), None)
-        #     if result:
-        #         entity_id = f"automation.{id.replace("-", "_").replace(" ", "_")}"
-        #         if entity_id != result.entity_id:
-        #             registry = er.async_get(hass)
-        #             registry.async_update_entity(entity_id=result.entity_id, new_entity_id=entity_id)
-
-        hass.bus.async_fire("event_automation_reloaded")
-
+        hass.bus.async_fire("event_automation_updated")
         _LOGGER.info("Automations successfully updated or added")
 
     except yaml.YAMLError as e:

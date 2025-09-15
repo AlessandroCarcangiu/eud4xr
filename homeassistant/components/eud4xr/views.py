@@ -55,7 +55,7 @@ class AutomationsView(HomeAssistantView):
     async def post(self, request):
         # get the json defintion of an automation, convert it to yaml format and save it
         data = await request.json()
-        print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
+        _LOGGER.debug(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
         if isinstance(data, dict):
             yaml_code = [Automation.from_dict(data).to_yaml(self.hass)]
         else:
@@ -67,22 +67,24 @@ class AutomationsView(HomeAssistantView):
     async def get(self, request):
         # get id
         automation_id = request.match_info.get("id")
-
-        # # update entity_id
-        # automations = self.hass.states.async_all("automation")
-        # for a in automations:
-        #     print(a.attributes.get("id"))
+        automations = list()
 
         # retrieve
         if automation_id:
             automation = await async_get_automation(self.hass, automation_id)
-            automations = [Automation.from_yaml(self.hass, automation).to_dict()]
+            if automation:
+                automations = [Automation.from_yaml(self.hass, automation).to_dict()]
         else:
             # list
-            automations = [
-                Automation.from_yaml(self.hass, a).to_dict()
-                for a in await async_list_automations(self.hass)
-            ]
+            for a in await async_list_automations(self.hass):
+                try:
+                    automations.append(Automation.from_yaml(self.hass, a).to_dict())
+                except Exception as e:
+                    _LOGGER.exception(f"Error on decoding automation {a} \nError throwed: {e}")
+            # automations = [
+            #     Automation.from_yaml(self.hass, a).to_dict()
+            #     for a in await async_list_automations(self.hass)
+            # ]
 
         return self.json({"automations": automations})
 
@@ -92,110 +94,6 @@ class AutomationsView(HomeAssistantView):
             await async_remove_automation(self.hass, automation_id)
             return Response(status=200)
         _LOGGER.error("The request must specify an id in the url")
-
-
-# class ListFramedVirtualDevicesView(HomeAssistantView):
-# """class State:
-
-# entity_id   str      e.g.    "person.giagobox",
-
-# state   str          e.g.    "unknown"
-# domain  str          e.g.    "unknown"
-
-# context homeassistant.core.Context        e.g.    <homeassistant.core.Context object at 0x7fc10ebe68d0>
-
-# attributes  homeassistant.util.read_only_dict.ReadOnlyDict  e.g.    {'editable': True, 'id': 'giagobox', 'device_trackers': [], 'user_id': '5fa37f398b5648eb955ca701f38ab210', 'friendly_name': 'Giagobox'}
-
-# last_changed    datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
-# last_reported   datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
-# last_updated    datetime.datetime   e.g.    "2024-11-14T15:51:47.761084+00:00"
-
-# as_dict()    homeassistant.util.read_only_dict.ReadOnlyDict   e.g.   {'entity_id': 'person.giagobox', 'state': 'unknown', 'attributes': {'editable': True, 'id': 'giagobox', 'device_trackers': [], 'user_id': '5fa37f398b5648eb955ca701f38ab210', 'friendly_name': 'Giagobox'}, 'last_changed': '2024-11-14T15:59:51.742010+00:00', 'last_reported': '2024-11-14T15:59:53.029074+00:00', 'last_updated': '2024-11-14T15:59:53.029074+00:00', 'context': {'id': '01JCNPE265RWHYC4BXDVG69W88', 'parent_id': None, 'user_id': None}}
-# as_dict_json    bytes   e.g.    b'{"entity_id":"person.giagobox","state":"unknown","attributes":{"editable":true,"id":"giagobox","device_trackers":[],"user_id":"5fa37f398b5648eb955ca701f38ab210","friendly_name":"Giagobox"},"last_changed":"2024-11-14T15:59:51.742010+00:00","last_reported":"2024-11-14T15:59:53.029074+00:00","last_updated":"2024-11-14T15:59:53.029074+00:00","context":{"id":"01JCNPE265RWHYC4BXDVG69W88","parent_id":null,"user_id":null}}'
-# """
-
-# url = f"/api/eud4xr/{API_GET_VIRTUAL_DEVICES}"
-# name = f"api:{API_GET_VIRTUAL_DEVICES}"
-# methods = ["GET"]
-
-# def __init__(self, hass: HomeAssistant) -> None:
-#     self.hass = hass
-
-# async def get(self, request):
-#     def filter_sensors(s: State):
-#         # print(f"\nsensor: {s}\n")
-#         def is_virtual_eud4xr_sensor(sensor: State) -> bool:
-#             # Check if:
-#             # 0) The entity is a sensor and its state == "active"
-#             # 1) It has the attribute device_class == eca_entity
-#             # 2) @Type is equal to "ECAObject"
-#             # 3) The attribute "isInsideCamera" is "yes"
-#             # If all the conditions are met, return True. Otherwise, return False
-#             # print(f"\nsensor: {s}\n")
-#             # 0) The entity is not a sensor
-#             if s.domain != "sensor" or s.state != "active":
-#                 return False
-
-#             # 1) It has the attribute "friendly_name"
-#             if not s.attributes or s.attributes.get("device_class") != "eca_entity":
-#                 return False
-
-#             # 2) @Type is equal to "ECAObject"
-#             friendly_name = s.attributes["friendly_name"]
-#             ecatype = friendly_name.split("@")
-#             if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
-#                 return False
-
-#             # 3) The attribute "isInsideCamera" is "yes"
-#             if s.attributes["isInsideCamera"] != "yes":
-#                 return False
-
-#             # If all the conditions are met, return True
-#             return True
-
-#         def is_iot_device(s: State) -> bool:
-#             # print(f"\nsensor: {s}\n")
-#             print(
-#                 f"sensor: {s.domain}, state: {s.state}, attributes: {s.attributes}, friendly_name: {s.attributes.get('friendly_name', 'N/A')}"
-#             )
-
-#             # 0) The entity is not a sensor
-#             if (
-#                 s.domain not in ["sensor", "binary_sensor", "fan"]
-#                 or s.state != "active"
-#             ):
-#                 return False
-
-#             # # 1) It has the attribute "friendly_name"
-#             # if not s.attributes or s.attributes.get("device_class") != "eca_entity":
-#             #     return False
-
-#             # # 2) @Type is equal to "ECAObject"
-#             # friendly_name = s.attributes["friendly_name"]
-#             # ecatype = friendly_name.split("@")
-#             # if len(ecatype) > 1 and ecatype[-1].lower() != "ECAObject".lower():
-#             #     return False
-
-#             # # 3) The attribute "isInsideCamera" is "yes"
-#             # if s.attributes["isInsideCamera"] != "yes":
-#             #     return False
-
-#             # # If all the conditions are met, return True
-#             return True
-
-#         if is_virtual_eud4xr_sensor(s):
-#             return True
-#         return is_iot_device(
-#             s
-#         )  # Why this ugly code? At least I can focus only on this function and print its stuff only?
-
-#     # Get the list of sensors in Home Assistant
-#     states = self.hass.states.async_all()
-
-#     states = list(filter(filter_sensors, states))
-
-#     # Filter sensors only ECAObject with isInsideCamera = true
-#     return self.json(states)
 
 
 class ListECACapabilitiesView(HomeAssistantView):
@@ -360,7 +258,6 @@ class MultimediaFilesView(HomeAssistantView):
         )
 
 
-# TODO J - Lavorare qui
 class FindCloseObjectsView(HomeAssistantView):
     url = f"/api/eud4xr/{API_GET_CLOSE_OBJECTS}"
     name = f"api:{API_GET_CLOSE_OBJECTS}"
@@ -763,6 +660,7 @@ class UpdateIotDeviceIsFramedView(HomeAssistantView):
         )
 
 
+#region test endpoints
 class TestUnityServer_ExistingEndpointView(HomeAssistantView):
     API_GET_ECA_CAPABILITIES = "test"
     url = f"/api/eud4xr/{API_GET_ECA_CAPABILITIES}"
@@ -825,3 +723,4 @@ class TestUnityServer_NonExistingEndPointView(HomeAssistantView):
                 # Otherwise return bad request
                 return self.json_message("Failed to retrieve capabilities", 500)
         print("BYE")
+#endregion
