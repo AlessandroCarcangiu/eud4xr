@@ -113,6 +113,28 @@ eud4xr:
       attributes: {
         "price": 0.0
       }
+    # surface
+    - eca_script: "ECAObject"
+      game_object: "Tavolo@ECAObject"
+      unity_id: "Tavolo@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': -5},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "superficie di lavoro.",
+      }
+    - eca_script: "ECAEnvironment"
+      game_object: "Tavolo@ECAEnvironment"
+      unity_id: "Tavolo@ECAEnvironment"
+    - eca_script: "ECASurface"
+      game_object: "Tavolo@ECASurface"
+      unity_id: "Tavolo@ECASurface"
+      attributes: {
+        "type": "tavolo di legno"
+      }
 
 group:
   scopa:
@@ -136,6 +158,12 @@ group:
     - sensor.secchio_ecaprop
     - sensor.secchio_ecaliquidcontainer
     - sensor.secchio_ecabucket
+  tavolo:
+   name: "tavolo"
+   entities:
+    - sensor.tavolo_ecaobject
+    - sensor.tavolo_ecaenvironment
+    - sensor.tavolo_ecasurface
   # cube2:
   #  name: "cube2"
   #  entities:

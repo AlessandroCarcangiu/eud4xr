@@ -123,4 +123,3 @@ async def async_remove_automation(hass: HomeAssistant, automation_id: str) -> No
         _LOGGER.error(f"Error on parsing YAML code: {e}")
     except Exception as e:
         _LOGGER.error(f"Error on removing a new automation: {e}")
-

@@ -13,6 +13,7 @@
   id: 6b00cfed-f5c9-42e5-8608-ebbf2ab4d089
   trigger:
   - event_data:
+      obj: tavolo
       subject: scopa
       verb: sweeps
     event_type: eud4xr
@@ -38,14 +39,6 @@
     event_type: eud4xr
     platform: event
 - action:
-  - alias: sequence.Disattiva cubo 2 per CO2 bassa > Attiva ventilazione - CO2 alta
-    data:
-      entity_id: automation.r2
-    service: automation.turn_on
-  - alias: sequence.Disattiva cubo 2 per CO2 bassa > Attiva ventilazione - CO2 alta
-    data:
-      entity_id: automation.r1
-    service: automation.turn_off
   alias: r1
   condition: []
   id: d69b8056-8993-47a7-8974-1c364a379ca1
