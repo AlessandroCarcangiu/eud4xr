@@ -112,11 +112,19 @@ class Automation:
         trigger = cls.safe_action_from_yaml(hass, data.get("trigger"), is_trigger=True)
         # actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]
         automation_actions = data.get("action")
-        actions = (
-            [cls.safe_action_from_yaml(hass, a) for a in automation_actions]
-            if automation_actions
-            else None
-        )
+        actions = list()
+        if automation_actions:
+            for a in automation_actions:
+                if "service" in a:
+                    service = a["service"]
+                    if service in ["automation.turn_on", "automation.turn_off"]:
+                        break;
+                actions.append(cls.safe_action_from_yaml(hass, a))
+        # actions = (
+        #     [cls.safe_action_from_yaml(hass, a) for a in automation_actions]
+        #     if automation_actions
+        #     else None
+        # )
         automation_conditions = data.get("condition")
         conditions = None
         if automation_conditions:
@@ -161,7 +169,7 @@ class Automation:
         try:
             d = copy.deepcopy(data)
             action = ECAAction.from_yaml(hass=hass, data=d, **kwargs)
-        except Exception:
+        except Exception as ed:
             try:
                 d = copy.deepcopy(data)
                 action = SafeAction.from_yaml(d)

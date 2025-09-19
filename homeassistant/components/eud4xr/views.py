@@ -702,7 +702,7 @@ class RealObjectsCapabilitiesView(HomeAssistantView):
 
             return output
         return self.json({**map_real_devices(real_objects)})
-    
+
 class TestUnityServer_ExistingEndpointView(HomeAssistantView):
     API_GET_ECA_CAPABILITIES = "test"
     url = f"/api/eud4xr/{API_GET_ECA_CAPABILITIES}"

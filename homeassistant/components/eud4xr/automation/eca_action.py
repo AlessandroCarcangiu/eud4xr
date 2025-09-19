@@ -3,7 +3,7 @@
 import inspect
 
 from homeassistant.core import HomeAssistant
-
+from ..entity import ECAEntity
 from ..hass_utils import (
     convert_subject_to_unity,
     get_entity_id_by_game_object_and_eca_script,
@@ -204,6 +204,9 @@ class ECAAction:
                     for param_name, param in sig.parameters.items():
                         if param_name != "self":
                             v = data["data"][param_name]
+                            if issubclass(param.annotation, ECAEntity):
+                                game_object, eca_script = v.split(".")[1].split("_")
+                                v = get_entity_id_by_game_object_and_eca_script(hass, game_object, eca_script)
         else:
             verb = service_name.replace("_", " ")
         # define kwargs
