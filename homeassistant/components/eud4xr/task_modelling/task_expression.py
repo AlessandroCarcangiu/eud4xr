@@ -367,9 +367,10 @@ class TaskExpression:
             await self._add_action_turn_on_to_automation(
                 automation_id, next_element, sequence_name
             )
-            await self._add_action_turn_on_to_automation(
-                automation_id, next_element, sequence_name
-            )
+            # print("[sequence] sto add_action_turn_on_to_automation")
+            # await self._add_action_turn_on_to_automation(
+            #     automation_id, next_element, sequence_name
+            # )
 
         await self._add_action_turn_off_to_automation(
             source=automation_id,
