@@ -113,7 +113,7 @@ eud4xr:
       attributes: {
         "price": 0.0
       }
-    # surface
+    # tavolo
     - eca_script: "ECAObject"
       game_object: "Tavolo@ECAObject"
       unity_id: "Tavolo@ECAObject"
@@ -135,6 +135,46 @@ eud4xr:
       attributes: {
         "type": "tavolo di legno"
       }
+    - eca_script: "ECADustBall"
+      game_object: "Tavolo@ECADustBall"
+      unity_id: "Tavolo@ECADustBall"
+      attributes: {
+        "sweepsCounter": 1,
+        "allSwept": "false"
+      }
+    - eca_script: "ECAOilStain"
+      game_object: "Tavolo@ECAOilStain"
+      unity_id: "Tavolo@ECAOilStain"
+      attributes: {
+        "washesCounter": 1,
+        "allWashed": "false"
+      }
+    # player
+    - eca_script: "ECAObject"
+      game_object: "Player@ECAObject"
+      unity_id: "Player@ECAObject"
+      attributes: {
+        "position": {'x': 0, 'y': 0, 'z': -15},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "no",
+        "description": "utente che ha il visore.",
+      }
+    - eca_script: "ECACharacter"
+      game_object: "Player@ECACharacter"
+      unity_id: "Player@ECACharacter"
+      attributes: {
+        "life": 100,
+        "playing": "yes",
+      }
+    - eca_script: "ECAAnimal"
+      game_object: "Player@ECAAnimal"
+      unity_id: "Player@ECAAnimal"
+    - eca_script: "ECAHuman"
+      game_object: "Player@ECAHuman"
+      unity_id: "Player@ECAHuman"
 
 group:
   scopa:
@@ -164,29 +204,12 @@ group:
     - sensor.tavolo_ecaobject
     - sensor.tavolo_ecaenvironment
     - sensor.tavolo_ecasurface
-  # cube2:
-  #  name: "cube2"
-  #  entities:
-  #   - sensor.cube2_ecaobject
-  #   - sensor.cube2_interactable
-  #   - sensor.cube2_food
-  # pulsante:
-  #  name: "pulsante"
-  #  entities:
-  #   - sensor.pulsante_button
-  # luce:
-  #  name: "luce"
-  #  entities:
-  #   - sensor.luce_ecalight
-  # player:
-  #   name: "player"
-  #   entities:
-  #     - sensor.player_ecaobject
-  #     - sensor.player_character
-  # t_shirt_test:
-  #   name: "t_shirt_test"
-  #   entities:
-  #   - sensor.t_shirt_test_ecaobject
-  #   - sensor.t_shirt_test_clothing
-  #   - sensor.t_shirt_test_prop
-  #   - sensor.t_shirt_test_interactable
+    - sensor.tavolo_ecadustball
+    - sensor.tavolo_ecaoilstain
+  player:
+   name: "player"
+   entities:
+    - sensor.player_ecaobject
+    - sensor.player_ecacharacter
+    - sensor.player_ecaanimal
+    - sensor.player_ecahuman

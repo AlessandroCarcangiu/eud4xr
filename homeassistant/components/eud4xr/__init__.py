@@ -364,7 +364,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             async with aiohttp.ClientSession() as session:
                 try:
                     print(f"{server_unity_url}{API_UNITY_NOTIFY_EXPRESSIONS}")
-
                     async with session.post(
                         f"{server_unity_url}{API_UNITY_NOTIFY_EXPRESSIONS}",
                         json={"expressions": expressions},
