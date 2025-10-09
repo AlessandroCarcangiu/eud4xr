@@ -566,7 +566,7 @@ class TaskExpressionView(HomeAssistantView):
         try:
             data = await request.json()
         except Exception:
-            return self.json_message("Payload JSON non valido", 400)
+            return self.json_message(f"Payload JSON non valido for request:{request.body}", 400)
 
         sequence = data.get("sequence")
         choice = data.get("choice")
