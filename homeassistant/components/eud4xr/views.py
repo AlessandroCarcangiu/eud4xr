@@ -56,7 +56,7 @@ class AutomationsView(HomeAssistantView):
     async def post(self, request):
         # get the json defintion of an automation, convert it to yaml format and save it
         data = await request.json()
-        _LOGGER.debug(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
+        _LOGGER.info(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
         if isinstance(data, dict):
             yaml_code = [Automation.from_dict(data).to_yaml(self.hass)]
         else:

@@ -106,16 +106,14 @@ class ECAEntity(Entity):
             service_params = dict()
             signature = inspect.signature(method).parameters.items()
             for param_name, param in list(filter(lambda x: x[0] != "self", signature)):
-                # value = self.__mapping_parameter(param_name, param, hass)
                 service_params[param_name] = str(param.annotation.__name__)
-
             s = Service(
                 method=method,
                 eca_action=f"eud4xr.{name.replace('async_','')}",
                 params=service_params,
                 description=inspect.getdoc(method),
+                object_name=self.name,
             ).to_dict()
-            # services[getattr(method, "kwargs")["verb"]] = s
             services.append(
                 {
                     "service_of_component": self.game_object,

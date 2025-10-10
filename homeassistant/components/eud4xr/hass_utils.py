@@ -1,12 +1,14 @@
 # ruff: noqa
 
 import inspect
+import logging
 
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
 
 from .sensor import get_classes_subclassing
 
+_LOGGER = logging.getLogger(__name__)
 
 def find_group(hass: HomeAssistant, group_id: str) -> State:
     group = hass.states.get(f"group.{group_id}")
@@ -87,7 +89,7 @@ def get_entity_instance_and_method_signature_by_structured_language(
     modifier: str = None,
 ) -> str:
     verb = verb.replace("_", " ")
-
+    _LOGGER.info(f"[get_entity_instance_and_method_signature_by_structured_language] - {game_object_name} - {verb} - {variable} - {modifier}")
     # get group
     group = find_group(hass, game_object_name)
     if not group:
@@ -111,6 +113,7 @@ def get_entity_instance_and_method_signature_by_structured_language(
                 ):
                     return entity_instance, name, method, inspect.signature(method)
     return None, None, None, None
+
 
 
 def get_method_by_eca_script_name(eca_script: str, verb: str) -> any:

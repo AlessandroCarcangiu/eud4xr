@@ -394,7 +394,6 @@ async def get_virtual_entities(
     else:
         # names
         names = [n.lower() for n in names] if names else []
-        registry = er.async_get(hass)
 
         for state in registered_groups:
             new_group = dict()
@@ -403,43 +402,13 @@ async def get_virtual_entities(
             new_group["services"] = list()
             new_group["properties"] = list()
 
-            # components = list()
             for i in state.attributes["entity_id"]:
                 sensor, entity = find_sensor(hass, i)
-                # components.append({
-                #     "sensor name": i,
-                #     **sensor.to_dict(hass)
-                # })
-                # new_group["components"] = components
-
                 new_group["components"] += [sensor.game_object]
                 new_group["properties"] += sensor.get_properties()
                 new_group["services"] += sensor.get_services()
 
-                # c = hass.states.get(i)
-                # if c:
-                #     # get properties and services
-                #     print(f"sensor: {type(sensor)}\n{sensor.to_dict(hass)}")
-
-                #     component_state = c.as_dict().copy()
-                #     # drop unuseful keys
-                #     for k in [
-                #         "last_changed",
-                #         "last_reported",
-                #         "last_updated",
-                #         "context",
-                #     ]:
-                #         if k in component_state:
-                #             component_state.pop(k)
-                #     # add class name
-                #     component_entity = get_entity_instance_by_entity_id(
-                #         hass, i
-                #     )
-                #     component_state["class"] = component_entity.eca_script
-                #     components.append(component_state)
-
             objects_all.append(new_group)
             if not names or new_group["name"].lower() in names:
                 objects.append(new_group)
-
     return {"virtual_objects": objects if objects else objects_all}

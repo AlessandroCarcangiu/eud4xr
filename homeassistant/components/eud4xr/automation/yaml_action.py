@@ -104,7 +104,7 @@ class YAMLAction:
 
         # active or passive action
         if not method_name:
-            # new #
+            # is passive #
             passive_instance, method_name, _, sig = (
                 get_entity_instance_and_method_signature_by_structured_language(
                     hass, self.obj, self.verb, self.variable, self.modifier

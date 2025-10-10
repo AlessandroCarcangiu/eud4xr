@@ -522,91 +522,6 @@ class ECALiquidDispenser(ECAEntity):
         return {"liquidType": self.liquidType, **super_extra_attributes}
 
 
-class ECABottle(ECAEntity):
-    """
-    ECABottle is a virtual bottle object that can contain and dispense liquid.
-            It supports state variables such as capOpen and flipped, and interacts with a  component for liquid spawning.
-            It provides actions for flipping the bottle, opening or closing its cap, and starting or stopping the flow of liquid.
-            Some rules are added automatically at the start:
-            - Flipping the bottle down while the cap is open will cause liquid to drop.
-            - Flipping the bottle up will stop the liquid from dropping.
-            - Closing the cap will stop the liquid from dropping.
-            - Opening the cap while the bottle is flipped down will cause liquid to drop.
-
-    Attributes:
-    - capOpen (ECABoolean): capOpen indicates whether the cap of the bottle is open (YES) or closed (NO).
-    - flipped (ECABoolean): flipped indicates whether the bottle is currently flipped upside down (YES) or upright (NO).
-
-    """
-
-    def __init__(
-        self, capOpen: ECABoolean, flipped: ECABoolean, **kwargs: dict
-    ) -> None:
-        super().__init__(**kwargs)
-        self._capOpen = capOpen
-        self._flipped = flipped
-        self._attr_should_poll = False
-
-    @property
-    def capOpen(self) -> ECABoolean:
-        return self._capOpen
-
-    @property
-    def flipped(self) -> ECABoolean:
-        return self._flipped
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        super_extra_attributes = super().extra_state_attributes
-        return {
-            "capOpen": self.capOpen,
-            "flipped": self.flipped,
-            **super_extra_attributes,
-        }
-
-    @eca_script_action(verb="opens-cap")
-    async def async_opens_cap(self) -> None:
-        """
-        opens-cap is an action that opens the bottle’s cap.
-        """
-        _LOGGER.info(f"Performed opens_cap action")
-
-    @eca_script_action(verb="closes-cap")
-    async def async_closes_cap(self) -> None:
-        """
-        closes-cap is an action that closes the bottle’s cap.
-        """
-        _LOGGER.info(f"Performed closes_cap action")
-
-    @eca_script_action(verb="flips-down")
-    async def async_flips_down(self) -> None:
-        """
-        flips-down is an action that simulates turning the bottle upside down.
-        """
-        _LOGGER.info(f"Performed flips_down action")
-
-    @eca_script_action(verb="flips-up")
-    async def async_flips_up(self) -> None:
-        """
-        flips-up is an action that simulates turning the bottle upright.
-        """
-        _LOGGER.info(f"Performed flips_up action")
-
-    @eca_script_action(verb="drops-liquid")
-    async def async_drops_liquid(self) -> None:
-        """
-        drops-liquid is an internal action that triggers the liquid to start spawning from the spawner.
-        """
-        _LOGGER.info(f"Performed drops_liquid action")
-
-    @eca_script_action(verb="stops-dropping")
-    async def async_stops_dropping(self) -> None:
-        """
-        stops-dropping is an internal action that stops the flow of liquid from the bottle.
-        """
-        _LOGGER.info(f"Performed stops_dropping action")
-
-
 class ECACharacter(ECAEntity):
     """
     Represents a versatile character within the ECA rules framework.
@@ -703,6 +618,91 @@ class ECACharacter(ECAEntity):
             -s:The string of the animation clip to play
         """
         _LOGGER.info(f"Performed starts_animation action - {s}")
+        
+
+class ECABottle(ECAEntity):
+    """
+    ECABottle is a virtual bottle object that can contain and dispense liquid.
+            It supports state variables such as capOpen and flipped, and interacts with a  component for liquid spawning.
+            It provides actions for flipping the bottle, opening or closing its cap, and starting or stopping the flow of liquid.
+            Some rules are added automatically at the start:
+            - Flipping the bottle down while the cap is open will cause liquid to drop.
+            - Flipping the bottle up will stop the liquid from dropping.
+            - Closing the cap will stop the liquid from dropping.
+            - Opening the cap while the bottle is flipped down will cause liquid to drop.
+
+    Attributes:
+    - capOpen (ECABoolean): capOpen indicates whether the cap of the bottle is open (YES) or closed (NO).
+    - flipped (ECABoolean): flipped indicates whether the bottle is currently flipped upside down (YES) or upright (NO).
+
+    """
+
+    def __init__(
+        self, capOpen: ECABoolean, flipped: ECABoolean, **kwargs: dict
+    ) -> None:
+        super().__init__(**kwargs)
+        self._capOpen = capOpen
+        self._flipped = flipped
+        self._attr_should_poll = False
+
+    @property
+    def capOpen(self) -> ECABoolean:
+        return self._capOpen
+
+    @property
+    def flipped(self) -> ECABoolean:
+        return self._flipped
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            "capOpen": self.capOpen,
+            "flipped": self.flipped,
+            **super_extra_attributes,
+        }
+
+    @eca_script_action(verb = "opens-cap", is_passive = True)
+    async def async_opens_cap(self, c: ECACharacter) -> None:
+        """
+        opens-cap is an action that opens the bottle’s cap.
+        """
+        _LOGGER.info(f"Performed opens_cap action")
+
+    @eca_script_action(verb = "closes-cap", is_passive = True)
+    async def async_closes_cap(self, c: ECACharacter) -> None:
+        """
+        closes-cap is an action that closes the bottle’s cap.
+        """
+        _LOGGER.info(f"Performed closes_cap action")
+
+    @eca_script_action(verb="flips-down")
+    async def async_flips_down(self) -> None:
+        """
+        flips-down is an action that simulates turning the bottle upside down.
+        """
+        _LOGGER.info(f"Performed flips_down action")
+
+    @eca_script_action(verb="flips-up")
+    async def async_flips_up(self) -> None:
+        """
+        flips-up is an action that simulates turning the bottle upright.
+        """
+        _LOGGER.info(f"Performed flips_up action")
+
+    @eca_script_action(verb="drops-liquid")
+    async def async_drops_liquid(self) -> None:
+        """
+        drops-liquid is an internal action that triggers the liquid to start spawning from the spawner.
+        """
+        _LOGGER.info(f"Performed drops_liquid action")
+
+    @eca_script_action(verb="stops-dropping")
+    async def async_stops_dropping(self) -> None:
+        """
+        stops-dropping is an internal action that stops the flow of liquid from the bottle.
+        """
+        _LOGGER.info(f"Performed stops_dropping action")
 
 
 class ECAWaterMixerTap(ECAEntity):
@@ -748,7 +748,7 @@ class ECAWaterMixerTap(ECAEntity):
         """
         _LOGGER.info(f"Performed stops_flowing_water action")
 
-    @eca_script_action(verb="turns-left")
+    @eca_script_action(verb = "turns-left", is_passive = True)
     async def async_turns_left(self, c: ECACharacter) -> None:
         """
         TurnsLeft is an action where a character turns the tap handle to the left.
@@ -757,7 +757,7 @@ class ECAWaterMixerTap(ECAEntity):
         """
         _LOGGER.info(f"Performed turns_left action - {c}")
 
-    @eca_script_action(verb="turns-idle")
+    @eca_script_action(verb="turns-idle", is_passive = True)
     async def async_turns_idle(self, c: ECACharacter) -> None:
         """
         TurnsIdle is an action where a character returns the tap handle to the center (idle) position.
@@ -766,7 +766,7 @@ class ECAWaterMixerTap(ECAEntity):
         """
         _LOGGER.info(f"Performed turns_idle action - {c}")
 
-    @eca_script_action(verb="turns-right")
+    @eca_script_action(verb="turns-right", is_passive = True)
     async def async_turns_right(self, c: ECACharacter) -> None:
         """
         TurnsRight is an action where a character turns the tap handle to the right.
@@ -841,7 +841,7 @@ class ECALiquidContainer(ECAEntity):
             **super_extra_attributes,
         }
 
-    @eca_script_action(verb="fills-in")
+    @eca_script_action(verb="fills-in", is_passive = True)
     async def async_fills_in(self, dispenser: ECALiquidDispenser) -> None:
         """
         _FillsIn is an action method invoked when the container is filled by a liquid dispenser.
@@ -1020,7 +1020,7 @@ class ECASoakableCleaningItem(ECAEntity):
             **super_extra_attributes,
         }
 
-    @eca_script_action(verb="wets")
+    @eca_script_action(verb="wets", is_passive = True)
     async def async_wets(self, ld: ECALiquidDispenser) -> None:
         """
         Wets is an action method that updates the item’s internal state to reflect it has absorbed a specific liquid.
@@ -1146,8 +1146,8 @@ class ECADustBall(ECAEntity):
         """
         _LOGGER.info(f"Performed changes action - {v}")
 
-    @eca_script_action(verb="increasingly-removes-dust")
-    async def async_increasingly_removes_dust_(self, scottex: ECAScottex) -> None:
+    @eca_script_action(verb="increasingly-removes-dust", is_passive = True)
+    async def async_increasingly_removes_dust_scottex(self, scottex: ECAScottex) -> None:
         """
         increasingly-removes-dust simulates a sweeping action by a , decreasing by one the number of sweeps needed.
             When enough sweeps are performed, the dust ball is considered clean.
@@ -1156,8 +1156,8 @@ class ECADustBall(ECAEntity):
         """
         _LOGGER.info(f"Performed increasingly_removes_dust_ action - {scottex}")
 
-    @eca_script_action(verb="increasingly-removes-dust")
-    async def async_increasingly_removes_dust_(self, broom: ECABroom) -> None:
+    @eca_script_action(verb="increasingly-removes-dust", is_passive = True)
+    async def async_increasingly_removes_dust_eca_broom(self, broom: ECABroom) -> None:
         """
         increasingly-removes-dust simulates a sweeping action by a , decreasing by one the number of sweeps needed.
             When enough sweeps are performed, the dust ball is considered clean.
@@ -1263,7 +1263,7 @@ class ECAButton(ECAEntity):
         super_extra_attributes = super().extra_state_attributes
         return {**super_extra_attributes}
 
-    @eca_script_action(verb="pushes")
+    @eca_script_action(verb="pushes", is_passive = True)
     async def async_pushes(self, c: ECACharacter) -> None:
         """
         Presses is a passive function that represents the pressing of the button by a character C.
@@ -1711,8 +1711,8 @@ class ECAOilStain(ECAEntity):
         """
         _LOGGER.info(f"Performed changes action - {v}")
 
-    @eca_script_action(verb="increasingly-removes-stain")
-    async def async_increasingly_removes_stain_(
+    @eca_script_action(verb="increasingly-removes-stain", is_passive=True)
+    async def async_increasingly_removes_stain_rag(
         self, cleaningRag: ECACleaningRag
     ) -> None:
         """
@@ -1723,8 +1723,8 @@ class ECAOilStain(ECAEntity):
         """
         _LOGGER.info(f"Performed increasingly_removes_stain_ action - {cleaningRag}")
 
-    @eca_script_action(verb="increasingly-removes-stain")
-    async def async_increasingly_removes_stain_(self, mop: ECAMop) -> None:
+    @eca_script_action(verb="increasingly-removes-stain", is_passive = True)
+    async def async_increasingly_removes_stain_mop(self, mop: ECAMop) -> None:
         """
         increasingly-removes-stain simulates a washing action by a , decreasing by one the number of washes needed.
             When enough washes are performed, the oil stains are considered clean.
@@ -1759,7 +1759,7 @@ class ECAPhysicalGrabbable(ECAEntity):
         super_extra_attributes = super().extra_state_attributes
         return {"grabbed": self.grabbed, **super_extra_attributes}
 
-    @eca_script_action(verb="starts-grabbing")
+    @eca_script_action(verb="starts-grabbing", is_passive = True)
     async def async_starts_grabbing(self, c: ECACharacter) -> None:
         """
         starts-grabbing is triggered when the player begins to grab the object with either hand.
@@ -1769,7 +1769,7 @@ class ECAPhysicalGrabbable(ECAEntity):
         """
         _LOGGER.info(f"Performed starts_grabbing action - {c}")
 
-    @eca_script_action(verb="stops-grabbing")
+    @eca_script_action(verb="stops-grabbing", is_passive = True)
     async def async_stops_grabbing(self, c: ECACharacter) -> None:
         """
         stops-grabbing is triggered when the player releases the object with both hands.
@@ -1989,7 +1989,7 @@ class ECAXRGrabbable(ECAEntity):
             **super_extra_attributes,
         }
 
-    @eca_script_action(verb="starts-grabbing")
+    @eca_script_action(verb="starts-grabbing", is_passive = True)
     async def async_starts_grabbing(self, c: ECACharacter) -> None:
         """
         <b>StartsGrabbing</b> is an action that occurs when the player character begins holding this object.
@@ -1998,7 +1998,7 @@ class ECAXRGrabbable(ECAEntity):
         """
         _LOGGER.info(f"Performed changes_source action - {c}")
 
-    @eca_script_action(verb="stops-grabbing")
+    @eca_script_action(verb="stops-grabbing", is_passive = True)
     async def async_stops_grabbing(self, c: ECACharacter) -> None:
         """
         <b>StopsGrabbing</b> is an action that occurs when the player character releases this object.
@@ -2028,7 +2028,7 @@ class ECASprayBottle(ECAEntity):
             **super_extra_attributes,
         }
 
-    @eca_script_action(verb="sprays")
+    @eca_script_action(verb="sprays", is_passive = True)
     async def async_sprays(self, c: ECACharacter) -> None:
         """
         <b>sprays</b> is an action that dispenses liquid from the spray bottle when triggered by a character,

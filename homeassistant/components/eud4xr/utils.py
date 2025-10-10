@@ -41,6 +41,7 @@ def eca_script_action(
             return result
 
         wrapper._is_eca_script_action = True
+        wrapper.is_passive = is_passive
         return wrapper
 
     return decorator
@@ -77,12 +78,13 @@ def decorator_update_deque(circular_list: deque):
 
 class Service:
     def __init__(
-        self, method: any, eca_action: dict, params: dict, description: str
+        self, method: any, eca_action: dict, params: dict, description: str, object_name: str = None
     ) -> None:
         self.method = method
         self.eca_action = eca_action
         self.params = params
         self.description = description
+        self.object_name = object_name
 
     def to_dict(self):
         kwargs = getattr(self.method, "kwargs")
@@ -117,7 +119,7 @@ class Service:
             data["requested_parameter"] = self.params[list(self.params.keys())[0]]
 
         json_structure = {
-            "subject": "{{l'oggetto che compie l'azione}}",
+            "subject": self.object_name if not self.method.is_passive else f"{{l'oggetto che compie l'azione}} su {self.object_name}",
             "verb": kwargs["verb"],
         }
         for i in ["variable", "modifier"]:
@@ -129,7 +131,7 @@ class Service:
             )
         elif self.params:
             json_structure["obj"] = (
-                "{{un valore, o un altro oggetto, coinvolti nell'azione}}"
+                "{{un valore, o un altro oggetto, su cui si esegue nell'azione}}" if not self.method.is_passive else self.object_name
             )
 
         return {

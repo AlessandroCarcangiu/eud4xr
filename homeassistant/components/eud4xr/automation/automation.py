@@ -92,14 +92,13 @@ class Automation:
         yaml_data["alias"] = self.alias
         yaml_data["description"] = self.description
         # trigger
-        # yaml_data["trigger"] = [self.trigger.to_yaml(hass=hass, as_event=True)]
         yaml_data["trigger"] = [
             self.safe_action_to_yaml(hass, self.trigger, as_event=True)
         ]
         # conditions
         yaml_data["condition"] = [c.to_yaml(hass) for c in self.conditions]
         # actions
-        # yaml_data["action"] = [a.to_yaml(hass=hass) for a in self.actions]
+
         yaml_data["action"] = [self.safe_action_to_yaml(hass, a) for a in self.actions]
         # convert to yaml
         automation_yaml = yaml.dump(yaml_data, default_flow_style=False)
@@ -152,13 +151,14 @@ class Automation:
 
     @staticmethod
     def safe_action_to_yaml(
-        hass: HomeAssistant, action: YAMLAction | dict, **kwargs
+        hass: HomeAssistant, action, **kwargs
     ) -> dict:
         data = None
-        if isinstance(action, dict):
-            data = action
-        else:
+        try:
             data = action.to_yaml(hass, **kwargs)
+        except Exception as e:
+            print(f"Error on converting {action} to yaml - error occurred: {e}}")
+            return action
         return data
 
     @staticmethod
