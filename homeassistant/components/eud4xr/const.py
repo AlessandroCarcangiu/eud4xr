@@ -39,7 +39,7 @@ API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY = "update_iotdevice_visibility_from_u
 API_GET_RealObjects_Capabilities = "list_real_objects_capabilities"
 
 # unity services
-META_UNITY_SERVER_IP = "http://127.0.0.1:8080"
+META_UNITY_SERVER_IP = "http://192.168.1.123:8080" # NOTDE: DO NOT END WITH '/'
 API_UNITY_NOTIFY_UPDATE = "/api/external_updates/"
 API_UNITY_NOTIFY_AUTOMATIONS = "/api/automations/"
 API_UNITY_NOTIFY_EXPRESSIONS = "/api/expressions/"
