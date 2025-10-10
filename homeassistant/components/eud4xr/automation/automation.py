@@ -157,7 +157,7 @@ class Automation:
         try:
             data = action.to_yaml(hass, **kwargs)
         except Exception as e:
-            print(f"Error on converting {action} to yaml - error occurred: {e}}")
+            print(f"Error on converting {action} to yaml - error occurred: {e}")
             return action
         return data
 
