@@ -75,7 +75,7 @@ CONFIG_SCHEMA = vol.Schema(
         DOMAIN: vol.Schema(
             {
                 vol.Required(CONF_SERVER_UNITY_URL): cv.url,
-                vol.Required(CONF_SERVER_UNITY_TOKEN): cv.string,
+                vol.Optional(CONF_SERVER_UNITY_TOKEN): cv.string,
                 vol.Optional(CONF_SENSORS, default=list()): vol.All(
                     cv.ensure_list, [SENSOR_SCHEMA]
                 ),
@@ -618,7 +618,7 @@ class ECACharacter(ECAEntity):
             -s:The string of the animation clip to play
         """
         _LOGGER.info(f"Performed starts_animation action - {s}")
-        
+
 
 class ECABottle(ECAEntity):
     """

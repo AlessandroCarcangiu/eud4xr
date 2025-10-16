@@ -13,6 +13,10 @@ from .condition import CompositeCondition, Condition, SimpleCondition, get_condi
 from .eca_action import ECAAction
 from .safe_action import SafeAction
 from .yaml_action import YAMLAction
+from ..const import (
+    CONF_YAML_COMPOSITE_KEYS,
+    CONF_YAML_SIMPLE_KEYS
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,7 +44,9 @@ class Automation:
         if isinstance(self.conditions, list):
             conditions = [c.to_dict() for c in self.conditions]
         elif self.conditions:
-            conditions = self.conditions.to_dict()
+            conditions = self.conditions
+            if isinstance(self.conditions, (SimpleCondition, CompositeCondition)):
+                conditions = conditions.to_dict()
         else:
             conditions = self.conditions
         return {
@@ -96,9 +102,12 @@ class Automation:
             self.safe_action_to_yaml(hass, self.trigger, as_event=True)
         ]
         # conditions
-        yaml_data["condition"] = [c.to_yaml(hass) for c in self.conditions]
+        conditions = list()
+        for c in self.conditions:
+            v = c.to_yaml(hass) if isinstance(c, (SimpleCondition, CompositeCondition)) else c
+            conditions.append(v)
+        yaml_data["condition"] = conditions
         # actions
-
         yaml_data["action"] = [self.safe_action_to_yaml(hass, a) for a in self.actions]
         # convert to yaml
         automation_yaml = yaml.dump(yaml_data, default_flow_style=False)
@@ -106,10 +115,9 @@ class Automation:
 
     @classmethod
     def from_yaml(cls, hass: HomeAssistant, data: dict) -> "Automation":
-        # ActionClass = ECAAction
-        # trigger = ActionClass.from_yaml(hass, data.get("trigger"), is_trigger=True)
+        # trigger
         trigger = cls.safe_action_from_yaml(hass, data.get("trigger"), is_trigger=True)
-        # actions = [ActionClass.from_yaml(hass, a) for a in data.get("action")]
+        # actions
         automation_actions = data.get("action")
         actions = list()
         if automation_actions:
@@ -117,22 +125,21 @@ class Automation:
                 if "service" in a:
                     service = a["service"]
                     if service in ["automation.turn_on", "automation.turn_off"]:
-                        break;
+                        break
                 actions.append(cls.safe_action_from_yaml(hass, a))
-        # actions = (
-        #     [cls.safe_action_from_yaml(hass, a) for a in automation_actions]
-        #     if automation_actions
-        #     else None
-        # )
+        # conditions
         automation_conditions = data.get("condition")
         conditions = None
         if automation_conditions:
-            conditions = [
-                SimpleCondition.from_yaml(hass, c)
-                if c["condition"] == "template"
-                else CompositeCondition.from_yaml(hass, c)
-                for c in automation_conditions
-            ]
+            conditions = list()
+            for c in automation_conditions:
+                if all(k in c for k in CONF_YAML_COMPOSITE_KEYS):
+                    v = CompositeCondition.from_yaml(hass, c)
+                elif all(k in c for k in CONF_YAML_SIMPLE_KEYS):
+                    v = SimpleCondition.from_yaml(hass, c)
+                else:
+                    v = c
+                conditions.append(v)
 
             if len(conditions) > 1:
                 conditions = CompositeCondition("and", conditions)

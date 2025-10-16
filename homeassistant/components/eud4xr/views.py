@@ -82,10 +82,6 @@ class AutomationsView(HomeAssistantView):
                     automations.append(Automation.from_yaml(self.hass, a).to_dict())
                 except Exception as e:
                     _LOGGER.exception(f"Error on decoding automation {a} \nError throwed: {e}")
-            # automations = [
-            #     Automation.from_yaml(self.hass, a).to_dict()
-            #     for a in await async_list_automations(self.hass)
-            # ]
 
         return self.json({"automations": automations})
 

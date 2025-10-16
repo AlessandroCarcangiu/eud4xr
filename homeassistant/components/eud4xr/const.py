@@ -39,7 +39,7 @@ API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY = "update_iotdevice_visibility_from_u
 API_GET_RealObjects_Capabilities = "list_real_objects_capabilities"
 
 # unity services
-META_UNITY_SERVER_IP = "http://192.168.1.123:8080" # NOTDE: DO NOT END WITH '/'
+META_UNITY_SERVER_IP = "http://192.168.1.123:8080" # NOT END WITH '/'
 API_UNITY_NOTIFY_UPDATE = "/api/external_updates/"
 API_UNITY_NOTIFY_AUTOMATIONS = "/api/automations/"
 API_UNITY_NOTIFY_EXPRESSIONS = "/api/expressions/"
@@ -82,3 +82,9 @@ CONF_TASK_MODELLING_EXPRESSIONS = "task_modelling_expressions"
 
 # unuseful attribute/service keys
 CONF_UNUSEFUL_KEYS = ["attribution", "restored", "supported_features"]
+
+# condition keys
+CONF_JSON_COMPOSITE_KEYS = ["operator", "conditions"]
+CONF_JSON_SIMPLE_KEYS = ["component", "property", "symbol", "compareWith"]
+CONF_YAML_COMPOSITE_KEYS = ["condition", "conditions"]
+CONF_YAML_SIMPLE_KEYS = ["condition", "value_template"]

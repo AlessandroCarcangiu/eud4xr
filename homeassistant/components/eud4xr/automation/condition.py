@@ -5,7 +5,11 @@ import re
 
 from homeassistant.core import HomeAssistant
 
-from ..const import IS_DEBUG
+from ..const import (
+    IS_DEBUG,
+    CONF_JSON_COMPOSITE_KEYS,
+    CONF_JSON_SIMPLE_KEYS
+)
 from ..hass_utils import (
     convert_subject_to_unity,
     get_entity_id_by_game_object_and_property,
@@ -58,11 +62,6 @@ class SimpleCondition(Condition):
             condition: template
             value_template: ' {{ state_attr('{sensor.game_object_name_eca_script}', '{property_name}') {symbol} {value} }}
         """
-        if IS_DEBUG:
-            print("------------start SIMPLECONDITION to_yaml------------")
-            print(f"data: {self.to_dict()}")
-            print("------------end SIMPLECONDITION to_yaml------------\n")
-
         if isinstance(self.compareWith, (dict, list)):
             comparewith_str = json.dumps(self.compareWith)
         else:
@@ -92,22 +91,20 @@ class SimpleCondition(Condition):
         symbol: symbol
         compareWith: value
         """
-        if IS_DEBUG:
-            print("------------start SIMPLECONDITION from_yaml------------")
-            print(f"data: {data}")
-            print("------------end SIMPLECONDITION from_yaml------------\n")
         value_template = data["value_template"].strip()
         pattern = (
             r'\{\{\s*state_attr\("([^"]+)",\s*"([^"]+)"\)\s*([!=<>]+)\s*(.+?)\s*\}\}'
         )
-        # r"state_attr\('([^']+)',\s'([^']+)'\)\s([!=<>]+)\s({.*})"
         # apply regex
         match = re.search(pattern, value_template)
         if not match:
-            raise Exception(f"Error on converting condition - {value_template}")
+            raise Exception(f"[SimpleCondition - from_yaml] Error on converting condition - {value_template}")
         # extract group, the game object in unity, from the component
-        # component = "_".join(match.group(1).split(".")[-1].split("_")[:-1])
-        component = convert_subject_to_unity(hass, match.group(1))
+        try:
+            component = convert_subject_to_unity(hass, match.group(1))
+        except Exception as e:
+            component = match.group(1)
+            print(f"[SimpleCondition - from_yaml] WARNING {component} is not an eca object or not found - Error generated: {e}")
         property = match.group(2)
         symbol = match.group(3)
         compareWith = match.group(4).replace(" }}", "").replace('"', "")
@@ -124,6 +121,9 @@ class CompositeCondition(Condition):
         self.operator = operator
         self.conditions = conditions
 
+    def __str__(self) -> str:
+        return f"operator: {self.operator} - conditions: {self.conditions}"
+
     def to_dict(self) -> dict:
         return {
             "op": self.operator,
@@ -134,10 +134,6 @@ class CompositeCondition(Condition):
 
     @classmethod
     def from_dict(cls, data: dict) -> "Condition":
-        if IS_DEBUG:
-            print("------------start CompositeCondition from_dict------------")
-            print(f"data: {data}")
-            print("------------end CompositeCondition from_dict------------\n")
         return cls(
             operator=data.get("operator"),
             conditions=[
@@ -179,11 +175,12 @@ class CompositeCondition(Condition):
 
 def get_condition(data: dict | list) -> Condition | list[Condition]:
     def convert(i) -> Condition:
-        return (
-            CompositeCondition.from_dict(i)
-            if "operator" in i
-            else SimpleCondition.from_dict(i)
-        )
+        converted_value = i
+        if all(k in i for k in CONF_JSON_COMPOSITE_KEYS):
+            converted_value = CompositeCondition.from_dict(i)
+        elif all(k in i for k in CONF_JSON_SIMPLE_KEYS):
+            converted_value = SimpleCondition.from_dict(i)
+        return converted_value
 
     if isinstance(data, list):
         conditions = [convert(c) for c in data]
