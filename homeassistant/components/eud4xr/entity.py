@@ -2,6 +2,7 @@
 
 import inspect
 import logging
+import re
 import time
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -32,6 +33,7 @@ class ECAEntity(Entity):
         self._game_object = game_object
         self._unique_id = unity_id
         self._name = game_object
+        self._unity_name = game_object.lower().split("@")[0]
         self._hass = hass
         self._state = "active"
         self._last_updates = dict()
@@ -107,12 +109,17 @@ class ECAEntity(Entity):
             signature = inspect.signature(method).parameters.items()
             for param_name, param in list(filter(lambda x: x[0] != "self", signature)):
                 service_params[param_name] = str(param.annotation.__name__)
+
+            dry_descr = inspect.getdoc(method).replace('\n', ' ').replace('\t', ' ').replace('\\"', '"')
+            dry_descr = re.sub(r'<[^>]+>', '', dry_descr)
+            dry_descr = re.sub(r'\s+', ' ', dry_descr)
+            dry_descr = re.sub(r'\s+([,.!?;:])', r'\1', dry_descr).strip()
             s = Service(
                 method=method,
                 eca_action=f"eud4xr.{name.replace('async_','')}",
                 params=service_params,
-                description=inspect.getdoc(method),
-                object_name=self.name,
+                description=dry_descr,
+                object_name=self._unity_name,
             ).to_dict()
             services.append(
                 {

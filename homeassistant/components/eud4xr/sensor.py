@@ -779,8 +779,8 @@ class ECAWaterMixerTap(ECAEntity):
 class ECALiquidContainer(ECAEntity):
     """
     ECALiquidContainer represents a virtual container that can hold various virtual liquids and tracks their fill levels.
-            It manages the fill steps between start and end positions, tracks different types of liquid drops,
-            updates the visual liquid level, and handles temperature changes as liquids are added.
+    It manages the fill steps between start and end positions, tracks different types of liquid drops,
+    updates the visual liquid level, and handles temperature changes as liquids are added.
 
     Attributes:
     - waterDrops (int): waterDrops counts how many water drops have been added to the container.
@@ -789,7 +789,6 @@ class ECALiquidContainer(ECAEntity):
     - amuchinaDrops (int): amuchinaDrops counts how many amuchina drops have been added to the container.
     - temperature (float): temperature represents the current temperature of the liquid mixture inside the container.
             It is updated dynamically as new liquid drops with different temperatures are added.
-
     """
 
     def __init__(
