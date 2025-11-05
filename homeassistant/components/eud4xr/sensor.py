@@ -1022,10 +1022,12 @@ class ECASoakableCleaningItem(ECAEntity):
     @eca_script_action(verb="wets", is_passive = True)
     async def async_wets(self, ld: ECALiquidDispenser) -> None:
         """
-        Wets is an action method that updates the item’s internal state to reflect it has absorbed a specific liquid.
-            It changes the item's material to a "wet" visual and starts a timer for automatic drying.
-        Argument:
-            -ld:The liquid dispenser responsible for wetting this item.
+        <b>Wets</b> represents the situation where an ECASoakableCleaningItem (such as a cloth, rag, or paper towel) becomes wet after being sprayed or poured on by an ECALiquidDispenser (such as a bottle or sprayer).
+        When the ECASoakableCleaningItem is wetted, this event serves as a trigger in an ECA automation.
+        The implicit action to execute depends on the type of liquid contained in the ECALiquidDispenser:
+        - If the dispenser contains water, the implicit action to execute is changes hasWater.
+        - If the dispenser contains degreaser, the implicit action to execute is changes hasDegreaser.
+        The automation updates the internal state of the cleaning item to reflect the absorbed liquid, enabling subsequent ECA rules to react accordingly (for example, drying or cleaning behaviors).
         """
         _LOGGER.info(f"Performed wets action - {ld}")
 
@@ -1036,6 +1038,13 @@ class ECASoakableCleaningItem(ECAEntity):
             both visually and logically by clearing the water state variable.
         """
         _LOGGER.info(f"Performed dries action")
+
+    @eca_script_action(verb="changesHasWater")
+    async def async_changesHasWater(self) -> None:
+        """
+        È l'azione che rende impregnato d'acqua l'ECASoakableCleaningItem.
+        """
+        _LOGGER.info(f"Performed changesHasWater action")
 
 
 class ECACleaningRag(ECAEntity):
@@ -1056,15 +1065,15 @@ class ECACleaningRag(ECAEntity):
         super_extra_attributes = super().extra_state_attributes
         return {**super_extra_attributes}
 
-    @eca_script_action(verb="washes")
-    async def async_washes(self, surface: ECASurface) -> None:
+    @eca_script_action(verb="wipes")
+    async def async_wipes(self, surface: ECASurface) -> None:
         """
-        Washes is a method that simulates the action of cleaning a surface using the rag.
-            It is triggered when the rag interacts with a surface, typically via collision detection.
+        Wipes is a method that allows to clean a surface by using the rag. Generally, when a ECACleaningRag wipes
+        a surface then something is removed (dust balls or oil stains).
         Argument:
-            -surface:The  to be washed.
+            -surface:The ECASurface to be washed.
         """
-        _LOGGER.info(f"Performed washes action - {surface}")
+        _LOGGER.info(f"Performed wipes action - {surface}")
 
 
 class ECAScottex(ECAEntity):
@@ -1145,25 +1154,12 @@ class ECADustBall(ECAEntity):
         """
         _LOGGER.info(f"Performed changes action - {v}")
 
-    @eca_script_action(verb="increasingly-removes-dust", is_passive = True)
-    async def async_increasingly_removes_dust_scottex(self, scottex: ECAScottex) -> None:
+    @eca_script_action(verb="removes dust balls")
+    async def async_removes_dust_ball(self, cleaningRag: ECACleaningItem) -> None:
         """
-        increasingly-removes-dust simulates a sweeping action by a , decreasing by one the number of sweeps needed.
-            When enough sweeps are performed, the dust ball is considered clean.
-        Argument:
-            -scottex:The scottex object performing the sweep.
+        this action removes the dust ball from the surface. This action is performed by using a cleaning rag item and, generally, is the result of cleaning the surface.
         """
-        _LOGGER.info(f"Performed increasingly_removes_dust_ action - {scottex}")
-
-    @eca_script_action(verb="increasingly-removes-dust", is_passive = True)
-    async def async_increasingly_removes_dust_eca_broom(self, broom: ECABroom) -> None:
-        """
-        increasingly-removes-dust simulates a sweeping action by a , decreasing by one the number of sweeps needed.
-            When enough sweeps are performed, the dust ball is considered clean.
-        Argument:
-            -scottex:The scottex object performing the sweep.
-        """
-        _LOGGER.info(f"Performed increasingly_removes_dust_ action - {broom}")
+        _LOGGER.info(f"Performed removes dust dust action by {cleaningRag}")
 
 
 class ECADustPan(ECAEntity):
@@ -1710,27 +1706,12 @@ class ECAOilStain(ECAEntity):
         """
         _LOGGER.info(f"Performed changes action - {v}")
 
-    @eca_script_action(verb="increasingly-removes-stain", is_passive=True)
-    async def async_increasingly_removes_stain_rag(
-        self, cleaningRag: ECACleaningRag
-    ) -> None:
+    @eca_script_action(verb="removes oil stains", is_passive = True)
+    async def async_removes_oil_stains(self, cleaningRag: ECACleaningRag) -> None:
         """
-        increasingly-removes-stain simulates a washing action by a , decreasing by one the number of washes needed.
-            When enough washes are performed, the oil stains are considered clean.
-        Argument:
-            -cleaningRag:The cleaning rag object performing the wash.
+        This action removes the oil stains from the surface. This action is performed by using a cleaning rag item and, generally, is the result of cleaning the surface.
         """
-        _LOGGER.info(f"Performed increasingly_removes_stain_ action - {cleaningRag}")
-
-    @eca_script_action(verb="increasingly-removes-stain", is_passive = True)
-    async def async_increasingly_removes_stain_mop(self, mop: ECAMop) -> None:
-        """
-        increasingly-removes-stain simulates a washing action by a , decreasing by one the number of washes needed.
-            When enough washes are performed, the oil stains are considered clean.
-        Argument:
-            -cleaningRag:The cleaning rag object performing the wash.
-        """
-        _LOGGER.info(f"Performed increasingly_removes_stain_ action - {mop}")
+        _LOGGER.info(f"Performed cleans action - {cleaningRag}")
 
 
 class ECAPhysicalGrabbable(ECAEntity):
@@ -2027,15 +2008,15 @@ class ECASprayBottle(ECAEntity):
             **super_extra_attributes,
         }
 
-    @eca_script_action(verb="sprays", is_passive = True)
-    async def async_sprays(self, c: ECACharacter) -> None:
-        """
-        <b>sprays</b> is an action that dispenses liquid from the spray bottle when triggered by a character,
-        typically through a hand pinch gesture. It also plays an audio cue when the spray starts.
-        Argument:
-            -c: The "ECACharacter" performing the spray action.
-        """
-        _LOGGER.info(f"Performed changes_source action - {c}")
+    # @eca_script_action(verb="sprays", is_passive = True)
+    # async def async_sprays(self, c: ECACharacter) -> None:
+    #     """
+    #     <b>sprays</b> is an action that dispenses liquid from the spray bottle when triggered by a character,
+    #     typically through a hand pinch gesture. It also plays an audio cue when the spray starts.
+    #     Argument:
+    #         -c: The "ECACharacter" performing the spray action.
+    #     """
+    #     _LOGGER.info(f"Performed changes_source action - {c}")
 
 
 class ECAXRPointer(ECAEntity):

@@ -1,6 +1,7 @@
 # ruff: noqa
 
 from collections import OrderedDict
+import inspect
 import logging
 import math
 
@@ -33,10 +34,11 @@ from .const import (
     IS_DEBUG,
     API_UNITY_TEST,
     META_UNITY_SERVER_IP,
-    API_GET_RealObjects_Capabilities
+    API_GET_RealObjects_Capabilities,
+    API_AVAILABLE_ECA_SCRIPTS
 )
 from .eca_classes import ECAPosition
-from .entity import EUD4XRIOTDevice
+from .entity import ECAEntity, EUD4XRIOTDevice
 from .filters import get_devices_data, get_virtual_entities
 from .hass_utils import get_entity_instance_by_entity_id
 from .task_modelling import TaskExpression
@@ -147,8 +149,7 @@ class ContextObjectsView(HomeAssistantView):
             {
                 "framed_objects": list(DEQUE_FRAMED_OBJECTS),
                 "pointed_objects": list(DEQUE_POINTED_OBJECTS),
-                "interacted_with_objects": list(DEQUE_INTERACTED_OBJECTS),
-                # TODO J - Do we add LIST_IOT_DEVICES here?
+                "interacted_with_objects": list(DEQUE_INTERACTED_OBJECTS)
             }
         )
 
@@ -369,6 +370,23 @@ class FindCloseObjectsView(HomeAssistantView):
         )
         return self.json(
             OrderedDict(sorted(distances.items(), key=lambda x: x[1]["distance"]))
+        )
+
+
+class AvailableECAScripts(HomeAssistantView):
+    url = f"/api/eud4xr/{API_AVAILABLE_ECA_SCRIPTS}"
+    name = f"api:{API_AVAILABLE_ECA_SCRIPTS}"
+    methods = ["GET"]
+
+    async def get(self, request):
+        from .sensor import CURRENT_MODULE
+        classes = inspect.getmembers(CURRENT_MODULE, inspect.isclass)
+        subclasses = [
+            name for name, cls in classes
+            if issubclass(cls, ECAEntity) and cls is not ECAEntity
+        ]
+        return self.json(
+            subclasses
         )
 
 

@@ -108,7 +108,7 @@ class ECAEntity(Entity):
             service_params = dict()
             signature = inspect.signature(method).parameters.items()
             for param_name, param in list(filter(lambda x: x[0] != "self", signature)):
-                service_params[param_name] = str(param.annotation.__name__)
+                service_params[param_name] = param.annotation #str(param.annotation.__name__)
 
             dry_descr = inspect.getdoc(method).replace('\n', ' ').replace('\t', ' ').replace('\\"', '"')
             dry_descr = re.sub(r'<[^>]+>', '', dry_descr)
@@ -123,13 +123,13 @@ class ECAEntity(Entity):
             ).to_dict()
             services.append(
                 {
-                    "service_of_component": self.game_object,
+                    #"service_of_component": self.game_object,
                     **s,
                 }
             )
         return services
 
-    def to_dict(self, hass) -> dict:
+    def to_dict(self, hass: HomeAssistant) -> dict:
         # properties
         properties = self.get_properties()
         # services

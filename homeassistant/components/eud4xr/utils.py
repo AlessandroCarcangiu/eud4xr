@@ -114,32 +114,49 @@ class Service:
         # }
 
         # third solution
-        data = {}
+        param_type = None
         if self.params:
-            data["requested_parameter"] = self.params[list(self.params.keys())[0]]
+            param_type = self.params[list(self.params.keys())[0]]
 
         json_structure = {
-            "subject": self.object_name if not self.method.is_passive else f"{{l'oggetto che compie l'azione}} su {self.object_name}",
-            "verb": kwargs["verb"],
+            #"subject": self.object_name, #if not self.method.is_passive else f"un oggetto con la componente {param_type.__name__ if inspect.isclass(param_type) else param_type}", #f"oggetto di tipo {data['requested_parameter']}."che agisce su {self.object_name}",
+            #"verb": kwargs["verb"],
         }
+
+        subj = ""
+        if self.method.is_passive:
+            subj = "un oggetto con la componente " + str(param_type.__name__) if inspect.isclass(param_type) else str(param_type)
+        else:
+            subj = self.object_name
+        json_structure["subject"] = subj
+
+        json_structure["verb"] = kwargs["verb"]
+
         for i in ["variable", "modifier"]:
             if kwargs.get(i):
                 json_structure[i] = kwargs[i]
         if "variable" in json_structure:
             json_structure["value"] = (
-                "{{un valore in input da assegnare, aggiungere o sottrare}}"
+                f"valore di tipo {param_type.__name__ if inspect.isclass(param_type) else param_type} input da assegnare, aggiungere o sottrare"
             )
         elif self.params:
-            json_structure["obj"] = (
-                "{{un valore, o un altro oggetto, su cui si esegue nell'azione}}" if not self.method.is_passive else self.object_name
-            )
+            if not self.method.is_passive and inspect.isclass(param_type) and issubclass(param_type, ECAEntity):
+                json_structure["obj"] = f"un oggetto con la componente {param_type.__name__}"
+            elif not self.method.is_passive and inspect.isclass(param_type):
+                json_structure["obj"] = f"un valore di tipo {param_type.__name__}"
+            elif not self.method.is_passive:
+                json_structure["obj"] = f"un valore di tipo {param_type}"
+            else:
+                json_structure["obj"] = self.object_name
 
-        return {
+        data = {
             "verb": kwargs["verb"],
-            **data,
             "description": self.description,
             "format": json_structure,
         }
+        if param_type and inspect.isclass(param_type) and issubclass(param_type, ECAEntity):
+            data["arg_type"] = param_type.__name__
+        return data
 
 
 class MappedClass:

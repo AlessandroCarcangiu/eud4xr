@@ -99,7 +99,7 @@ async def get_virtual_entities(
 
             for i in state.attributes["entity_id"]:
                 sensor, entity = find_sensor(hass, i)
-                new_group["components"] += [sensor.game_object]
+                new_group["components"] += [sensor.eca_script]
                 new_group["properties"] += sensor.get_properties()
                 new_group["services"] += sensor.get_services()
 

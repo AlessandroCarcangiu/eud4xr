@@ -35,6 +35,7 @@ API_GET_VIRTUAL_OBJECTS = "virtual_objects"
 API_GET_MULTIMEDIA_FILES = "multimedia_files"
 API_GET_CLOSE_OBJECTS = "find_close_objects"
 API_EXPRESSION = "expressions"
+API_AVAILABLE_ECA_SCRIPTS = "available_eca_scripts"
 API_UPDATE_IOTDevice_VISIBILITY_FROM_UNITY = "update_iotdevice_visibility_from_unity"
 API_GET_RealObjects_Capabilities = "list_real_objects_capabilities"
 
