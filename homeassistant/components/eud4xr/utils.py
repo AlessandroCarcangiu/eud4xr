@@ -76,6 +76,16 @@ def decorator_update_deque(circular_list: deque):
     return decorator
 
 
+def describe(text: str):
+    def decorator(obj):
+        if isinstance(obj, property):
+            obj.fget._label = text
+            return obj
+        setattr(obj, "_label", text)
+        return obj
+    return decorator
+
+
 class Service:
     def __init__(
         self, method: any, eca_action: dict, params: dict, description: str, object_name: str = None

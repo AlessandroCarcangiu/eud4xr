@@ -76,7 +76,7 @@ class ECAEntity(Entity):
         return self._state
 
     def get_description(self) -> str:
-        return self.__class__.__doc__
+        return getattr(self, "_label", self.__class__.__doc__)
 
     def get_properties(self) -> list:
         properties = list()
@@ -87,14 +87,19 @@ class ECAEntity(Entity):
             )
         ):
             valore = getattr(self, param_name)
+            data = {
+                "name": param_name,
+                "type": getattr(
+                    param.annotation, "__name__", str(param.annotation)
+                ),
+                "current value": valore,
+            }
+            class_attr = getattr(type(self), param_name, None)
+            if isinstance(class_attr, property) and hasattr(class_attr.fget, "_label"):
+                data["description"] = class_attr.fget._label
+
             properties.append(
-                {
-                    "name": param_name,
-                    "type": getattr(
-                        param.annotation, "__name__", str(param.annotation)
-                    ),
-                    "current value": valore,
-                }
+                data
             )
         return properties
 
@@ -113,10 +118,12 @@ class ECAEntity(Entity):
             for param_name, param in list(filter(lambda x: x[0] != "self", signature)):
                 service_params[param_name] = param.annotation #str(param.annotation.__name__)
 
-            dry_descr = inspect.getdoc(method).replace('\n', ' ').replace('\t', ' ').replace('\\"', '"')
-            dry_descr = re.sub(r'<[^>]+>', '', dry_descr)
-            dry_descr = re.sub(r'\s+', ' ', dry_descr)
-            dry_descr = re.sub(r'\s+([,.!?;:])', r'\1', dry_descr).strip()
+            dry_descr = getattr(method, "_label", "")
+            if not dry_descr:
+                dry_descr = inspect.getdoc(method).replace('\n', ' ').replace('\t', ' ').replace('\\"', '"')
+                dry_descr = re.sub(r'<[^>]+>', '', dry_descr)
+                dry_descr = re.sub(r'\s+', ' ', dry_descr)
+                dry_descr = re.sub(r'\s+([,.!?;:])', r'\1', dry_descr).strip()
             s = Service(
                 method=method,
                 eca_action=f"eud4xr.{name.replace('async_','')}",

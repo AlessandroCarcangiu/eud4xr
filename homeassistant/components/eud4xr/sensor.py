@@ -11,7 +11,12 @@ from .const import *
 from .eca_classes import ECABoolean, ECAColor, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
 from .task_modelling import CounterOrderIndependence
-from .utils import MappedClasses, eca_script_action, decorator_update_deque
+from .utils import (
+    MappedClasses,
+    eca_script_action,
+    decorator_update_deque,
+    describe
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -152,28 +157,29 @@ def get_classes_subclassing(to_string: bool = False) -> list[any]:
     ]
     return subclass_names
 
-
 # endregion ECA scripts
 
-
+@describe("ECAObject is the base class for all virtual objects that can be used in the automations."+
+            "All the other classes in this package inherit from this class or one of its subclasses."+
+            "It supports properties such as position, rotation, scale, visibility, and activity, and provides methods for moving, rotating, scaling, and controlling visibility.")
 class ECAObject(ECAEntity):
-    """
-    ECAObject is the base class for all virtual objects that can be used in the automations.
-            All the other classes in this package inherit from this class or one of its subclasses.
-            It supports properties such as position, rotation, scale, visibility, and activity, and provides methods for moving, rotating, scaling, and controlling visibility.
+    # """
+    # ECAObject is the base class for all virtual objects that can be used in the automations.
+    #         All the other classes in this package inherit from this class or one of its subclasses.
+    #         It supports properties such as position, rotation, scale, visibility, and activity, and provides methods for moving, rotating, scaling, and controlling visibility.
 
-    Attributes:
-    - description (str): description describes in a few words what the object is and its role.
-    - position (ECAPosition): p represents the position of the virtual object in the 3D space. It's a vector with three components: x, y, and z.
-    - rotation (ECARotation): r represents the rotation of the object in the 3D space. It's a vector with three components: x, y, and z (euler angles).
-    - scale (ECAScale): r represents the scale of the object in the 3D space.
-    - visible (ECABoolean): visible indicates whether the object is visible. The allowed values are either "yes" or "no".
-            If invisible, the object is not rendered but remains interactive for collisions.
-    - active (ECABoolean): active indicates whether the object is active. The allowed values are either "yes" or "no".
-            When inactive, the object is not rendered and does not interact with other objects.
-    - isInsideCamera (ECABoolean): isInsideCamera indicates whether the object is currently within the camera's field of view. This property is automatically updated at runtime.
+    # Attributes:
+    # - description (str): description describes in a few words what the object is and its role.
+    # - position (ECAPosition): p represents the position of the virtual object in the 3D space. It's a vector with three components: x, y, and z.
+    # - rotation (ECARotation): r represents the rotation of the object in the 3D space. It's a vector with three components: x, y, and z (euler angles).
+    # - scale (ECAScale): r represents the scale of the object in the 3D space.
+    # - visible (ECABoolean): visible indicates whether the object is visible. The allowed values are either "yes" or "no".
+    #         If invisible, the object is not rendered but remains interactive for collisions.
+    # - active (ECABoolean): active indicates whether the object is active. The allowed values are either "yes" or "no".
+    #         When inactive, the object is not rendered and does not interact with other objects.
+    # - isInsideCamera (ECABoolean): isInsideCamera indicates whether the object is currently within the camera's field of view. This property is automatically updated at runtime.
 
-    """
+    # """
 
     def __init__(
         self,
@@ -197,6 +203,7 @@ class ECAObject(ECAEntity):
         self._attr_should_poll = False
 
     @property
+    @describe("Describes in a few words what the object is and its role.")
     def description(self) -> str:
         return self._description
 
@@ -244,6 +251,7 @@ class ECAObject(ECAEntity):
         }
 
     @eca_script_action(verb="moves to")
+    @describe("Moves (to) is a method that moves the object to a specified position in the 3D space. Argument:-newPos:The target position to move to.")
     async def async_moves_to(self, newPos: ECAPosition) -> None:
         """
         Moves (to) is a method that moves the object to a specified position in the 3D space.
