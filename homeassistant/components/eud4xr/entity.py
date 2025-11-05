@@ -75,6 +75,9 @@ class ECAEntity(Entity):
         """Return the state of the game object."""
         return self._state
 
+    def get_description(self) -> str:
+        return self.__class__.__doc__
+
     def get_properties(self) -> list:
         properties = list()
         signature = inspect.signature(self.__init__)
@@ -130,11 +133,14 @@ class ECAEntity(Entity):
         return services
 
     def to_dict(self, hass: HomeAssistant) -> dict:
-        # properties
+        description = self.get_description()
         properties = self.get_properties()
-        # services
         services = self.get_services()
-        return {"properties": properties, "services": services}
+        return {
+            "description": description,
+            "properties": properties,
+            "services": services
+        }
 
     def generate_payload(
         self,
