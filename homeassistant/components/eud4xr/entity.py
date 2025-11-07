@@ -120,7 +120,10 @@ class ECAEntity(Entity):
 
             dry_descr = getattr(method, "_label", "")
             if not dry_descr:
-                dry_descr = inspect.getdoc(method).replace('\n', ' ').replace('\t', ' ').replace('\\"', '"')
+                dry_descr = inspect.getdoc(method)
+                if not dry_descr:
+                    dry_descr = ""
+                dry_descr = dry_descr.replace('\n', ' ').replace('\t', ' ').replace('\\"', '"')
                 dry_descr = re.sub(r'<[^>]+>', '', dry_descr)
                 dry_descr = re.sub(r'\s+', ' ', dry_descr)
                 dry_descr = re.sub(r'\s+([,.!?;:])', r'\1', dry_descr).strip()

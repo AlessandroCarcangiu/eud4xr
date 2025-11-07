@@ -25,10 +25,10 @@ http:
     - 172.17.0.1
 
 eud4xr:
-  server_unity_url: "YOUR-UNITY-URL:8080"
-  server_unity_token: "token" # non cancellare ma da non modificare
-  # scopa
+  server_unity_url: "http://192.168.1.123:8080"
+  #server_unity_token: "YOUR-UNITY-SERVER-TOKEN" # optional
   unity_entities:
+    # scopa
     - eca_script: "ECAObject"
       game_object: "Scopa@ECAObject"
       unity_id: "Scopa@ECAObject"
@@ -139,14 +139,12 @@ eud4xr:
       game_object: "Tavolo@ECADustBall"
       unity_id: "Tavolo@ECADustBall"
       attributes: {
-        "sweepsCounter": 1,
         "allSwept": "false"
       }
     - eca_script: "ECAOilStain"
       game_object: "Tavolo@ECAOilStain"
       unity_id: "Tavolo@ECAOilStain"
       attributes: {
-        "washesCounter": 1,
         "allWashed": "false"
       }
     # player
@@ -175,6 +173,96 @@ eud4xr:
     - eca_script: "ECAHuman"
       game_object: "Player@ECAHuman"
       unity_id: "Player@ECAHuman"
+    # straccio
+    - eca_script: "ECAObject"
+      game_object: "Straccio@ECAObject"
+      unity_id: "Straccio@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 2, 'z': -8},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "panno.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "Straccio@ECAProp"
+      unity_id: "Straccio@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECACleaningRag"
+      game_object: "Straccio@ECACleaningRag"
+      unity_id: "Straccio@ECACleaningRag"
+    - eca_script: "ECACleaningItem"
+      game_object: "Straccio@ECACleaningItem"
+      unity_id: "Straccio@ECACleaningItem"
+    - eca_script: "ECASoakableCleaningItem"
+      game_object: "Straccio@ECASoakableCleaningItem"
+      unity_id: "Straccio@ECASoakableCleaningItem"
+      attributes: {
+        "hasWater": "yes",
+        "hasDegreaser": "no",
+        "hasBatteryKiller": "no",
+        "hasAmuchina": "no",
+      }
+    # PavimentoImpolverato
+    - eca_script: "ECAObject"
+      game_object: "PavimentoImpolverato@ECAObject"
+      unity_id: "PavimentoImpolverato@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': -5},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Pavimento della stanza impolverato.",
+      }
+    - eca_script: "ECAEnvironment"
+      game_object: "PavimentoImpolverato@ECAEnvironment"
+      unity_id: "PavimentoImpolverato@ECAEnvironment"
+    - eca_script: "ECASurface"
+      game_object: "PavimentoImpolverato@ECASurface"
+      unity_id: "PavimentoImpolverato@ECASurface"
+      attributes: {
+        "type": "Pavimento della stanza impolverato."
+      }
+    - eca_script: "ECADustBall"
+      game_object: "PavimentoImpolverato@ECADustBall"
+      unity_id: "PavimentoImpolverato@ECADustBall"
+      attributes: {
+        "allSwept": "false"
+      }
+    # PavimentoMacchie
+    - eca_script: "ECAObject"
+      game_object: "PavimentoMacchie@ECAObject"
+      unity_id: "PavimentoMacchie@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': -5},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Pavimento della stanza con delle macchie e incrostazioni.",
+      }
+    - eca_script: "ECAEnvironment"
+      game_object: "PavimentoMacchie@ECAEnvironment"
+      unity_id: "PavimentoMacchie@ECAEnvironment"
+    - eca_script: "ECASurface"
+      game_object: "PavimentoMacchie@ECASurface"
+      unity_id: "PavimentoMacchie@ECASurface"
+      attributes: {
+        "type": "Pavimento della stanza con delle macchie e incrostazioni."
+      }
+    - eca_script: "ECAOilStain"
+      game_object: "PavimentoMacchie@ECAOilStain"
+      unity_id: "PavimentoMacchie@ECAOilStain"
+      attributes: {
+        "allWashed": "false"
+      }
 
 group:
   scopa:
@@ -213,3 +301,25 @@ group:
     - sensor.player_ecacharacter
     - sensor.player_ecaanimal
     - sensor.player_ecahuman
+  straccio:
+   name: "straccio"
+   entities:
+    - sensor.straccio_ecaobject
+    - sensor.straccio_ecaprop
+    - sensor.straccio_ecasoakablecleaningitem
+    - sensor.straccio_ecacleaningrag
+    - sensor.straccio_ecacleaningitem
+  pavimentoimpolverato:
+   name: "pavimentoimpolverato"
+   entities:
+    - sensor.pavimentoimpolverato_ecaobject
+    - sensor.pavimentoimpolverato_ecaenvironment
+    - sensor.pavimentoimpolverato_ecasurface
+    - sensor.pavimentoimpolverato_ecadustball
+  pavimentomacchie:
+   name: "pavimentomacchie"
+   entities:
+    - sensor.pavimentomacchie_ecaobject
+    - sensor.pavimentomacchie_ecaenvironment
+    - sensor.pavimentomacchie_ecasurface
+    - sensor.pavimentomacchie_ecaoilstain
