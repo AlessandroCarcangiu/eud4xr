@@ -291,6 +291,20 @@ class ECAObject(ECAEntity):
         _LOGGER.info(f"Performed changes_active action - {yesNo}")
 
 
+@describe("")
+class ECABehaviour(ECAEntity):
+
+    def __init__(self, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+        self._attr_should_poll = False
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        super_extra_attributes = super().extra_state_attributes
+        return {
+            **super_extra_attributes
+        }
+
 
 class ECASystem(ECAEntity):
 
@@ -860,7 +874,7 @@ class ECADustBall(ECAEntity):
 
     @eca_script_action(verb = "removes-dust", is_passive = True)
     @describe("removes-dust defines the sweeping action performed by an object equipped with an ECAScottex component. When the action is executed, the dust balls are removed. Typically, this is the result of a wipes event performed by an object equipped with an ECAScottex. Argument: -subject: The object equipped with an ECAScottex component responsible for performing the sweeping action.")
-    async def async_removes_dust__ecascottex(self, scottex: ECAScottex) -> None:
+    async def async_removes_dust_ecascottex(self, scottex: ECAScottex) -> None:
         _LOGGER.info(f"Performed removes_dust action - {scottex}")
 
     @eca_script_action(verb = "removes-dust", is_passive = True)

@@ -28,32 +28,73 @@ eud4xr:
   server_unity_url: "http://192.168.1.123:8080"
   #server_unity_token: "YOUR-UNITY-SERVER-TOKEN" # optional
   unity_entities:
-    # scopa
+    # 1 - straccio
     - eca_script: "ECAObject"
-      game_object: "Scopa@ECAObject"
-      unity_id: "Scopa@ECAObject"
+      game_object: "Straccio@ECAObject"
+      unity_id: "Straccio@ECAObject"
       attributes: {
-        "position": {'x': 1, 'y': 1, 'z': 1},
-        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "position": {'x': 1, 'y': 2, 'z': -8},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
         "scale": {'x': 1, 'y': 1, 'z': 1},
         "visible": "yes",
         "active": "yes",
         "isInsideCamera": "yes",
-        "description": "oggetto per pulire il pavimento",
+        "description": "Un panno per pulire superfici di tutti i tipi, come tavoli, sedie, piastrelle o pavimenti.",
       }
-    - eca_script: "ECACleaningItem"
-      game_object: "Scopa@ECACleaningItem"
-      unity_id: "Scopa@ECACleaningItem"
-    - eca_script: "ECABroom"
-      game_object: "Scopa@ECABroom"
-      unity_id: "Scopa@ECABroom"
     - eca_script: "ECAProp"
-      game_object: "Scopa@ECAProp"
-      unity_id: "Scopa@ECAProp"
+      game_object: "Straccio@ECAProp"
+      unity_id: "Straccio@ECAProp"
       attributes: {
         "price": 0.0
       }
-    # spruzzino
+    - eca_script: "ECACleaningItem"
+      game_object: "Straccio@ECACleaningItem"
+      unity_id: "Straccio@ECACleaningItem"
+    - eca_script: "ECASoakableCleaningItem"
+      game_object: "Straccio@ECASoakableCleaningItem"
+      unity_id: "Straccio@ECASoakableCleaningItem"
+      attributes: {
+        "hasWater": "no",
+        "hasDegreaser": "no",
+        "hasBatteryKiller": "no",
+        "hasAmuchina": "no",
+      }
+    - eca_script: "ECACleaningRag"
+      game_object: "Straccio@ECACleaningRag"
+      unity_id: "Straccio@ECACleaningRag"
+    # 2 - BottigliaAcqua
+    - eca_script: "ECAObject"
+      game_object: "BottigliaAcqua@ECAObject"
+      unity_id: "BottigliaAcqua@ECAObject"
+      attributes: {
+        "position": {'x': 5, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "una bottiglia che contiene acqua, utile per umidire oggetti quali stracci, spazzole, ecc.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "BottigliaAcqua@ECAProp"
+      unity_id: "BottigliaAcqua@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECALiquidDispenser"
+      game_object: "BottigliaAcqua@ECALiquidDispenser"
+      unity_id: "BottigliaAcqua@ECALiquidDispenser"
+      attributes: {
+        "liquidType": "water"
+      }
+    - eca_script: "ECABottle"
+      game_object: "BottigliaAcqua@ECABottle"
+      unity_id: "BottigliaAcqua@ECABottle"
+      attributes: {
+        "capOpen": "true",
+        "flipped": "false"
+      }
+    # 3 - spruzzino
     - eca_script: "ECAObject"
       game_object: "Spruzzino@ECAObject"
       unity_id: "Spruzzino@ECAObject"
@@ -64,16 +105,7 @@ eud4xr:
         "visible": "yes",
         "active": "yes",
         "isInsideCamera": "yes",
-        "description": "oggetto che emette liquidi che possono essere assorbiti da stracci, mocci o secchi.",
-      }
-    - eca_script: "ECASprayBottle"
-      game_object: "Spruzzino@ECASprayBottle"
-      unity_id: "Spruzzino@ECASprayBottle"
-    - eca_script: "ECALiquidDispenser"
-      game_object: "Spruzzino@ECALiquidDispenser"
-      unity_id: "Spruzzino@ECALiquidDispenser"
-      attributes: {
-        "liquidType": "water"
+        "description": "spruzzino che emette acqua, può essere usato per inumidire stracci, spazzole, mocci oppure versare acqua in secchi o bacinelle.",
       }
     - eca_script: "ECAProp"
       game_object: "Spruzzino@ECAProp"
@@ -81,7 +113,258 @@ eud4xr:
       attributes: {
         "price": 0.0
       }
-    # secchio
+    - eca_script: "ECALiquidDispenser"
+      game_object: "Spruzzino@ECALiquidDispenser"
+      unity_id: "Spruzzino@ECALiquidDispenser"
+      attributes: {
+        "liquidType": "water"
+      }
+    - eca_script: "ECASprayBottle"
+      game_object: "Spruzzino@ECASprayBottle"
+      unity_id: "Spruzzino@ECASprayBottle"
+    # 4 -  scopa
+    - eca_script: "ECAObject"
+      game_object: "Scopa@ECAObject"
+      unity_id: "Scopa@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Usalo per pulire e rimuovere la polvere dal pavimento.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "Scopa@ECAProp"
+      unity_id: "Scopa@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECACleaningItem"
+      game_object: "Scopa@ECACleaningItem"
+      unity_id: "Scopa@ECACleaningItem"
+    - eca_script: "ECABroom"
+      game_object: "Scopa@ECABroom"
+      unity_id: "Scopa@ECABroom"
+    # 5 - mocio
+    - eca_script: "ECAObject"
+      game_object: "Mocio@ECAObject"
+      unity_id: "Mocio@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Sostanzialmente è uno straccio con un bastone, utile per pulire e rimuovere macchie e incrostrazioni dai pavimenti.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "Mocio@ECAProp"
+      unity_id: "Mocio@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECACleaningItem"
+      game_object: "Mocio@ECACleaningItem"
+      unity_id: "Mocio@ECACleaningItem"
+    - eca_script: "ECASoakableCleaningItem"
+      game_object: "Mocio@ECASoakableCleaningItem"
+      unity_id: "Mocio@ECASoakableCleaningItem"
+      attributes: {
+        "hasWater": "no",
+        "hasDegreaser": "no",
+        "hasBatteryKiller": "no",
+        "hasAmuchina": "no",
+      }
+    - eca_script: "ECAMop"
+      game_object: "Mocio@ECAMop"
+      unity_id: "Mocio@ECAMop"
+    # 6 - scottex
+    - eca_script: "ECAObject"
+      game_object: "Scottex@ECAObject"
+      unity_id: "Scottex@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 2, 'z': -8},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Carta assorbente per pulire superfici superiori come tavoli o sedie.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "Scottex@ECAProp"
+      unity_id: "Scottex@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECACleaningItem"
+      game_object: "Scottex@ECACleaningItem"
+      unity_id: "Scottex@ECACleaningItem"
+    - eca_script: "ECASoakableCleaningItem"
+      game_object: "Scottex@ECASoakableCleaningItem"
+      unity_id: "Scottex@ECASoakableCleaningItem"
+      attributes: {
+        "hasWater": "no",
+        "hasDegreaser": "no",
+        "hasBatteryKiller": "no",
+        "hasAmuchina": "no",
+      }
+    - eca_script: "ECAScottex"
+      game_object: "Scottex@ECAScottex"
+      unity_id: "Scottex@ECAScottex"
+    # 7 - spruzzinoamuchina
+    - eca_script: "ECAObject"
+      game_object: "SpruzzinoAmuchina@ECAObject"
+      unity_id: "SpruzzinoAmuchina@ECAObject"
+      attributes: {
+        "position": {'x': 5, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Spruzzino che emette amuchina, può essere versato su stracci, spazzole, mocci, secchi e bacinelle.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "SpruzzinoAmuchina@ECAProp"
+      unity_id: "SpruzzinoAmuchina@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECALiquidDispenser"
+      game_object: "SpruzzinoAmuchina@ECALiquidDispenser"
+      unity_id: "SpruzzinoAmuchina@ECALiquidDispenser"
+      attributes: {
+        "liquidType": "amuchina"
+      }
+    - eca_script: "ECASprayBottle"
+      game_object: "SpruzzinoAmuchina@ECASprayBottle"
+      unity_id: "SpruzzinoAmuchina@ECASprayBottle"
+    # 8 - spruzzinoantibatterico
+    - eca_script: "ECAObject"
+      game_object: "SpruzzinoAntibatterico@ECAObject"
+      unity_id: "SpruzzinoAntibatterico@ECAObject"
+      attributes: {
+        "position": {'x': 5, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Spruzzino che emette anti batterico, può essere versato su stracci, spazzole, mocci, secchi e bacinelle.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "SpruzzinoAntibatterico@ECAProp"
+      unity_id: "SpruzzinoAntibatterico@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECALiquidDispenser"
+      game_object: "SpruzzinoAntibatterico@ECALiquidDispenser"
+      unity_id: "SpruzzinoAntibatterico@ECALiquidDispenser"
+      attributes: {
+        "liquidType": "battery killer"
+      }
+    - eca_script: "ECASprayBottle"
+      game_object: "SpruzzinoAntibatterico@ECASprayBottle"
+      unity_id: "SpruzzinoAntibatterico@ECASprayBottle"
+    # 9 - paletta
+    - eca_script: "ECAObject"
+      game_object: "Paletta@ECAObject"
+      unity_id: "Paletta@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Usalo per raccogliere la polvere dal pavimento quando spolveri il pavimento.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "Paletta@ECAProp"
+      unity_id: "Paletta@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECACleaningItem"
+      game_object: "Paletta@ECACleaningItem"
+      unity_id: "Paletta@ECACleaningItem"
+    - eca_script: "ECADustPan"
+      game_object: "Paletta@ECADustPan"
+      unity_id: "Paletta@ECADustPan"
+    - eca_script: "ECABehaviour"
+      game_object: "Paletta@ECABehaviour"
+      unity_id: "Paletta@ECABehaviour"
+    - eca_script: "ECAInteractable"
+      game_object: "Paletta@ECAInteractable"
+      unity_id: "Paletta@ECAInteractable"
+    - eca_script: "ECAXRGrabbable"
+      game_object: "Paletta@ECAXRGrabbable"
+      unity_id: "Paletta@ECAXRGrabbable"
+      attributes: {
+        "grabbed": "false"
+      }
+     # 10 - spruzzinosgrassatore
+    - eca_script: "ECAObject"
+      game_object: "SpruzzinoSgrassatore@ECAObject"
+      unity_id: "SpruzzinoSgrassatore@ECAObject"
+      attributes: {
+        "position": {'x': 5, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Spruzzino contenente sgrassatore può essere versato su stracci e spazzole.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "SpruzzinoSgrassatore@ECAProp"
+      unity_id: "SpruzzinoSgrassatore@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECALiquidDispenser"
+      game_object: "SpruzzinoSgrassatore@ECALiquidDispenser"
+      unity_id: "SpruzzinoSgrassatore@ECALiquidDispenser"
+      attributes: {
+        "liquidType": "degreaser"
+      }
+    - eca_script: "ECASprayBottle"
+      game_object: "SpruzzinoSgrassatore@ECASprayBottle"
+      unity_id: "SpruzzinoSgrassatore@ECASprayBottle"
+    # 11 - rubinetto
+    - eca_script: "ECAObject"
+      game_object: "Rubinetto@ECAObject"
+      unity_id: "Rubinetto@ECAObject"
+      attributes: {
+        "position": {'x': 5, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Dispositivo per controllare e regolare il flusso da acqua attraverso un tubo, utile per riempire secchi o bacinelle di acqua.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "Rubinetto@ECAProp"
+      unity_id: "Rubinetto@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECALiquidDispenser"
+      game_object: "Rubinetto@ECALiquidDispenser"
+      unity_id: "Rubinetto@ECALiquidDispenser"
+      attributes: {
+        "liquidType": "water"
+      }
+    - eca_script: "ECAWaterMixerTap"
+      game_object: "Rubinetto@ECAWaterMixerTap"
+      unity_id: "Rubinetto@ECAWaterMixerTap"
+    # 12 - secchio
     - eca_script: "ECAObject"
       game_object: "Secchio@ECAObject"
       unity_id: "Secchio@ECAObject"
@@ -92,11 +375,14 @@ eud4xr:
         "visible": "yes",
         "active": "yes",
         "isInsideCamera": "yes",
-        "description": "oggetto che contiene dei liquidi.",
+        "description": "Oggetto che può contenere dei liquidi dei liquidi.",
       }
-    - eca_script: "ECABucket"
-      game_object: "Secchio@ECABucket"
-      unity_id: "Secchio@ECABucket"
+    - eca_script: "ECAProp"
+      game_object: "Secchio@ECAProp"
+      unity_id: "Secchio@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
     - eca_script: "ECALiquidContainer"
       game_object: "Secchio@ECALiquidContainer"
       unity_id: "Secchio@ECALiquidContainer"
@@ -107,13 +393,10 @@ eud4xr:
         "amuchinaDrops": 1000,
         "temperature": 30.5
       }
-    - eca_script: "ECAProp"
-      game_object: "Secchio@ECAProp"
-      unity_id: "Secchio@ECAProp"
-      attributes: {
-        "price": 0.0
-      }
-    # tavolo
+    - eca_script: "ECABucket"
+      game_object: "Secchio@ECABucket"
+      unity_id: "Secchio@ECABucket"
+    # 13 - tavolo
     - eca_script: "ECAObject"
       game_object: "Tavolo@ECAObject"
       unity_id: "Tavolo@ECAObject"
@@ -124,7 +407,7 @@ eud4xr:
         "visible": "yes",
         "active": "yes",
         "isInsideCamera": "yes",
-        "description": "superficie di lavoro.",
+        "description": "Superficie piano di lavoro, sporca di polvere e macchie di olio/incrostazioni.",
       }
     - eca_script: "ECAEnvironment"
       game_object: "Tavolo@ECAEnvironment"
@@ -147,67 +430,7 @@ eud4xr:
       attributes: {
         "allWashed": "false"
       }
-    # player
-    - eca_script: "ECAObject"
-      game_object: "Player@ECAObject"
-      unity_id: "Player@ECAObject"
-      attributes: {
-        "position": {'x': 0, 'y': 0, 'z': -15},
-        "rotation": {'x': 0, 'y': 0, 'z': 0},
-        "scale": {'x': 1, 'y': 1, 'z': 1},
-        "visible": "yes",
-        "active": "yes",
-        "isInsideCamera": "no",
-        "description": "utente che ha il visore.",
-      }
-    - eca_script: "ECACharacter"
-      game_object: "Player@ECACharacter"
-      unity_id: "Player@ECACharacter"
-      attributes: {
-        "life": 100,
-        "playing": "yes",
-      }
-    - eca_script: "ECAAnimal"
-      game_object: "Player@ECAAnimal"
-      unity_id: "Player@ECAAnimal"
-    - eca_script: "ECAHuman"
-      game_object: "Player@ECAHuman"
-      unity_id: "Player@ECAHuman"
-    # straccio
-    - eca_script: "ECAObject"
-      game_object: "Straccio@ECAObject"
-      unity_id: "Straccio@ECAObject"
-      attributes: {
-        "position": {'x': 1, 'y': 2, 'z': -8},
-        "rotation": {'x': 0, 'y': 0, 'z': 0},
-        "scale": {'x': 1, 'y': 1, 'z': 1},
-        "visible": "yes",
-        "active": "yes",
-        "isInsideCamera": "yes",
-        "description": "panno.",
-      }
-    - eca_script: "ECAProp"
-      game_object: "Straccio@ECAProp"
-      unity_id: "Straccio@ECAProp"
-      attributes: {
-        "price": 0.0
-      }
-    - eca_script: "ECACleaningRag"
-      game_object: "Straccio@ECACleaningRag"
-      unity_id: "Straccio@ECACleaningRag"
-    - eca_script: "ECACleaningItem"
-      game_object: "Straccio@ECACleaningItem"
-      unity_id: "Straccio@ECACleaningItem"
-    - eca_script: "ECASoakableCleaningItem"
-      game_object: "Straccio@ECASoakableCleaningItem"
-      unity_id: "Straccio@ECASoakableCleaningItem"
-      attributes: {
-        "hasWater": "yes",
-        "hasDegreaser": "no",
-        "hasBatteryKiller": "no",
-        "hasAmuchina": "no",
-      }
-    # PavimentoImpolverato
+    # 14 - pavimentoimpolverato
     - eca_script: "ECAObject"
       game_object: "PavimentoImpolverato@ECAObject"
       unity_id: "PavimentoImpolverato@ECAObject"
@@ -227,7 +450,7 @@ eud4xr:
       game_object: "PavimentoImpolverato@ECASurface"
       unity_id: "PavimentoImpolverato@ECASurface"
       attributes: {
-        "type": "Pavimento della stanza impolverato."
+        "type": "floor."
       }
     - eca_script: "ECADustBall"
       game_object: "PavimentoImpolverato@ECADustBall"
@@ -235,7 +458,7 @@ eud4xr:
       attributes: {
         "allSwept": "false"
       }
-    # PavimentoMacchie
+    # 15 - pavimentoMacchie
     - eca_script: "ECAObject"
       game_object: "PavimentoMacchie@ECAObject"
       unity_id: "PavimentoMacchie@ECAObject"
@@ -255,7 +478,7 @@ eud4xr:
       game_object: "PavimentoMacchie@ECASurface"
       unity_id: "PavimentoMacchie@ECASurface"
       attributes: {
-        "type": "Pavimento della stanza con delle macchie e incrostazioni."
+        "type": "floor."
       }
     - eca_script: "ECAOilStain"
       game_object: "PavimentoMacchie@ECAOilStain"
@@ -263,15 +486,81 @@ eud4xr:
       attributes: {
         "allWashed": "false"
       }
+    # 16 - finestra
+    - eca_script: "ECAObject"
+      game_object: "Finestra@ECAObject"
+      unity_id: "Finestra@ECAObject"
+      attributes: {
+        "position": {'x': 1, 'y': 1, 'z': 1},
+        "rotation": {'x': 0, 'y': -90, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "yes",
+        "description": "Finestra della stanza. Può essere aparta o chiusa.",
+      }
+    - eca_script: "ECAProp"
+      game_object: "Finestra@ECAProp"
+      unity_id: "Finestra@ECAProp"
+      attributes: {
+        "price": 0.0
+      }
+    - eca_script: "ECABehaviour"
+      game_object: "Finestra@ECABehaviour"
+      unity_id: "Finestra@ECABehaviour"
+    - eca_script: "ECAInteractable"
+      game_object: "Finestra@ECAInteractable"
+      unity_id: "Finestra@ECAInteractable"
+    - eca_script: "ECAWindow"
+      game_object: "Finestra@ECAWindow"
+      unity_id: "Finestra@ECAWindow"
+      attributes: {
+        "isOpen": "false"
+      }
+    # player
+    - eca_script: "ECAObject"
+      game_object: "Player@ECAObject"
+      unity_id: "Player@ECAObject"
+      attributes: {
+        "position": {'x': 0, 'y': 0, 'z': -15},
+        "rotation": {'x': 0, 'y': 0, 'z': 0},
+        "scale": {'x': 1, 'y': 1, 'z': 1},
+        "visible": "yes",
+        "active": "yes",
+        "isInsideCamera": "no",
+        "description": "L'utente che crea le regole, che indossa il visore e che può interagire con l'ambiente.",
+      }
+    - eca_script: "ECACharacter"
+      game_object: "Player@ECACharacter"
+      unity_id: "Player@ECACharacter"
+      attributes: {
+        "life": 100,
+        "playing": "yes",
+      }
+    - eca_script: "ECAAnimal"
+      game_object: "Player@ECAAnimal"
+      unity_id: "Player@ECAAnimal"
+    - eca_script: "ECAHuman"
+      game_object: "Player@ECAHuman"
+      unity_id: "Player@ECAHuman"
+
 
 group:
-  scopa:
-   name: "scopa"
+  straccio:
+   name: "straccio"
    entities:
-    - sensor.scopa_ecaobject
-    - sensor.scopa_ecacleaningitem
-    - sensor.scopa_ecabroom
-    - sensor.scopa_ecaprop
+    - sensor.straccio_ecaobject
+    - sensor.straccio_ecaprop
+    - sensor.straccio_ecacleaningitem
+    - sensor.straccio_ecasoakablecleaningitem
+    - sensor.straccio_ecacleaningrag
+  bottigliaacqua:
+   name: "bottigliaacqua"
+   entities:
+    - sensor.bottigliaacqua_ecaobject
+    - sensor.bottigliaacqua_ecaprop
+    - sensor.bottigliaacqua_ecaliquiddispenser
+    - sensor.bottigliaacqua_ecabottle
   spruzzino:
    name: "spruzzino"
    entities:
@@ -279,47 +568,108 @@ group:
     - sensor.spruzzino_ecaprop
     - sensor.spruzzino_ecaliquiddispenser
     - sensor.spruzzino_ecaspraybottle
+  scopa:
+   name: "scopa"
+   entities:
+    - sensor.scopa_ecaobject
+    - sensor.scopa_ecaprop
+    - sensor.scopa_ecacleaningitem
+    - sensor.scopa_ecabroom
+  mocio:
+   name: "mocio"
+   entities:
+    - sensor.mocio_ecaobject
+    - sensor.mocio_ecaprop
+    - sensor.mocio_ecacleaningitem
+    - sensor.mocio_ecasoakablecleaningitem
+    - sensor.mocio_ecamop
+  scottex:
+   name: "scottex"
+   entities:
+    - sensor.scottex_ecaobject
+    - sensor.scottex_ecaprop
+    - sensor.scottex_ecacleaningitem
+    - sensor.scottex_ecasoakablecleaningitem
+    - sensor.scottex_ecascottex
+  spruzzinoamuchina:
+   name: "spruzzinoamuchina"
+   entities:
+    - sensor.spruzzinoamuchina_ecaobject
+    - sensor.spruzzinoamuchina_ecaprop
+    - sensor.spruzzinoamuchina_ecaliquiddispenser
+    - sensor.spruzzinoamuchina_ecaspraybottle
+  spruzzinoantibatterico:
+   name: "spruzzinoantibatterico"
+   entities:
+    - sensor.spruzzinoantibatterico_ecaobject
+    - sensor.spruzzinoantibatterico_ecaprop
+    - sensor.spruzzinoantibatterico_ecaliquiddispenser
+    - sensor.spruzzinoantibatterico_ecaspraybottle
+  paletta:
+   name: "paletta"
+   entities:
+    - sensor.paletta_ecaobject
+    - sensor.paletta_ecaprop
+    - sensor.paletta_ecacleaningitem
+    - sensor.paletta_ecadustpan
+    - sensor.paletta_ecabehaviour
+    - sensor.paletta_ecainteractable
+    - sensor.paletta_ecaxrgrabbable
+  spruzzinosgrassatore:
+   name: "spruzzinosgrassatore"
+   entities:
+    - sensor.spruzzinosgrassatore_ecaobject
+    - sensor.spruzzinosgrassatore_ecaprop
+    - sensor.spruzzinosgrassatore_ecaliquiddispenser
+    - sensor.spruzzinosgrassatore_ecaspraybottle
+  rubinetto:
+   name: "rubinetto"
+   entities:
+     - sensor.rubinetto_ecaobject
+     - sensor.rubinetto_ecaprop
+     - sensor.rubinetto_ecaliquiddispenser
+     - sensor.rubinetto_ecawatermixertap
   secchio:
    name: "secchio"
    entities:
-    - sensor.secchio_ecaobject
-    - sensor.secchio_ecaprop
-    - sensor.secchio_ecaliquidcontainer
-    - sensor.secchio_ecabucket
+     - sensor.secchio_ecaobject
+     - sensor.secchio_ecaprop
+     - sensor.secchio_ecaliquidcontainer
+     - sensor.secchio_ecabucket
   tavolo:
    name: "tavolo"
    entities:
-    - sensor.tavolo_ecaobject
-    - sensor.tavolo_ecaenvironment
-    - sensor.tavolo_ecasurface
-    - sensor.tavolo_ecadustball
-    - sensor.tavolo_ecaoilstain
-  player:
-   name: "player"
-   entities:
-    - sensor.player_ecaobject
-    - sensor.player_ecacharacter
-    - sensor.player_ecaanimal
-    - sensor.player_ecahuman
-  straccio:
-   name: "straccio"
-   entities:
-    - sensor.straccio_ecaobject
-    - sensor.straccio_ecaprop
-    - sensor.straccio_ecasoakablecleaningitem
-    - sensor.straccio_ecacleaningrag
-    - sensor.straccio_ecacleaningitem
+     - sensor.tavolo_ecaobject
+     - sensor.tavolo_ecaenvironment
+     - sensor.tavolo_ecasurface
+     - sensor.tavolo_ecadustball
+     - sensor.tavolo_ecaoilstain
   pavimentoimpolverato:
    name: "pavimentoimpolverato"
    entities:
-    - sensor.pavimentoimpolverato_ecaobject
-    - sensor.pavimentoimpolverato_ecaenvironment
-    - sensor.pavimentoimpolverato_ecasurface
-    - sensor.pavimentoimpolverato_ecadustball
+     - sensor.pavimentoimpolverato_ecaobject
+     - sensor.pavimentoimpolverato_ecaenvironment
+     - sensor.pavimentoimpolverato_ecasurface
+     - sensor.pavimentoimpolverato_ecadustball
   pavimentomacchie:
    name: "pavimentomacchie"
    entities:
-    - sensor.pavimentomacchie_ecaobject
-    - sensor.pavimentomacchie_ecaenvironment
-    - sensor.pavimentomacchie_ecasurface
-    - sensor.pavimentomacchie_ecaoilstain
+     - sensor.pavimentomacchie_ecaobject
+     - sensor.pavimentomacchie_ecaenvironment
+     - sensor.pavimentomacchie_ecasurface
+     - sensor.pavimentomacchie_ecaoilstain
+  finestra:
+   name: "finestra"
+   entities:
+     - sensor.finestra_ecaobject
+     - sensor.finestra_ecaprop
+     - sensor.finestra_ecabehaviour
+     - sensor.finestra_ecainteractable
+     - sensor.finestra_ecawindow
+  player:
+   name: "player"
+   entities:
+     - sensor.player_ecaobject
+     - sensor.player_ecacharacter
+     - sensor.player_ecaanimal
+     - sensor.player_ecahuman
