@@ -124,12 +124,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     ## Send update to Unity
     async def handle_send_update_to_server_unity(call: ServiceCall) -> None:
-        # # validate entity
-        # ent_reg = entity_registry.async_get(hass)
-        # entity = ent_reg.async_get(call.data[CONF_SUBJECT])
-        # if not entity:
-        #     _LOGGER.error("L'entit√† %s non √® valida", subject)
-        #     return
         await send_update_to_server_unity(call.data)
 
     async def send_update_to_server_unity(payload: dict) -> None:
@@ -137,6 +131,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         headers = {}  # {"Authorization": f"Bearer {server_unity_token}"}
         # send request
         async with aiohttp.ClientSession() as session:
+            _LOGGER.info(f"Sending an update to {server_unity_url}{API_UNITY_NOTIFY_UPDATE}")
             try:
                 async with session.post(
                     f"{server_unity_url}{API_UNITY_NOTIFY_UPDATE}", json=payload
@@ -168,9 +163,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         _LOGGER.info(f"Received a new entry: {virtual_object_data}")
         await async_add_virtual_object(hass, virtual_object_data)
 
-    async def async_add_virtual_object(
-        hass, data: list
-    ):  # TODO J 25-08-03 - Theorically you already have "hass", no need to override and pass it as input (?)
+    async def async_add_virtual_object(hass, data: list):
         new_sensors = list()
         entity_name = None
         group_name = None
@@ -209,7 +202,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 new_sensors_to_append = [
                     s for s in new_sensors if s not in current_entities
                 ]
-
                 @callback
                 def async_update_group():
                     hass.states.async_set(
@@ -220,8 +212,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                             "friendly_name": group_name,
                         },
                     )
-
-                await hass.add_job(async_update_group)
+                hass.async_add_job(async_update_group)
+                # try:
+                #     hass.async_add_job(async_update_group)
+                # except Exception as e:
+                #     print(f"ERROR NELLA HASS.ADD_JOB(ASYNC_UPDATE_GROUP: {current_entities} - {new_sensors_to_append}")
 
         _LOGGER.info("Registered a new object - {entity_name}")
 
@@ -229,14 +224,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_update_from_unity(call) -> None:
         await async_update_from_unity(hass, call.data)
 
-    async def async_update_from_unity(
-        hass, update, is_retry: bool = False
-    ):  # TODO J 25-08-03 - Same here, no need to pass "hass" (?)
-        message = (
-            f"Received a new update from unity: {update}"
-            if not is_retry
-            else f"Received an old update from unity: {update}"
-        )
+    async def async_update_from_unity(hass, update, is_retry: bool = False):
+        message = f"Received a new update from unity: {update}" if not is_retry else f"Received an old update from unity: {update}"
         _LOGGER.info(message)
         # update state #
         data = copy.deepcopy(update.get(CONF_SERVICE_UPDATE_FROM_UNITY_UPDATE))
@@ -297,7 +286,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 + f"Possibly causes: group: {group} or sensor {sensor} or entity {entity} not found"
             )
         else:
-            _LOGGER.error(f"FALLIMENTO - {group} - {group_id}")
+            _LOGGER.error(f"Failing - {group} - {group_id}")
         return False
 
     # the system registered a new sensor -> check on the failed update list
@@ -312,9 +301,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 _LOGGER.info(f"Deleted an old update {update}")
                 failed_updates.remove((ts, update))
             else:
-                _LOGGER.info("STO GESTENDO L'UPDATE")
                 res = await async_update_from_unity(hass, update, is_retry=True)
-                _LOGGER.info(f"RISULTATO GESTIONE: {res}")
                 if res:
                     _LOGGER.info(f"Handled an old update {update}")
                     failed_updates.remove((ts, update))

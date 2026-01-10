@@ -531,32 +531,32 @@ class ECABottle(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb = "opens cap", is_passive = True)
+    @eca_script_action(verb = "opens-cap", is_passive = True)
     @describe("opens-cap represents the action of opening the cap of a bottle equipped with an ECABottle component. When executed, it sets the internal state variable capOpen to true and, if the bottle is flipped downward, triggers the drops-liquid action to start the liquid flow.")
     async def async_opens_cap(self, c: ECACharacter) -> None:
         _LOGGER.info(f"Performed opens_cap action - {c}")
 
-    @eca_script_action(verb = "closes cap", is_passive = True)
+    @eca_script_action(verb = "closes-cap", is_passive = True)
     @describe("closes-cap represents the action of closing the cap of a bottle equipped with an ECABottle component. When executed, it sets the internal state variable capOpen to false and triggers the stops-dropping action to halt any ongoing liquid flow.")
     async def async_closes_cap(self, c: ECACharacter) -> None:
         _LOGGER.info(f"Performed closes_cap action - {c}")
 
-    @eca_script_action(verb = "flips down")
+    @eca_script_action(verb = "flips-down")
     @describe("flips-down represents the action of turning a bottle equipped with an ECABottle component upside down. When executed, it updates the internal state variable flipped to true and, if the cap is open, triggers the drops-liquid action to start the liquid flow.")
     async def async_flips_down(self) -> None:
         _LOGGER.info(f"Performed flips_down action")
 
-    @eca_script_action(verb = "flips up")
+    @eca_script_action(verb = "flips-up")
     @describe("flips-up represents the action of turning a bottle equipped with an ECABottle component to an upright position. When executed, it updates the internal state variable flipped to false and stops any ongoing liquid flow if the bottle was previously pouring.")
     async def async_flips_up(self) -> None:
         _LOGGER.info(f"Performed flips_up action")
 
-    @eca_script_action(verb = "drops liquid")
+    @eca_script_action(verb = "drops-liquid")
     @describe("drops liquid represents the action that initiates the release of liquid from the spawner associated with an object equipped with an ECABottle component. When executed, it starts the spawning of liquid particles or drops within the environment.")
     async def async_drops_liquid(self) -> None:
         _LOGGER.info(f"Performed drops_liquid action")
 
-    @eca_script_action(verb = "stops dropping")
+    @eca_script_action(verb = "stops-dropping")
     @describe("stops dropping represents the internal action that stops the flow of liquid from an object equipped with an ECABottle component. When executed, it halts the spawning of liquid particles or drops and updates the dispenser’s internal state to indicate that the liquid flow has stopped.")
     async def async_stops_dropping(self) -> None:
         _LOGGER.info(f"Performed stops_dropping action")
@@ -657,7 +657,7 @@ class ECALiquidContainer(ECAEntity):
         }
 
     @eca_script_action(verb = "fills-in", is_passive = True)
-    @describe("fills-in represents the action performed when an object equipped with an ECALiquidContainer component is filled by an object equipped with an ECALiquidDispenser component. Argument: -subject: The object equipped with an  component that fills the container.")
+    @describe("fills-in represents the action performed when an object equipped with an ECALiquidContainer component is filled by an object equipped with an ECALiquidDispenser component. Argument: -subject: The object equipped with an ECALiquidDispenser component that fills the container.")
     async def async_fills_in(self, dispenser: ECALiquidDispenser) -> None:
         _LOGGER.info(f"Performed fills_in action - {dispenser}")
 
@@ -716,7 +716,7 @@ class ECASurface(ECAEntity):
         self._attr_should_poll = False
 
     @property
-    @describe("type (str): type specifies the kind of surface represented by an object equipped with the  component. Valid values include 'table', 'floor', 'wall', and 'ceiling'. This attribute is used by cleaning items to determine how to interact with the surface.")
+    @describe("type (str): type specifies the kind of surface represented by an object equipped with the ECASurface component. Valid values include 'table', 'floor', 'wall', and 'ceiling'. This attribute is used by cleaning items to determine how to interact with the surface.")
     def type(self) -> str:
         return self._type
 
@@ -744,7 +744,7 @@ class ECABroom(ECAEntity):
         }
 
     @eca_script_action(verb = "sweeps")
-    @describe("sweeps represents the action of a broom cleaning an object equipped with an ECASurface component, typically a surface within the environment. This method is usually invoked when the broom comes into contact with an object equipped with an ECASurface component. When executed, if it interacts with objects equipped with both ECASurface and ECADustBall components, it removes any dust balls present, triggering the corresponding remove-dust action. In addition to removing dust, this action generally activates the collects-dust action of nearby objects equipped with an ECADustPan component, allowing them to collect the detached dust balls. Argument: -obj: The object equipped with an  component representing the surface to be swept.")
+    @describe("sweeps represents a triggerable interaction performed by a broom on an object equipped with an ECASurface component. When sweeps is used as a trigger in an ECA automation, it implicitly defines a causal action within the same automation. Specifically, if the swept surface is equipped with both ECASurface and ECADustBall components, the trigger sweeps MUST result in the execution of the removes-dust-with-broom action. This action removes all dust balls present on the surface. Therefore, in an ECA rule, sweeps should be interpreted not only as a trigger condition but also as a semantic indicator that the automation includes the action removes-dust-with-broom applied to the same surface involved in the trigger. Optionally, the removal of dust can enable secondary actions (e.g., dust collection) by nearby objects equipped with an ECADustPan component. Argument: -obj: The object equipped with an ECASurface component representing the surface being swept.")
     async def async_sweeps(self, surface: ECASurface) -> None:
         _LOGGER.info(f"Performed sweeps action - {surface}")
 
@@ -792,7 +792,7 @@ class ECASoakableCleaningItem(ECAEntity):
         }
 
     @eca_script_action(verb = "wets", is_passive = True)
-    @describe("wets represents the action in which an object equipped with the ECASoakableCleaningItem component, such as a cloth, rag, or paper towel, becomes wet after being poured on by an object equipped with the ECALiquidDispenser component, such as a bottle or sprayer within the environment. When the ECASoakableCleaningItem is wetted, this event acts as a trigger within an ECA automation. The resulting state change depends on the liquid dispensed: - When the ECALiquidDispenser contains water, the cleaning item implicitly performs the action changes hasWater. - When the ECALiquidDispenser contains degreaser, it implicitly performs the action changes hasDegreaser. Executing this action updates the internal state of the cleaning item to reflect the absorbed liquid.")
+    @describe("wets represents the action in which an object equipped with the ECASoakableCleaningItem component, such as a cloth, rag, or paper towel, becomes wet after being poured on by an object equipped with the ECALiquidDispenser component, such as a bottle or sprayer within the environment. When the ECASoakableCleaningItem is wetted, this event acts as a trigger within an ECA automation. The resulting state change depends on the liquid dispensed: - When the ECALiquidDispenser contains water, the cleaning item implicitly performs the action changes-has-water. - When the ECALiquidDispenser contains degreaser, it implicitly performs the action changes-has-dDegreaser. - When the ECALiquidDispenser contains amuchina, it implicitly performs the action changes-has-amuchina. Executing this action updates the internal state of the cleaning item to reflect the absorbed liquid.")
     async def async_wets(self, ld: ECALiquidDispenser) -> None:
         _LOGGER.info(f"Performed wets action - {ld}")
 
@@ -802,13 +802,19 @@ class ECASoakableCleaningItem(ECAEntity):
         _LOGGER.info(f"Performed dries action")
 
     @eca_script_action(verb = "changes has water")
+    @describe("changes has water represents the implicit action performed when an object equipped with an ECASoakableCleaningItem component absorbs water due to the wets action triggered by an object equipped with a ECALiquidDispenser component whose liquidSpawner property is explicitly set to water (e.g., a spruzzino object). In other words, this action is only applicable if the liquid dispenser is configured to dispense water; liquid dispensers configured with any other liquid do not trigger this state change. When this condition is satisfied, the action updates the internal state of the cleaning item by setting the hasWater variable to true, indicating that the object has absorbed water and is now ready for water-based cleaning operations.")
     async def async_changes_has_water(self) -> None:
         _LOGGER.info(f"Performed changes_has_water action")
 
     @eca_script_action(verb = "changes has degreaser")
-    @describe("changes-has-degreaser represents the implicit action performed when an object equipped with an ECASoakableCleaningItem component becomes wet due to the wets action triggered by an object equipped with a ECALiquidDispenser component containing degreaser. This action updates the internal state of the cleaning item by setting the hasDegreaser variable to true, indicating that the object has absorbed degreaser and is now ready for degreasing operations.")
+    @describe("changes-has-degreaser represents the implicit action performed when an object equipped with an ECASoakableCleaningItem component absorbs degreaser due to the wets action triggered by an object equipped with a ECALiquidDispenser component whose liquidSpawner property is explicitly set to degreaser (e.g., spruzzinosgrassatore object). In other words, this action is only applicable if the liquid dispenser is configured to dispense degreaser; liquid dispensers configured with any other liquid do not trigger this state change. When this condition is satisfied, the action updates the internal state of the cleaning item by setting the hasDegreaser variable to true, indicating that the object has absorbed degreaser and is therefore ready for degreasing operations.")
     async def async_changes_has_degreaser(self) -> None:
         _LOGGER.info(f"Performed changes_has_degreaser action")
+
+    @eca_script_action(verb = "changes has amuchina")
+    @describe("changes-has-amuchina represents the implicit action performed when an object equipped with an ECASoakableCleaningItem component absorbs amuchina due to the wets action triggered by an object equipped with a ECALiquidDispenser component whose liquidSpawner property is explicitly set to amuchina (e.g., spruzzinoamuchina object). In other words, this action is only applicable if the liquid dispenser is configured to dispense amuchina; liquid dispensers configured with any other liquid do not trigger this state change. When this condition is satisfied, the action updates the internal state of the cleaning item by setting the hasAmuchina variable to true, indicating that the object has absorbed amuchina and is therefore ready for sanitizing operations.")
+    async def async_changes_has_amuchina(self) -> None:
+        _LOGGER.info(f"Performed changes_has_amuchina action")
 
 
 @describe("ECACleaningRag is a component that represents a cleaning rag object used to wash objects equipped with an ECASurface component.")
@@ -826,7 +832,7 @@ class ECACleaningRag(ECAEntity):
         }
 
     @eca_script_action(verb = "washes")
-    @describe("washes simulates the cleaning action performed by a rag on an object equipped with an ECASurface component, typically a surface within the environment. When executed, it removes dirt, dust, or stains from the surface. If the rag contains water or detergent, the action represents a washing process; otherwise, it performs a dry wiping action. Both cases trigger the washes automation event. When interacting with surfaces equipped with an ECAOilStain component, it removes oil stains, and when the surface includes an ECADustBall component, it removes dust balls. This method is automatically invoked when the rag comes into contact with an object equipped with an ECASurface component, typically detected through a collision event. Argument: -obj: The object equipped with an  component representing the surface to be cleaned.")
+    @describe("washes simulates the cleaning action performed by a rag on an object equipped with an ECASurface component, typically a surface within the environment. When executed, it removes dirt, dust, or stains from the surface. If the rag contains water or detergent, the action represents a washing process; otherwise, it performs a dry wiping action. Both cases trigger the washes automation event. When interacting with surfaces equipped with an ECAOilStain component, it removes oil stains, and when the surface includes an ECADustBall component, it removes dust balls. This method is automatically invoked when the rag comes into contact with an object equipped with an ECASurface component, typically detected through a collision event. Argument: -obj: The object equipped with an ECASurface component representing the surface to be cleaned.")
     async def async_washes(self, surface: ECASurface) -> None:
         _LOGGER.info(f"Performed washes action - {surface}")
 
@@ -846,7 +852,7 @@ class ECAScottex(ECAEntity):
         }
 
     @eca_script_action(verb = "sweeps")
-    @describe("sweeps represents the action of a paper towel (or scottex) cleaning an object equipped with an ECASurface component, typically representing a surface within the environment. This method is usually invoked when the paper towel comes into contact with an object equipped with an ECASurface component. When executed, if the target object also includes an ECADustBall component, it removes any dust balls present and triggers the corresponding remove-dust action, performed by an object equipped with an ECAScottex component. Argument: -obj: The object equipped with an  component representing the surface to be swept.")
+    @describe("sweeps represents the action of a paper towel (or scottex) cleaning an object equipped with an ECASurface component, typically representing a surface within the environment. This method is usually invoked when the paper towel comes into contact with an object equipped with an ECASurface component. When sweeps is used as a trigger in an ECA automation, if it interacts with objects equipped with both ECASurface and ECADustBall components, it MUST trigger in the same automation the corresponding removes-dust-with-scottex action (that removes the dust from the surface). Argument: -obj: The object equipped with an ECASurface component representing the surface to be swept.")
     async def async_sweeps(self, surface: ECASurface) -> None:
         _LOGGER.info(f"Performed sweeps action - {surface}")
 
@@ -872,15 +878,15 @@ class ECADustBall(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb = "removes-dust", is_passive = True)
-    @describe("removes-dust defines the sweeping action performed by an object equipped with an ECAScottex component. When the action is executed, the dust balls are removed. Typically, this is the result of a wipes event performed by an object equipped with an ECAScottex. Argument: -subject: The object equipped with an ECAScottex component responsible for performing the sweeping action.")
-    async def async_removes_dust_ecascottex(self, scottex: ECAScottex) -> None:
-        _LOGGER.info(f"Performed removes_dust action - {scottex}")
+    @eca_script_action(verb = "removes-dust-with-scottex", is_passive = True)
+    @describe("removes-dust-with-scottex defines the sweeping action performed by an object equipped with an ECAScottex component. When the action is executed, the dust balls are removed. Typically, this is the result of a wipes event performed by an object equipped with an ECAScottex. Argument: -subject: The object equipped with an ECAScottex component responsible for performing the sweeping action.")
+    async def async_removes_dust_with_scottex(self, scottex: ECAScottex) -> None:
+        _LOGGER.info(f"Performed removes_dust_with_scottex action - {scottex}")
 
-    @eca_script_action(verb = "removes-dust", is_passive = True)
-    @describe("removes-dust defines the sweeping action performed by an object equipped with an ECABroom component. When the action is executed, the dust balls are removed. Typically, this is the result of a wipes event performed by an object equipped with an ECABroom. After removal, nearby objects equipped with an ECADustPan component may automatically execute their collects-dust action to gather the detached dust ball. Argument: -subject: The object equipped with an ECABroom component responsible for performing the sweeping action.")
-    async def async_removes_dust_ecabroom(self, broom: ECABroom) -> None:
-        _LOGGER.info(f"Performed removes_dust action - {broom}")
+    @eca_script_action(verb = "removes-dust-with-broom", is_passive = True)
+    @describe("removes-dust-with-broom defines the sweeping action performed by an object equipped with an ECABroom component. When the action is executed, the dust balls are removed. Typically, this is the result of a wipes event performed by an object equipped with an ECABroom. Argument: -subject: The object equipped with an ECABroom component responsible for performing the sweeping action.")
+    async def async_removes_dust_with_broom(self, broom: ECABroom) -> None:
+        _LOGGER.info(f"Performed removes_dust_with_broom action - {broom}")
 
 
 @describe("ECADustPan is a component that represents a virtual dustpan used in cleaning tasks within the environment. It interacts with objects equipped with an ECADustBall component and allows the collection and containment of dust balls that have been previously removed or swept by other cleaning tools.")
@@ -898,7 +904,7 @@ class ECADustPan(ECAEntity):
         }
 
     @eca_script_action(verb = "collects-dust")
-    @describe("collects-dust simulates the action of a dustpan collecting a dust ball from an object equipped with the ECADustBall component, generally a surface within the environment. This method is typically triggered after a sweeps action performed by an object equipped with an ECABroom component, often in combination with the remove-dust action of an ECADustBall component. When executed, it transfers the dust ball into the dustpan, updating its collected state Argument: -obj: The  object being collected by the dustpan.")
+    @describe("collects-dust simulates the action of a dustpan collecting a dust ball from an object equipped with the ECADustBall component, generally a surface within the environment. This method is typically triggered after a sweeps action performed by an object equipped with an ECABroom component, often in combination with the remove-dust action of an ECADustBall component. When executed, it transfers the dust ball into the dustpan, updating its collected state Argument: -obj: The ECADustBall object being collected by the dustpan.")
     async def async_collects_dust(self, dustBall: ECADustBall) -> None:
         _LOGGER.info(f"Performed collects_dust action - {dustBall}")
 
@@ -918,7 +924,7 @@ class ECAMop(ECAEntity):
         }
 
     @eca_script_action(verb = "washes")
-    @describe("washes specifies the action of a mop cleaning an object equipped with an ECASurface component, typically representing a surface within the environment. This method is typically invoked when the mop comes into contact with an object equipped with an ECASurface component. When executed, if it interacts with objects equipped with both ECASurface and ECAOilStain components, it removes dirt, liquid residues, or stains from the surface as part of the cleaning process. Argument: -obj: The object equipped with an  component representing the surface to be cleaned.")
+    @describe("washes specifies the action of a mop cleaning an object equipped with an ECASurface component, typically representing a surface within the environment. This method is typically invoked when the mop comes into contact with an object equipped with an ECASurface component, and it assumes that the mop has the property hasWater set to true. When washes is used as a trigger in an ECA automation, if it interacts with objects equipped with both ECASurface and ECAOilStain components, it MUST trigger in the same automation the corresponding removes-stain-with-mop action (that removes dirt, liquid residues, or stains from the surface as part of the cleaning process). Argument: -obj: The object equipped with an ECASurface component representing the surface to be cleaned.")
     async def async_washes(self, surface: ECASurface) -> None:
         _LOGGER.info(f"Performed washes action - {surface}")
 
@@ -953,7 +959,7 @@ class ECAButton(ECAEntity):
         }
 
     @eca_script_action(verb = "pushes", is_passive = True)
-    @describe("Presses is a passive function that represents the pressing of the button by a character C. Argument: -subject: The  who presses the button.")
+    @describe("Presses is a passive function that represents the pressing of the button by a character C. Argument: -subject: The ECACharacter who presses the button.")
     async def async_pushes(self, c: ECACharacter) -> None:
         _LOGGER.info(f"Performed pushes action - {c}")
 
@@ -1020,7 +1026,7 @@ class ECALight(ECAEntity):
         _LOGGER.info(f"Performed sets action - {i}")
 
     @eca_script_action(verb = "changes", variable = "color", modifier = "to")
-    @describe("SetsColor updates the light's color to the specified value. The allowed values are predefined color names (e.g., 'red', 'blue', 'green'). Argument: -obj: The desired color to apply to the light source.")
+    @describe("SetsColor updates the light's color to the specified value. The allowed values are predefined color names (e.g., \"red\", \"blue\", \"green\"). Argument: -obj: The desired color to apply to the light source.")
     async def async_changes(self, inputColor: ECAColor) -> None:
         _LOGGER.info(f"Performed changes action - {inputColor}")
 
@@ -1268,15 +1274,15 @@ class ECAOilStain(ECAEntity):
             **super_extra_attributes
         }
 
-    @eca_script_action(verb = "removes-stain", is_passive = True)
-    @describe("removes-stain defines the sweeping action performed by an object that has an ECACleaningRag component. When the action is executed, the stains are removed. Typically, this is the result of a washes event performed by an object that has an ECACleaningRag. Argument: -subject: The object that has a ECACleaningRag component responsible for performing the washing action.")
-    async def async_removes_stain_cleaningrag(self, cleaningRag: ECACleaningRag) -> None:
-        _LOGGER.info(f"Performed removes_stain_ action - {cleaningRag}")
+    @eca_script_action(verb = "removes-stain-with-rag", is_passive = True)
+    @describe("removes-stain-with-rag defines the sweeping action performed by an object that has an ECACleaningRag component. When the action is executed, the stains are removed. Typically, this is the result of a washes event performed by an object that has an ECACleaningRag. Argument: -subject: The object that has a ECACleaningRag component responsible for performing the washing action.")
+    async def async_removes_stain_with_rag(self, cleaningRag: ECACleaningRag) -> None:
+        _LOGGER.info(f"Performed removes_stain_with_rag action - {cleaningRag}")
 
-    @eca_script_action(verb = "removes-stain", is_passive = True)
-    @describe("removes-stain defines the sweeping action performed by an object that has an ECAMop component. When the action is executed, the stains are removed. Typically, this is the result of a washes event performed by an object that has an ECAMop. Argument: -subject: The object that has a ECAMop component responsible for performing the washing action.")
-    async def async_removes_stain_ecamop(self, mop: ECAMop) -> None:
-        _LOGGER.info(f"Performed removes_stain_ action - {mop}")
+    @eca_script_action(verb = "removes-stain-with-mop", is_passive = True)
+    @describe("removes-stain-with-mop defines the sweeping action performed by an object that has an ECAMop component. When the action is executed, the stains are removed. Typically, this is the result of a washes event performed by an object that has an ECAMop. Argument: -subject: The object that has a ECAMop component responsible for performing the washing action.")
+    async def async_removes_stain_with_mop(self, mop: ECAMop) -> None:
+        _LOGGER.info(f"Performed removes_stain_with_mop action - {mop}")
 
 
 @describe("ECAPhysicalGrabbable is a component that represents a physical object in the scene which can be grabbed by a player, or user, object equipped with an ECACharacter component, using one or both hands. It tracks the grabbing state, manages interaction logic based on trigger collisions with hand colliders, and communicates grab-related events through the automation system.")
@@ -1301,12 +1307,12 @@ class ECAPhysicalGrabbable(ECAEntity):
         }
 
     @eca_script_action(verb = "starts-grabbing", is_passive = True)
-    @describe("starts-grabbing is triggered when a player or user object equipped with an ECACharacter component begins to grab this object with either hand. When triggered, it sets the grabbed state to true and notifies the automation system of the grab event. Argument: -subject: The object equipped with an  component that initiates the grab action.")
+    @describe("starts-grabbing is triggered when a player or user object equipped with an ECACharacter component begins to grab this object with either hand. When triggered, it sets the grabbed state to true and notifies the automation system of the grab event. Argument: -subject: The object equipped with an ECACharacter component that initiates the grab action.")
     async def async_starts_grabbing(self, c: ECACharacter) -> None:
         _LOGGER.info(f"Performed starts_grabbing action - {c}")
 
     @eca_script_action(verb = "stops-grabbing", is_passive = True)
-    @describe("stops-grabbing is triggered when a player or user object equipped with an ECACharacter component releases this object with both hands. When triggered, it sets the grabbed state to false and notifies the automation system that the grab interaction has ended. Argument: -subject: The object equipped with an  component that releases the object.")
+    @describe("stops-grabbing is triggered when a player or user object equipped with an ECACharacter component releases this object with both hands. When triggered, it sets the grabbed state to false and notifies the automation system that the grab interaction has ended. Argument: -subject: The object equipped with an ECACharacter component that releases the object.")
     async def async_stops_grabbing(self, c: ECACharacter) -> None:
         _LOGGER.info(f"Performed stops_grabbing action - {c}")
 
@@ -1509,15 +1515,9 @@ class ECASprayBottle(ECAEntity):
             **super_extra_attributes,
         }
 
-    @describe("sprays represents the action of dispensing liquid from an object equipped with an ECASprayBottle component, typically triggered by a character performing a pinch gesture with the hand. When executed, it releases a burst of liquid, plays an associated audio cue, and may trigger automation events related to cleaning, wetting, or environmental interactions. -Argument: 'c' The object equipped with an ECACharacter component performing the spray action.</param>")
+    @describe("sprays represents the action of dispensing liquid from an object equipped with an ECASprayBottle component, typically triggered by a character performing a pinch gesture with the hand. When executed, it releases a burst of liquid, plays an associated audio cue, and may trigger automation events related to cleaning, wetting, or environmental interactions. -Argument: 'subject' The object equipped with an ECACharacter component performing the spray action.</param>")
     @eca_script_action(verb="sprays", is_passive = True)
     async def async_sprays(self, c: ECACharacter) -> None:
-        """
-        <b>sprays</b> is an action that dispenses liquid from the spray bottle when triggered by a character,
-        typically through a hand pinch gesture. It also plays an audio cue when the spray starts.
-        Argument:
-            -c: The "ECACharacter" performing the spray action.
-        """
         _LOGGER.info(f"Performed changes_source action - {c}")
 
 

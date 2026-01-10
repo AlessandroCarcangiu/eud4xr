@@ -30,12 +30,14 @@ def eca_script_action(
                 verb=verb,
                 variable=variable,
                 modifier=modifier,
+                is_passive=is_passive,
                 **kwargs,
             )
             self.on_action(
                 verb=verb,
                 variable=variable,
                 modifier=modifier,
+                is_passive=is_passive,
                 **kwargs,
             )
             return result

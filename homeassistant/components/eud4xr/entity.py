@@ -158,6 +158,7 @@ class ECAEntity(Entity):
         variable: str = "",
         modifier: str = "",
         on_event: bool = False,
+        is_passive: bool = False,
         **kwargs,
     ) -> dict:
         data = {CONF_SERVICE_UPDATE_FROM_UNITY_VERB: verb}
@@ -173,34 +174,25 @@ class ECAEntity(Entity):
         for k, v in kwargs.items():
             if v:
                 if isinstance(v, RegistryEntry):
-                    paramater_to_send = (
-                        str(v.original_name.split("@")).lower()
-                        if on_event
-                        else str(v.game_object)
-                    )
+                    #paramater_to_send = str(v.original_name.split("@")).lower() if on_event or getattr(v, "original_name") else str(v.game_object)
+                    paramater_to_send = str(v.original_name) if on_event or getattr(v, "original_name") else str(v.game_object)
                 else:
                     if isinstance(v, str):
                         v = v.lower()
-
-                    value_to_string = (
-                        ", ".join([str(i).lower() for i in v])
-                        if isinstance(v, list)
-                        else str(v).lower()
-                    )
-                    if on_event:
-                        print(f"v: {v} - {hasattr(v, 'to_value')}")
-                    paramater_to_send = (
-                        v.to_value()
-                        if hasattr(v, "to_value")
-                        else v
-                        if on_event
-                        else value_to_string
-                    )
+                    value_to_string = ", ".join([str(i).lower() for i in v]) if isinstance(v, list) else str(v).lower()
+                    paramater_to_send = v.to_value() if hasattr(v, "to_value") else v if on_event else value_to_string
+                # remove @
+                if on_event:
+                    paramater_to_send = paramater_to_send.split("@")[0]
         if paramater_to_send:
             if variable and modifier:
                 data["value"] = paramater_to_send
             else:
-                data["obj"] = paramater_to_send
+                if not is_passive:
+                    data["obj"] = paramater_to_send
+                else:
+                    data["obj"] = data["subject"]
+                    data["subject"] = paramater_to_send
         return data
 
     async def action(self, **kwargs) -> None:
