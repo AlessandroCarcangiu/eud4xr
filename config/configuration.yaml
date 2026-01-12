@@ -25,8 +25,8 @@ http:
     - 172.17.0.1
 
 eud4xr:
-  #server_unity_url: "100.124.231.40:8080"
-  server_unity_url: https://fly-powerful-slug.ngrok-free.app
+  server_unity_url: "http://100.124.231.40:8080"
+  #server_unity_url: https://fly-powerful-slug.ngrok-free.app
   #server_unity_token: "YOUR-UNITY-SERVER-TOKEN" # optional
   unity_entities:
     # 1 - straccio

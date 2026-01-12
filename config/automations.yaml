@@ -1,51 +1,266 @@
 - action:
-  - action: eud4xr.sweeps
+  - action: eud4xr.changes_has_water
     data:
-      entity_id: sensor.scopa_ecabroom
-      surface: sensor.tavolo_ecasurface
-  - alias: sequence.pulizia piano lavoro
+      entity_id: sensor.straccio_ecasoakablecleaningitem
+  - alias: 'sequence.Procedura pulizia tavolo: bagna_straccio > sgrassa_straccio >
+      sgrassa_tavolo'
     service: automation.turn_on
     data:
-      entity_id: automation.lo_spruzzino_si_sposta_nella_posizione_0_su_tutti_gli_assi
-  - alias: sequence.pulizia piano lavoro
+      entity_id: automation.sgrassa_straccio
+  - alias: 'sequence.Procedura pulizia tavolo: bagna_straccio > sgrassa_straccio >
+      sgrassa_tavolo'
     service: automation.turn_off
     data:
-      entity_id: automation.la_scopa_pulisce_il_tavolo_quando_lo_spruzzino_si_attiva
-  alias: la_scopa_pulisce_il_tavolo_quando_lo_spruzzino_si_attiva
+      entity_id: automation.bagna_straccio
+  alias: bagna_straccio
   condition: []
-  description: Questa automazione attiva la scopa per pulire il tavolo quando lo spruzzino
-    viene attivato.
-  id: 89001d3c-38a4-41b6-b308-752970765c6c
+  description: Quando il spruzzino spruzza acqua sullo straccio, lo straccio si bagna
+    automaticamente. Questa automazione collega l'azione di spruzzare acqua con il
+    cambiamento di stato dello straccio, che passa da asciutto a bagnato senza bisogno
+    di ulteriori interventi.
+  id: cb2f4c5a-61e7-4c43-956c-a8452d1e72df
   trigger:
   - event_data:
+      obj: straccio
       subject: spruzzino
-      verb: activates
+      verb: wets
     event_type: eud4xr
     platform: event
 - action:
-  - action: eud4xr.moves_to
+  - action: eud4xr.changes_has_degreaser
     data:
-      entity_id: sensor.spruzzino_ecaobject
-      newPos:
-        x: 0
-        y: 0
-        z: 0
-  - alias: sequence.pulizia piano lavoro
+      entity_id: sensor.straccio_ecasoakablecleaningitem
+  - alias: 'sequence.Procedura pulizia tavolo: bagna_straccio > sgrassa_straccio >
+      sgrassa_tavolo'
+    service: automation.turn_on
+    data:
+      entity_id: automation.mucchina_straccio
+  - alias: 'sequence.Procedura pulizia tavolo: bagna_straccio > sgrassa_straccio >
+      sgrassa_tavolo'
     service: automation.turn_off
     data:
-      entity_id: automation.lo_spruzzino_si_sposta_nella_posizione_0_su_tutti_gli_assi
-  alias: lo_spruzzino_si_sposta_nella_posizione_0_su_tutti_gli_assi
+      entity_id: automation.sgrassa_straccio
+  alias: sgrassa_straccio
   condition: []
-  description: Questa automazione sposta lo spruzzino nella posizione (0, 0, 0) su
-    tutti gli assi quando la scopa viene nascosta.
-  id: d34daf0c-9ad3-4809-9bb7-716a15bfb08e
+  description: Quando spruzzi lo sgrassatore dal spruzzinosgrassatore sullo straccio,
+    lo straccio assorbe lo sgrassatore. Questa automazione collega l'azione di spruzzare
+    lo sgrassatore con il cambiamento di stato dello straccio, che diventa pronto
+    per sgrassare le superfici.
+  id: beb67ed2-fcfb-47d2-8f0a-d1af2cf9a4bc
   trigger:
   - event_data:
-      obj:
-        x: 1
-        y: 1
-        z: 1
-      subject: spruzzino
-      verb: moves to
+      obj: straccio
+      subject: spruzzinosgrassatore
+      verb: wets
+    event_type: eud4xr
+    platform: event
+- action:
+  - action: eud4xr.removes_stain_with_rag
+    data:
+      cleaningRag: sensor.straccio_ecacleaningrag
+      entity_id: sensor.tavolo_ecaoilstain
+  - alias: 'sequence.Procedura pulizia tavolo: bagna_straccio > sgrassa_straccio >
+      sgrassa_tavolo'
+    service: automation.turn_off
+    data:
+      entity_id: automation.sgrassa_tavolo
+  alias: sgrassa_tavolo
+  condition:
+  - condition: and
+    conditions:
+    - condition: template
+      value_template: '{{ state_attr("sensor.straccio_ecasoakablecleaningitem", "hasWater")
+        == "yes" }}'
+    - condition: template
+      value_template: '{{ state_attr("sensor.straccio_ecasoakablecleaningitem", "hasDegreaser")
+        == "yes" }}'
+  description: "Quando passi lo straccio sul tavolo, solo se lo straccio \xE8 bagnato\
+    \ e contiene sgrassatore, le macchie sul tavolo vengono rimosse automaticamente.\
+    \ Questa automazione assicura che la pulizia delle macchie avvenga solo quando\
+    \ lo straccio \xE8 nelle condizioni giuste per sgrassare."
+  id: 2754f6b9-1ab3-484d-84ec-97ed30b7559a
+  trigger:
+  - event_data:
+      obj: tavolo
+      subject: straccio
+      verb: washes
+    event_type: eud4xr
+    platform: event
+- action:
+  - action: eud4xr.removes_dust_with_broom
+    data:
+      broom: sensor.scopa_ecabroom
+      entity_id: sensor.pavimentosporcodipolvere_ecadustball
+  - action: eud4xr.collects_dust
+    data:
+      dustBall: sensor.pavimentosporcodipolvere_ecadustball
+      entity_id: sensor.paletta_ecadustpan
+  - alias: 'order.Procedura pulizia pavimento: scopa_paletta |=| pulisci_olio'
+    data:
+      entity_id: automation.scopa_paletta
+    service: automation.turn_off
+  - alias: 'Procedura pulizia pavimento: scopa_paletta |=| pulisci_olio'
+    data:
+      entity_id: 'sensor.Procedura pulizia pavimento: scopa_paletta |=| pulisci_olio'
+    service: eud4xr.increment_counter
+  alias: scopa_paletta
+  condition: []
+  description: Quando passi la scopa sul pavimento impolverato, la polvere viene rimossa
+    e subito dopo viene raccolta nella paletta. Questa automazione assicura che ogni
+    volta che la scopa spazza il pavimento sporco di polvere, la polvere venga prima
+    eliminata dal pavimento e poi raccolta automaticamente nella paletta, senza bisogno
+    di ulteriori azioni da parte dell'utente.
+  id: dbae9d1b-2b15-446e-a801-6aa0d3771643
+  trigger:
+  - event_data:
+      obj: pavimentosporcodipolvere
+      subject: scopa
+      verb: sweeps
+    event_type: eud4xr
+    platform: event
+- action:
+  - action: eud4xr.removes_stain_with_rag
+    data:
+      cleaningRag: sensor.straccio_ecacleaningrag
+      entity_id: sensor.pavimentosporcodimacchieolio_ecaoilstain
+  - alias: 'order.Procedura pulizia pavimento: scopa_paletta |=| pulisci_olio'
+    data:
+      entity_id: automation.pulisci_olio
+    service: automation.turn_off
+  - alias: 'Procedura pulizia pavimento: scopa_paletta |=| pulisci_olio'
+    data:
+      entity_id: 'sensor.Procedura pulizia pavimento: scopa_paletta |=| pulisci_olio'
+    service: eud4xr.increment_counter
+  alias: pulisci_olio
+  condition:
+  - condition: template
+    value_template: '{{ state_attr("sensor.straccio_ecasoakablecleaningitem", "hasWater")
+      == "yes" }}'
+  description: Quando usi lo straccio bagnato sul pavimento con macchie d'olio, le
+    macchie vengono rimosse automaticamente. Questa automazione collega l'azione di
+    lavare il pavimento con lo straccio alla rimozione delle macchie d'olio, senza
+    bisogno di ulteriori interventi o condizioni aggiuntive.
+  id: db5502c5-760e-4318-be7f-cb633cdd5d3b
+  trigger:
+  - event_data:
+      obj: pavimentosporcodimacchieolio
+      subject: straccio
+      verb: washes
+    event_type: eud4xr
+    platform: event
+- action:
+  - action: eud4xr.opens
+    data:
+      entity_id: sensor.finestra_ecawindow
+  - alias: "choice.Procedura controllo qualit\xE0 aria: Choice tra apri_finestra,\
+      \ aria_purificata, aria_ok"
+    data:
+      entity_id: automation.aria_purificata
+    service: automation.turn_off
+  - alias: "choice.Procedura controllo qualit\xE0 aria: Choice tra apri_finestra,\
+      \ aria_purificata, aria_ok"
+    data:
+      entity_id: automation.aria_ok
+    service: automation.turn_off
+  alias: apri_finestra
+  condition:
+  - condition: template
+    value_template: '{{ state_attr("sensor.netatmoeud4xr_health_index", "state") ==
+      "unhealthy" }}'
+  description: "Quando il valore \"Health index\" del NetatmoEUD4XR diventa unhealthy,\
+    \ la finestra si apre automaticamente. Questa automazione permette di migliorare\
+    \ la qualit\xE0 dell'aria in cucina aprendo la finestra solo quando il sensore\
+    \ rileva che l'aria non \xE8 salutare."
+  id: 9322b445-76ff-40fb-b786-ffb77e932f6f
+  trigger:
+  - entity_id: sensor.netatmoeud4xr_health_index
+    platform: state
+    to: unhealthy
+- action:
+  - service: fan.turn_on
+    target:
+      entity_id: fan.xiaomi_cpa4_e35d_air_purifier
+  - alias: "choice.Procedura controllo qualit\xE0 aria: Choice tra apri_finestra,\
+      \ aria_purificata, aria_ok"
+    data:
+      entity_id: automation.apri_finestra
+    service: automation.turn_off
+  - alias: "choice.Procedura controllo qualit\xE0 aria: Choice tra apri_finestra,\
+      \ aria_purificata, aria_ok"
+    data:
+      entity_id: automation.aria_ok
+    service: automation.turn_off
+  alias: aria_purificata
+  condition:
+  - condition: template
+    value_template: '{{ state_attr("sensor.netatmoeud4xr_health_index", "state") ==
+      "poor" }}'
+  description: "Quando il livello della qualit\xE0 dell\u2019aria rilevato dal NetatmoEUD4XR\
+    \ diventa \"poor\", il purificatore d\u2019aria Xiaomi Smart Air Purifier 4 Compact\
+    \ si accende automaticamente. Questa automazione aiuta a migliorare la qualit\xE0\
+    \ dell\u2019aria attivando il purificatore solo quando il sensore rileva che l\u2019\
+    aria non \xE8 di buona qualit\xE0."
+  id: 546c2dfb-6c1d-4344-be05-a82502c5a270
+  trigger:
+  - entity_id: sensor.netatmoeud4xr_health_index
+    platform: state
+    to: poor
+- action:
+  - service: fan.turn_off
+    target:
+      entity_id: fan.xiaomi_cpa4_e35d_air_purifier
+  - action: eud4xr.closes
+    data:
+      entity_id: sensor.finestra_ecawindow
+  - alias: "choice.Procedura controllo qualit\xE0 aria: Choice tra apri_finestra,\
+      \ aria_purificata, aria_ok"
+    data:
+      entity_id: automation.apri_finestra
+    service: automation.turn_off
+  - alias: "choice.Procedura controllo qualit\xE0 aria: Choice tra apri_finestra,\
+      \ aria_purificata, aria_ok"
+    data:
+      entity_id: automation.aria_purificata
+    service: automation.turn_off
+  alias: aria_ok
+  condition: []
+  description: "Quando il livello della qualit\xE0 dell\u2019aria rilevato dal NetatmoEUD4XR\
+    \ diventa \"fine\", la finestra si chiude automaticamente e il purificatore d\u2019\
+    aria Xiaomi Smart Air Purifier 4 Compact si spegne. Questa automazione serve a\
+    \ ripristinare le condizioni normali nell\u2019ambiente quando la qualit\xE0 dell\u2019\
+    aria torna ad essere buona, chiudendo la finestra e spegnendo il purificatore\
+    \ senza bisogno di intervento manuale."
+  id: 39739e8a-378e-44ef-a3a3-ae1ffef45c24
+  trigger:
+  - entity_id: sensor.netatmoeud4xr_health_index
+    platform: state
+    to: fine
+- action:
+  - action: eud4xr.changes_has_amuchina
+    data:
+      entity_id: sensor.straccio_ecasoakablecleaningitem
+  - alias: 'sequence.Procedura pulizia tavolo: bagna_straccio > sgrassa_straccio >
+      sgrassa_tavolo'
+    service: automation.turn_on
+    data:
+      entity_id: automation.sgrassa_tavolo
+  - alias: 'sequence.Procedura pulizia tavolo: bagna_straccio > sgrassa_straccio >
+      sgrassa_tavolo'
+    service: automation.turn_off
+    data:
+      entity_id: automation.mucchina_straccio
+  alias: mucchina_straccio
+  condition: []
+  description: "Quando spruzzi la mucchina sullo straccio usando lo spruzzinoamuchina,\
+    \ lo straccio assorbe la mucchina e sar\xE0 pronto per la sanificazione. Questa\
+    \ automazione collega l'azione di spruzzare la mucchina con il cambiamento di\
+    \ stato dello straccio, che passa a contenere la mucchina senza bisogno di ulteriori\
+    \ interventi."
+  id: 6cc555ee-6496-449c-a8ee-86bee120e3a9
+  trigger:
+  - event_data:
+      obj: straccio
+      subject: spruzzinoamuchina
+      verb: wets
     event_type: eud4xr
     platform: event
