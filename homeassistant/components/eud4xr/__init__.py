@@ -133,8 +133,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         async with aiohttp.ClientSession() as session:
             _LOGGER.info(f"Sending an update to {server_unity_url}{API_UNITY_NOTIFY_UPDATE}")
             try:
+                data={
+                    "url":API_UNITY_NOTIFY_UPDATE,
+                    "data": payload
+                }
                 async with session.post(
-                    f"{server_unity_url}{API_UNITY_NOTIFY_UPDATE}", json=payload
+                    #f"{server_unity_url}{API_UNITY_NOTIFY_UPDATE}",
+                    #json=payload
+                    server_unity_url,
+                    json=data
                 ) as response:
                     if response.status == 200:
                         _LOGGER.info("Update successfully sent")
@@ -322,9 +329,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     except Exception as e:
                         _LOGGER.exception(f"Error on decoding automation {a} \nError throwed: {e}")
                 try:
+                    data={
+                        "url":API_UNITY_NOTIFY_AUTOMATIONS,
+                        "data": automations
+                    }
                     async with session.post(
-                        f"{server_unity_url}{API_UNITY_NOTIFY_AUTOMATIONS}",
-                        json=automations,
+                        #f"{server_unity_url}{API_UNITY_NOTIFY_AUTOMATIONS}",
+                        #json=automations,
+                        server_unity_url,
+                        json=data
                     ) as response:
                         if response.status == 200:
                             _LOGGER.info("Update successfully sent")
@@ -351,10 +364,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             expressions = await TaskExpression(hass).get_expressions_from_store()
             async with aiohttp.ClientSession() as session:
                 try:
-                    print(f"{server_unity_url}{API_UNITY_NOTIFY_EXPRESSIONS}")
+                    data={
+                        "url":API_UNITY_NOTIFY_AUTOMATIONS,
+                        "data": {"expressions": expressions}
+                    }
                     async with session.post(
-                        f"{server_unity_url}{API_UNITY_NOTIFY_EXPRESSIONS}",
-                        json={"expressions": expressions},
+                        # f"{server_unity_url}{API_UNITY_NOTIFY_EXPRESSIONS}",
+                        # json={"expressions": expressions},
+                        server_unity_url,
+                        json=data
                     ) as response:
                         if response.status == 200:
                             _LOGGER.info("Update successfully sent")
@@ -365,7 +383,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
                 except Exception as e:
                     _LOGGER.error(
-                        f"Error on conctating Unity while notifying expressions: {e}"
+                        f"Error on sending data to Unity while notifying expressions: {e}"
                     )
         except Exception as e:
             _LOGGER.error(f"Error on converting expressions to json structure: {e}")

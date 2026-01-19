@@ -658,8 +658,6 @@ class UpdateIotDeviceIsFramedView(HomeAssistantView):
         from .sensor import DEQUE_FRAMED_OBJECTS, DICT_IOT_DEVICES
 
         data = await request.json()
-        print(f"RECEIVED DATA: {type(data)} \ndata:\n{data}")
-
         try:
             iot_device = EUD4XRIOTDevice.from_dict(data)
         except Exception as e:
