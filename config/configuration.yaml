@@ -63,38 +63,38 @@ eud4xr:
     - eca_script: "ECACleaningRag"
       game_object: "Straccio@ECACleaningRag"
       unity_id: "Straccio@ECACleaningRag"
-    # 2 - BottigliaAcqua
-    - eca_script: "ECAObject"
-      game_object: "BottigliaAcqua@ECAObject"
-      unity_id: "BottigliaAcqua@ECAObject"
-      attributes: {
-        "position": {'x': 5, 'y': 1, 'z': 1},
-        "rotation": {'x': 0, 'y': 0, 'z': 0},
-        "scale": {'x': 1, 'y': 1, 'z': 1},
-        "visible": "yes",
-        "active": "yes",
-        "isInsideCamera": "yes",
-        "description": "una bottiglia che contiene acqua, utile per umidire oggetti quali stracci, spazzole, ecc.",
-      }
-    - eca_script: "ECAProp"
-      game_object: "BottigliaAcqua@ECAProp"
-      unity_id: "BottigliaAcqua@ECAProp"
-      attributes: {
-        "price": 0.0
-      }
-    - eca_script: "ECALiquidDispenser"
-      game_object: "BottigliaAcqua@ECALiquidDispenser"
-      unity_id: "BottigliaAcqua@ECALiquidDispenser"
-      attributes: {
-        "liquidType": "water"
-      }
-    - eca_script: "ECABottle"
-      game_object: "BottigliaAcqua@ECABottle"
-      unity_id: "BottigliaAcqua@ECABottle"
-      attributes: {
-        "capOpen": "true",
-        "flipped": "false"
-      }
+    # # 2 - BottigliaAcqua
+    # - eca_script: "ECAObject"
+    #   game_object: "BottigliaAcqua@ECAObject"
+    #   unity_id: "BottigliaAcqua@ECAObject"
+    #   attributes: {
+    #     "position": {'x': 5, 'y': 1, 'z': 1},
+    #     "rotation": {'x': 0, 'y': 0, 'z': 0},
+    #     "scale": {'x': 1, 'y': 1, 'z': 1},
+    #     "visible": "yes",
+    #     "active": "yes",
+    #     "isInsideCamera": "yes",
+    #     "description": "una bottiglia che contiene acqua, utile per umidire oggetti quali stracci, spazzole, ecc.",
+    #   }
+    # - eca_script: "ECAProp"
+    #   game_object: "BottigliaAcqua@ECAProp"
+    #   unity_id: "BottigliaAcqua@ECAProp"
+    #   attributes: {
+    #     "price": 0.0
+    #   }
+    # - eca_script: "ECALiquidDispenser"
+    #   game_object: "BottigliaAcqua@ECALiquidDispenser"
+    #   unity_id: "BottigliaAcqua@ECALiquidDispenser"
+    #   attributes: {
+    #     "liquidType": "water"
+    #   }
+    # - eca_script: "ECABottle"
+    #   game_object: "BottigliaAcqua@ECABottle"
+    #   unity_id: "BottigliaAcqua@ECABottle"
+    #   attributes: {
+    #     "capOpen": "true",
+    #     "flipped": "false"
+    #   }
     # 3 - spruzzino
     - eca_script: "ECAObject"
       game_object: "Spruzzino@ECAObject"
@@ -273,42 +273,42 @@ eud4xr:
       game_object: "SpruzzinoAntibatterico@ECASprayBottle"
       unity_id: "SpruzzinoAntibatterico@ECASprayBottle"
     # 9 - paletta
-    - eca_script: "ECAObject"
-      game_object: "Paletta@ECAObject"
-      unity_id: "Paletta@ECAObject"
-      attributes: {
-        "position": {'x': 1, 'y': 1, 'z': 1},
-        "rotation": {'x': 0, 'y': -90, 'z': 0},
-        "scale": {'x': 1, 'y': 1, 'z': 1},
-        "visible": "yes",
-        "active": "yes",
-        "isInsideCamera": "yes",
-        "description": "Usalo per raccogliere la polvere dal pavimento quando spolveri il pavimento.",
-      }
-    - eca_script: "ECAProp"
-      game_object: "Paletta@ECAProp"
-      unity_id: "Paletta@ECAProp"
-      attributes: {
-        "price": 0.0
-      }
-    - eca_script: "ECACleaningItem"
-      game_object: "Paletta@ECACleaningItem"
-      unity_id: "Paletta@ECACleaningItem"
-    - eca_script: "ECADustPan"
-      game_object: "Paletta@ECADustPan"
-      unity_id: "Paletta@ECADustPan"
-    - eca_script: "ECABehaviour"
-      game_object: "Paletta@ECABehaviour"
-      unity_id: "Paletta@ECABehaviour"
-    - eca_script: "ECAInteractable"
-      game_object: "Paletta@ECAInteractable"
-      unity_id: "Paletta@ECAInteractable"
-    - eca_script: "ECAXRGrabbable"
-      game_object: "Paletta@ECAXRGrabbable"
-      unity_id: "Paletta@ECAXRGrabbable"
-      attributes: {
-        "grabbed": "false"
-      }
+    # - eca_script: "ECAObject"
+    #   game_object: "Paletta@ECAObject"
+    #   unity_id: "Paletta@ECAObject"
+    #   attributes: {
+    #     "position": {'x': 1, 'y': 1, 'z': 1},
+    #     "rotation": {'x': 0, 'y': -90, 'z': 0},
+    #     "scale": {'x': 1, 'y': 1, 'z': 1},
+    #     "visible": "yes",
+    #     "active": "yes",
+    #     "isInsideCamera": "yes",
+    #     "description": "Usalo per raccogliere la polvere dal pavimento quando spolveri il pavimento.",
+    #   }
+    # - eca_script: "ECAProp"
+    #   game_object: "Paletta@ECAProp"
+    #   unity_id: "Paletta@ECAProp"
+    #   attributes: {
+    #     "price": 0.0
+    #   }
+    # - eca_script: "ECACleaningItem"
+    #   game_object: "Paletta@ECACleaningItem"
+    #   unity_id: "Paletta@ECACleaningItem"
+    # - eca_script: "ECADustPan"
+    #   game_object: "Paletta@ECADustPan"
+    #   unity_id: "Paletta@ECADustPan"
+    # - eca_script: "ECABehaviour"
+    #   game_object: "Paletta@ECABehaviour"
+    #   unity_id: "Paletta@ECABehaviour"
+    # - eca_script: "ECAInteractable"
+    #   game_object: "Paletta@ECAInteractable"
+    #   unity_id: "Paletta@ECAInteractable"
+    # - eca_script: "ECAXRGrabbable"
+    #   game_object: "Paletta@ECAXRGrabbable"
+    #   unity_id: "Paletta@ECAXRGrabbable"
+    #   attributes: {
+    #     "grabbed": "false"
+    #   }
      # 10 - spruzzinosgrassatore
     - eca_script: "ECAObject"
       game_object: "SpruzzinoSgrassatore@ECAObject"
@@ -337,34 +337,34 @@ eud4xr:
     - eca_script: "ECASprayBottle"
       game_object: "SpruzzinoSgrassatore@ECASprayBottle"
       unity_id: "SpruzzinoSgrassatore@ECASprayBottle"
-    # 11 - rubinetto
-    - eca_script: "ECAObject"
-      game_object: "Rubinetto@ECAObject"
-      unity_id: "Rubinetto@ECAObject"
-      attributes: {
-        "position": {'x': 5, 'y': 1, 'z': 1},
-        "rotation": {'x': 0, 'y': 0, 'z': 0},
-        "scale": {'x': 1, 'y': 1, 'z': 1},
-        "visible": "yes",
-        "active": "yes",
-        "isInsideCamera": "yes",
-        "description": "Dispositivo per controllare e regolare il flusso da acqua attraverso un tubo, utile per riempire secchi o bacinelle di acqua.",
-      }
-    - eca_script: "ECAProp"
-      game_object: "Rubinetto@ECAProp"
-      unity_id: "Rubinetto@ECAProp"
-      attributes: {
-        "price": 0.0
-      }
-    - eca_script: "ECALiquidDispenser"
-      game_object: "Rubinetto@ECALiquidDispenser"
-      unity_id: "Rubinetto@ECALiquidDispenser"
-      attributes: {
-        "liquidType": "water"
-      }
-    - eca_script: "ECAWaterMixerTap"
-      game_object: "Rubinetto@ECAWaterMixerTap"
-      unity_id: "Rubinetto@ECAWaterMixerTap"
+    # # 11 - rubinetto
+    # - eca_script: "ECAObject"
+    #   game_object: "Rubinetto@ECAObject"
+    #   unity_id: "Rubinetto@ECAObject"
+    #   attributes: {
+    #     "position": {'x': 5, 'y': 1, 'z': 1},
+    #     "rotation": {'x': 0, 'y': 0, 'z': 0},
+    #     "scale": {'x': 1, 'y': 1, 'z': 1},
+    #     "visible": "yes",
+    #     "active": "yes",
+    #     "isInsideCamera": "yes",
+    #     "description": "Dispositivo per controllare e regolare il flusso da acqua attraverso un tubo, utile per riempire secchi o bacinelle di acqua.",
+    #   }
+    # - eca_script: "ECAProp"
+    #   game_object: "Rubinetto@ECAProp"
+    #   unity_id: "Rubinetto@ECAProp"
+    #   attributes: {
+    #     "price": 0.0
+    #   }
+    # - eca_script: "ECALiquidDispenser"
+    #   game_object: "Rubinetto@ECALiquidDispenser"
+    #   unity_id: "Rubinetto@ECALiquidDispenser"
+    #   attributes: {
+    #     "liquidType": "water"
+    #   }
+    # - eca_script: "ECAWaterMixerTap"
+    #   game_object: "Rubinetto@ECAWaterMixerTap"
+    #   unity_id: "Rubinetto@ECAWaterMixerTap"
     # 12 - secchio
     - eca_script: "ECAObject"
       game_object: "Secchio@ECAObject"
@@ -410,6 +410,9 @@ eud4xr:
         "isInsideCamera": "yes",
         "description": "Superficie piano di lavoro, sporca di polvere e macchie di olio/incrostazioni.",
       }
+    - eca_script: "ECABehaviour"
+      game_object: "Tavolo@ECABehaviour"
+      unity_id: "Tavolo@ECABehaviour"
     - eca_script: "ECAEnvironment"
       game_object: "Tavolo@ECAEnvironment"
       unity_id: "Tavolo@ECAEnvironment"
@@ -555,13 +558,13 @@ group:
     - sensor.straccio_ecacleaningitem
     - sensor.straccio_ecasoakablecleaningitem
     - sensor.straccio_ecacleaningrag
-  bottigliaacqua:
-   name: "bottigliaacqua"
-   entities:
-    - sensor.bottigliaacqua_ecaobject
-    - sensor.bottigliaacqua_ecaprop
-    - sensor.bottigliaacqua_ecaliquiddispenser
-    - sensor.bottigliaacqua_ecabottle
+  # bottigliaacqua:
+  #  name: "bottigliaacqua"
+  #  entities:
+  #   - sensor.bottigliaacqua_ecaobject
+  #   - sensor.bottigliaacqua_ecaprop
+  #   - sensor.bottigliaacqua_ecaliquiddispenser
+  #   - sensor.bottigliaacqua_ecabottle
   spruzzino:
    name: "spruzzino"
    entities:
@@ -606,16 +609,16 @@ group:
     - sensor.spruzzinoantibatterico_ecaprop
     - sensor.spruzzinoantibatterico_ecaliquiddispenser
     - sensor.spruzzinoantibatterico_ecaspraybottle
-  paletta:
-   name: "paletta"
-   entities:
-    - sensor.paletta_ecaobject
-    - sensor.paletta_ecaprop
-    - sensor.paletta_ecacleaningitem
-    - sensor.paletta_ecadustpan
-    - sensor.paletta_ecabehaviour
-    - sensor.paletta_ecainteractable
-    - sensor.paletta_ecaxrgrabbable
+  # paletta:
+  #  name: "paletta"
+  #  entities:
+  #   - sensor.paletta_ecaobject
+  #   - sensor.paletta_ecaprop
+  #   - sensor.paletta_ecacleaningitem
+  #   - sensor.paletta_ecadustpan
+  #   - sensor.paletta_ecabehaviour
+  #   - sensor.paletta_ecainteractable
+  #   - sensor.paletta_ecaxrgrabbable
   spruzzinosgrassatore:
    name: "spruzzinosgrassatore"
    entities:
@@ -623,13 +626,13 @@ group:
     - sensor.spruzzinosgrassatore_ecaprop
     - sensor.spruzzinosgrassatore_ecaliquiddispenser
     - sensor.spruzzinosgrassatore_ecaspraybottle
-  rubinetto:
-   name: "rubinetto"
-   entities:
-     - sensor.rubinetto_ecaobject
-     - sensor.rubinetto_ecaprop
-     - sensor.rubinetto_ecaliquiddispenser
-     - sensor.rubinetto_ecawatermixertap
+  # rubinetto:
+  #  name: "rubinetto"
+  #  entities:
+  #    - sensor.rubinetto_ecaobject
+  #    - sensor.rubinetto_ecaprop
+  #    - sensor.rubinetto_ecaliquiddispenser
+  #    - sensor.rubinetto_ecawatermixertap
   secchio:
    name: "secchio"
    entities:
@@ -641,6 +644,7 @@ group:
    name: "tavolo"
    entities:
      - sensor.tavolo_ecaobject
+     - sensor.tavolo_ecabehaviour
      - sensor.tavolo_ecaenvironment
      - sensor.tavolo_ecasurface
      - sensor.tavolo_ecaoilstain
