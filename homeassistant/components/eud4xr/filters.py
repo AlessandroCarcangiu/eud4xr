@@ -92,7 +92,6 @@ async def get_virtual_entities(
     else:
         # names
         names = [n.lower() for n in names] if names else []
-
         for state in registered_groups:
             new_group = dict()
             new_group["name"] = state.entity_id.split(".")[-1]
@@ -100,16 +99,14 @@ async def get_virtual_entities(
             new_group["description"] = dict()
             new_group["services"] = list()
             new_group["properties"] = list()
-
             for i in state.attributes["entity_id"]:
                 sensor, entity = find_sensor(hass, i)
                 if sensor:
-                	new_group["components"] += [sensor.eca_script]
-                	new_group["description"][sensor.eca_script] = sensor.get_description()
-                	new_group["properties"] += sensor.get_properties()
-                	new_group["services"] += sensor.get_services()
-
+                    new_group["components"] += [sensor.eca_script]
+                    new_group["description"][sensor.eca_script] = sensor.get_description()
+                    new_group["properties"] += sensor.get_properties()
+                    new_group["services"] += sensor.get_services()
             objects_all.append(new_group)
             if not names or new_group["name"].lower() in names:
-                objects.append(new_group)
+                 objects.append(new_group)
     return {"virtual_objects": objects if objects else objects_all}

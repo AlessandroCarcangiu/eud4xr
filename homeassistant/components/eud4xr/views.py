@@ -1,17 +1,14 @@
 # ruff: noqa
-
-from collections import OrderedDict
 import inspect
 import logging
+import json
 import math
-
+import yaml
 from aiohttp.web import Response
-import numpy as np
-
+from collections import OrderedDict
 from homeassistant.components import HomeAssistant
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import State
-
 from .automation import Automation
 from .automations import (
     async_add_update_automation,
@@ -35,7 +32,9 @@ from .const import (
     API_UNITY_TEST,
     META_UNITY_SERVER_IP,
     API_GET_RealObjects_Capabilities,
-    API_AVAILABLE_ECA_SCRIPTS
+    API_AVAILABLE_ECA_SCRIPTS,
+    AUTOMATION_PATH,
+    ENTITY_REGISTRY
 )
 from .eca_classes import ECAPosition
 from .entity import ECAEntity, EUD4XRIOTDevice
@@ -88,11 +87,24 @@ class AutomationsView(HomeAssistantView):
         return self.json({"automations": automations})
 
     async def delete(self, request):
-        automation_id = request.match_info.get("id")
-        if automation_id:
-            await async_remove_automation(self.hass, automation_id)
-            return Response(status=200)
-        _LOGGER.error("The request must specify an id in the url")
+        await self.hass.async_add_executor_job(self.__remove_automations_and_registry)
+        return Response(status=200)
+
+    def __remove_automations_and_registry(self) -> None:
+        file_automations = self.hass.config.path(AUTOMATION_PATH)
+        file_entity = self.hass.config.path(ENTITY_REGISTRY)
+        # clear automations.yaml
+        with open(file_automations, "w") as f:
+            yaml.safe_dump([], f)
+        # clear registry
+        with open(file_entity, "r") as f:
+            registry = json.load(f)
+        registry["data"]["entities"] = [
+            e for e in registry["data"]["entities"]
+            if not e.get("entity_id", "").startswith("automation.")
+        ]
+        with open(file_entity, "w") as f:
+            json.dump(registry, f, indent=2)
 
 
 class ListECACapabilitiesView(HomeAssistantView):

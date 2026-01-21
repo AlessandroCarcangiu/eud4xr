@@ -176,21 +176,25 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         group_name = None
         # create new sensor for each pair game_object-eca_script
         for d in data:
-            # if "attributes" in new_sensor_data and new_sensor_data.get("attributes"):
-            #     new_sensor_data.pop("attributes")
-            discovery.load_platform(hass, "sensor", DOMAIN, d.copy(), {})
             new_entity_name = d.get(GAME_OBJECT_NAME).lower()
-            new_sensors.append(f"sensor.{new_entity_name.replace('@', '_')}")
-            if entity_name is None:
-                entity_name = new_entity_name.replace("@", "_")
-                group_name = new_entity_name.split("@")[0]
+            sensor_entity_id = f"sensor.{new_entity_name.replace('@', '_')}"
+            state = hass.states.get(sensor_entity_id)
+            if state and state.state != "unavailable":
+                _LOGGER.info("Sensor {sensor_entity_id} already exists. Skipping creation.")
+                continue
+            discovery.load_platform(hass, "sensor", DOMAIN, d.copy(), {})
             hass.bus.async_fire("event_sensor_registered")
             _LOGGER.info(f"Registered a new sensor - {new_entity_name}")
+            new_sensors.append(sensor_entity_id)
+
+        if entity_name is None:
+            entity_name = new_entity_name.replace("@", "_")
+            group_name = new_entity_name.split("@")[0]
 
         # create or update group: check if exists a group for this pair game_object_name@name_component
         # No -> create a new Group
         # Yes -> update group's list of entities
-        if entity_name:
+        if entity_name and new_sensors:
             group_state = find_group(hass, group_name)
             if not group_state:
                 new_group = Group(
@@ -220,12 +224,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                         },
                     )
                 hass.async_add_job(async_update_group)
-                # try:
-                #     hass.async_add_job(async_update_group)
-                # except Exception as e:
-                #     print(f"ERROR NELLA HASS.ADD_JOB(ASYNC_UPDATE_GROUP: {current_entities} - {new_sensors_to_append}")
 
-        _LOGGER.info("Registered a new object - {entity_name}")
+            _LOGGER.info("Registered a new object - {entity_name}")
 
     ## Update from Unity
     async def handle_update_from_unity(call) -> None:

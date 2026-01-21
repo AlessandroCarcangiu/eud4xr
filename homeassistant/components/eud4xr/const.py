@@ -5,6 +5,7 @@ from typing import TypedDict
 IS_DEBUG = False
 
 AUTOMATION_PATH = "automations.yaml"
+ENTITY_REGISTRY = ".storage/core.entity_registry"
 
 TIMESTAMP_MIN_UPDATE = (
     1000  # time limit for retaining failed updates due to an unregistered sensor
