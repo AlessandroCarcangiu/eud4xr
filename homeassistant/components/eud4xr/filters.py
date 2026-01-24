@@ -60,7 +60,7 @@ async def get_devices_data(
     ]
     # for each device, get its info (properties, entities, ecc.)
     for device in devices:
-        device_name = device.name or device.name_by_user
+        device_name = device.name if device.name and device.name.lower() != "unknown" else device.name_by_user
         device_data = {
             "device_id": device.id,
             "name": device_name,

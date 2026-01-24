@@ -131,7 +131,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         headers = {}  # {"Authorization": f"Bearer {server_unity_token}"}
         # send request
         async with aiohttp.ClientSession() as session:
-            _LOGGER.info(f"Sending an update to {server_unity_url}{API_UNITY_NOTIFY_UPDATE}")
+            _LOGGER.info(f"Sending an update to {server_unity_url} - {API_UNITY_NOTIFY_UPDATE}")
             try:
                 data={
                     "url":API_UNITY_NOTIFY_UPDATE,
@@ -153,16 +153,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def refresh_token() -> None:
         nonlocal server_unity_token
         headers = {"Authorization": f"Bearer {server_unity_token}"}
-        response_verify = None  # requests.post(f"{server_unity_url}/auth/token/verify", headers=headers)
-        # if response_verify and response_verify.status_code != 200:
-        # response_refresh = requests.post(
-        #     f"{server_unity_url}/auth/token/refresh", headers=headers
-        # )
-        # if response_refresh.status_code == 200:
-        #     token = response_refresh.json().get("refreshed_token")
-        #     _LOGGER.info("Token successfully updated")
-        # else:
-        #     _LOGGER.error("Erronr on refreshing the token")
+        response_verify = None
 
     ## Register eca sensor
     async def handle_add_virtual_object(call):
@@ -365,7 +356,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             async with aiohttp.ClientSession() as session:
                 try:
                     data={
-                        "url":API_UNITY_NOTIFY_AUTOMATIONS,
+                        "url":API_UNITY_NOTIFY_EXPRESSIONS,
                         "data": {"expressions": expressions}
                     }
                     async with session.post(

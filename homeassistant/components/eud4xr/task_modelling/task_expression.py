@@ -364,9 +364,20 @@ class TaskExpression:
             await self._deactivate_automation(automation_id)
 
         if next_element:
-            await self._add_action_turn_on_to_automation(
-                automation_id, next_element, sequence_name
-            )
+            # if next element is an automation -> just add next enable
+            # else enable all sub task automations.
+            if isinstance(next_element, dict):
+                choice_automations = next_element.get("choice", list())
+                order_automations = next_element.get("order", list())
+                sub_task_automations = choice_automations + order_automations
+                for a in sub_task_automations:
+                    await self._add_action_turn_on_to_automation(
+                        automation_id, a, sequence_name
+                    )
+            else:
+                await self._add_action_turn_on_to_automation(
+                    automation_id, next_element, sequence_name
+                )
             # print("[sequence] sto add_action_turn_on_to_automation")
             # await self._add_action_turn_on_to_automation(
             #     automation_id, next_element, sequence_name
@@ -1053,42 +1064,60 @@ class TaskExpression:
         await self.hass.services.async_call("automation", "reload", {}, blocking=True)
 
     async def restore_expressions(self):
-        """Ripristina lo stato delle automazioni secondo la logica delle sequenze."""
+        """Ripristina lo stato delle automazioni secondo la logica delle automazioni."""
         if self.sequences is None or self.choices is None or self.orders is None:
             await self.async_initialize()
 
-        for seq_name, seq_data in self.sequences.items():
-            sequence = seq_data["sequence"]
-            if not sequence:
+        exprs = list()
+        for i in [self.sequences, self.choices, self.orders]:
+            for expr, data in i.items():
+                a = (
+                    {
+                        "name": expr,
+                        "children": data.get("sequence", data.get("choice", data.get("order")))
+                    }
+                )
+                if "choice" in data:
+                    a["type"] = "choice"
+                elif "sequence" in data:
+                    a["type"] = "sequence"
+                else:
+                    a["type"] = "order"
+                exprs.append(a)
+
+        for expr in exprs:
+            if self.deep_search(expr.get("name"), exprs):
                 continue
 
-            for idx, element in enumerate(sequence):
+            item = expr.get("children")
+            for idx, element in enumerate(item):
                 prev_is_order = (
                     idx > 0
-                    and isinstance(sequence[idx - 1], str)
-                    and sequence[idx - 1].startswith("order.")
+                    and isinstance(item[idx - 1], str)
+                    and item[idx - 1].startswith("order.")
                 )
-                is_first = idx == 0
-
+                is_first = idx == 0 or expr.get("type") in ["choice", "order"]
                 activate = is_first or prev_is_order
-
                 # Automazione singola
                 if isinstance(element, str) and element.startswith("automation."):
                     if activate:
                         await self._activate_automation(element)
                     else:
                         await self._deactivate_automation(element)
-
                 # Choice
                 elif isinstance(element, str) and element.startswith("choice."):
+                    print(f"CC 0 {element} - {activate}")
                     choice_name = element.split(".", 1)[1]
                     if choice_name in self.choices:
+                        print(f"CC 1 {choice_name}")
                         for autom in self.choices[choice_name]["choice"]:
+                            print(f"CC 2 {autom}")
                             if activate:
+                                print(f"CC 3 {activate}")
                                 await self._activate_automation(autom)
                             else:
+                                print(f"CC 4 {activate}")
                                 await self._deactivate_automation(autom)
-
                 # Order
                 elif isinstance(element, str) and element.startswith("order."):
                     order_name = element.split(".", 1)[1]
@@ -1098,6 +1127,62 @@ class TaskExpression:
                                 await self._activate_automation(autom)
                             else:
                                 await self._deactivate_automation(autom)
+
+        # for seq_name, seq_data in self.sequences.items():
+            # sequence = seq_data["sequence"]
+            # if not sequence:
+            #     continue
+
+            # for idx, element in enumerate(sequence):
+            #     prev_is_order = (
+            #         idx > 0
+            #         and isinstance(sequence[idx - 1], str)
+            #         and sequence[idx - 1].startswith("order.")
+            #     )
+            #     is_first = idx == 0
+
+            #     activate = is_first or prev_is_order
+
+            #     # Automazione singola
+            #     if isinstance(element, str) and element.startswith("automation."):
+            #         if activate:
+            #             await self._activate_automation(element)
+            #         else:
+            #             await self._deactivate_automation(element)
+
+            #     # Choice
+            #     elif isinstance(element, str) and element.startswith("choice."):
+            #         print(f"CC 0 {element} - {activate}")
+            #         choice_name = element.split(".", 1)[1]
+            #         if choice_name in self.choices:
+            #             print(f"CC 1 {choice_name}")
+            #             for autom in self.choices[choice_name]["choice"]:
+            #                 print(f"CC 2 {autom}")
+            #                 if activate:
+            #                     print(f"CC 3 {activate}")
+            #                     await self._activate_automation(autom)
+            #                 else:
+            #                     print(f"CC 4 {activate}")
+            #                     await self._deactivate_automation(autom)
+
+            #     # Order
+            #     elif isinstance(element, str) and element.startswith("order."):
+            #         order_name = element.split(".", 1)[1]
+            #         if order_name in self.orders:
+            #             for autom in self.orders[order_name]["order"]:
+            #                 if activate:
+            #                     await self._activate_automation(autom)
+            #                 else:
+            #                     await self._deactivate_automation(autom)
+
+    def deep_search(self, name: str, expressions: list) -> list[str]:
+        for expr in expressions:
+            children = expr.get("children", [])
+            for child in children:
+                if isinstance(child, str):
+                    if child.endswith(f".{name}") or child == name:
+                        return True
+        return False
 
     async def repair_automation_links(self, automation_id):
         """Method to repair automation links in sequences, choices, and orders."""
