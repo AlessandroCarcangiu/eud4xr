@@ -124,7 +124,7 @@ class Automation:
             for a in automation_actions:
                 if "service" in a:
                     service = a["service"]
-                    if service in ["automation.turn_on", "automation.turn_off"]:
+                    if service in ["automation.turn_on", "automation.turn_off", "eud4xr.increment_counter"]:
                         break
                 actions.append(cls.safe_action_from_yaml(hass, a))
         # conditions

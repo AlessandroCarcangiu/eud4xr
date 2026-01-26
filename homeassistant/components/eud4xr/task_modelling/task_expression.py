@@ -1106,17 +1106,12 @@ class TaskExpression:
                         await self._deactivate_automation(element)
                 # Choice
                 elif isinstance(element, str) and element.startswith("choice."):
-                    print(f"CC 0 {element} - {activate}")
                     choice_name = element.split(".", 1)[1]
                     if choice_name in self.choices:
-                        print(f"CC 1 {choice_name}")
                         for autom in self.choices[choice_name]["choice"]:
-                            print(f"CC 2 {autom}")
                             if activate:
-                                print(f"CC 3 {activate}")
                                 await self._activate_automation(autom)
                             else:
-                                print(f"CC 4 {activate}")
                                 await self._deactivate_automation(autom)
                 # Order
                 elif isinstance(element, str) and element.startswith("order."):
