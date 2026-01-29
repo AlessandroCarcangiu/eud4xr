@@ -26,17 +26,12 @@ def get_entity_attributes_by_state(state: any) -> dict:
 
 
 def get_entity_data(hass: HomeAssistant, service_map: list, entity: any) -> dict:
-	entity_id = entity.entity_id
-	state = hass.states.get(entity_id)
-	domain = entity_id.split(".")[0]
-	services = list(service_map.get(domain, {}).keys())
-	entity_id_value = None
-	if "netatmo" not in entity_id:
-		entity_id_value = entity_id
-	elif services:
-		entity_id = services.pop("device_class")
-	return {
-		"entity_id": entity_id_value,
+    entity_id = entity.entity_id
+    state = hass.states.get(entity_id)
+    domain = entity_id.split(".")[0]
+    services = list(service_map.get(domain, {}).keys())
+    return {
+		"entity_id": entity_id,
 		#"domain": domain,
 		"state": state.state if state else None,
 		"attributes": get_entity_attributes_by_state(state),
