@@ -53,22 +53,24 @@ async def get_devices_data(
         for d in dr.async_get(hass).devices.values()
         if d.name_by_user and suffix in d.name_by_user
     ]
-    # for each device, get its info (properties, entities, ecc.)
-    for device in devices:
-        device_name = device.name if device.name and device.name.lower() != "unknown" else device.name_by_user
-        device_data = {
-            "device_id": device.id,
-            "name": device_name,
-            #"manufacturer": device.manufacturer,
-            #"model": device.model,
-            # aggiungere description
-        }
-        entities = get_entities_for_device(hass, device.id)
-        device_data["entities"] = [
-            get_entity_data(hass, service_map, e) for e in entities
-        ]
-        devices_data[device_name] = device_data
-
+    if only_objects:
+        return [device.name if device.name and device.name.lower() != "unknown" else device.name_by_user for device in devices]
+    else:
+        # for each device, get its info (properties, entities, ecc.)
+        for device in devices:
+            device_name = device.name if device.name and device.name.lower() != "unknown" else device.name_by_user
+            device_data = {
+                "device_id": device.id,
+                "name": device_name,
+                #"manufacturer": device.manufacturer,
+                #"model": device.model,
+                # aggiungere description
+            }
+            entities = get_entities_for_device(hass, device.id)
+            device_data["entities"] = [
+                get_entity_data(hass, service_map, e) for e in entities
+            ]
+            devices_data[device_name] = device_data
     return {"real_objects": devices_data}
 
 
@@ -84,6 +86,7 @@ async def get_virtual_entities(
 
     if only_objects:
         objects = [state.entity_id.split(".")[-1] for state in registered_groups]
+        return objects
     else:
         # names
         names = [n.lower() for n in names] if names else []

@@ -25,9 +25,9 @@ http:
     - 172.17.0.1
 
 eud4xr:
-  server_unity_url: "http://host.docker.internal:3000/api/forwarding-hass-to-unity"
-  #server_unity_url: https://fly-powerful-slug.ngrok-free.app
-  #server_unity_token: "YOUR-UNITY-SERVER-TOKEN" # optional
+  server_unity_url: "PUT-YOUR-URL"
+  #server_unity_url: "http://host.docker.internal:3000/api/forwarding-hass-to-unity" # Cagliari
+  #server_unity_url: "" # Pisa
   unity_entities:
     # 1 - straccio
     - eca_script: "ECAObject"
@@ -55,7 +55,7 @@ eud4xr:
       game_object: "Straccio@ECASoakableCleaningItem"
       unity_id: "Straccio@ECASoakableCleaningItem"
       attributes: {
-        "hasWater": "no",
+        "hasWater": "yes",
         "hasDegreaser": "no",
         "hasBatteryKiller": "no",
         "hasAmuchina": "no",
@@ -174,7 +174,7 @@ eud4xr:
       game_object: "Mocio@ECASoakableCleaningItem"
       unity_id: "Mocio@ECASoakableCleaningItem"
       attributes: {
-        "hasWater": "no",
+        "hasWater": "yes",
         "hasDegreaser": "no",
         "hasBatteryKiller": "no",
         "hasAmuchina": "no",
@@ -182,40 +182,40 @@ eud4xr:
     - eca_script: "ECAMop"
       game_object: "Mocio@ECAMop"
       unity_id: "Mocio@ECAMop"
-    # 6 - scottex
-    - eca_script: "ECAObject"
-      game_object: "Scottex@ECAObject"
-      unity_id: "Scottex@ECAObject"
-      attributes: {
-        "position": {'x': 1, 'y': 2, 'z': -8},
-        "rotation": {'x': 0, 'y': 0, 'z': 0},
-        "scale": {'x': 1, 'y': 1, 'z': 1},
-        "visible": "yes",
-        "active": "yes",
-        "isInsideCamera": "yes",
-        "description": "Carta assorbente per pulire superfici superiori come tavoli o sedie.",
-      }
-    - eca_script: "ECAProp"
-      game_object: "Scottex@ECAProp"
-      unity_id: "Scottex@ECAProp"
-      attributes: {
-        "price": 0.0
-      }
-    - eca_script: "ECACleaningItem"
-      game_object: "Scottex@ECACleaningItem"
-      unity_id: "Scottex@ECACleaningItem"
-    - eca_script: "ECASoakableCleaningItem"
-      game_object: "Scottex@ECASoakableCleaningItem"
-      unity_id: "Scottex@ECASoakableCleaningItem"
-      attributes: {
-        "hasWater": "no",
-        "hasDegreaser": "no",
-        "hasBatteryKiller": "no",
-        "hasAmuchina": "no",
-      }
-    - eca_script: "ECAScottex"
-      game_object: "Scottex@ECAScottex"
-      unity_id: "Scottex@ECAScottex"
+    # # 6 - scottex
+    # - eca_script: "ECAObject"
+    #   game_object: "Scottex@ECAObject"
+    #   unity_id: "Scottex@ECAObject"
+    #   attributes: {
+    #     "position": {'x': 1, 'y': 2, 'z': -8},
+    #     "rotation": {'x': 0, 'y': 0, 'z': 0},
+    #     "scale": {'x': 1, 'y': 1, 'z': 1},
+    #     "visible": "yes",
+    #     "active": "yes",
+    #     "isInsideCamera": "yes",
+    #     "description": "Carta assorbente per pulire superfici superiori come tavoli o sedie.",
+    #   }
+    # - eca_script: "ECAProp"
+    #   game_object: "Scottex@ECAProp"
+    #   unity_id: "Scottex@ECAProp"
+    #   attributes: {
+    #     "price": 0.0
+    #   }
+    # - eca_script: "ECACleaningItem"
+    #   game_object: "Scottex@ECACleaningItem"
+    #   unity_id: "Scottex@ECACleaningItem"
+    # - eca_script: "ECASoakableCleaningItem"
+    #   game_object: "Scottex@ECASoakableCleaningItem"
+    #   unity_id: "Scottex@ECASoakableCleaningItem"
+    #   attributes: {
+    #     "hasWater": "no",
+    #     "hasDegreaser": "no",
+    #     "hasBatteryKiller": "no",
+    #     "hasAmuchina": "no",
+    #   }
+    # - eca_script: "ECAScottex"
+    #   game_object: "Scottex@ECAScottex"
+    #   unity_id: "Scottex@ECAScottex"
     # 7 - spruzzinoamuchina
     - eca_script: "ECAObject"
       game_object: "SpruzzinoAmuchina@ECAObject"
@@ -272,7 +272,7 @@ eud4xr:
     - eca_script: "ECASprayBottle"
       game_object: "SpruzzinoAntibatterico@ECASprayBottle"
       unity_id: "SpruzzinoAntibatterico@ECASprayBottle"
-    # 9 - paletta
+    # # 9 - paletta
     # - eca_script: "ECAObject"
     #   game_object: "Paletta@ECAObject"
     #   unity_id: "Paletta@ECAObject"
@@ -587,14 +587,14 @@ group:
     - sensor.mocio_ecacleaningitem
     - sensor.mocio_ecasoakablecleaningitem
     - sensor.mocio_ecamop
-  scottex:
-   name: "scottex"
-   entities:
-    - sensor.scottex_ecaobject
-    - sensor.scottex_ecaprop
-    - sensor.scottex_ecacleaningitem
-    - sensor.scottex_ecasoakablecleaningitem
-    - sensor.scottex_ecascottex
+  # scottex:
+  #  name: "scottex"
+  #  entities:
+  #   - sensor.scottex_ecaobject
+  #   - sensor.scottex_ecaprop
+  #   - sensor.scottex_ecacleaningitem
+  #   - sensor.scottex_ecasoakablecleaningitem
+  #   - sensor.scottex_ecascottex
   spruzzinoamuchina:
    name: "spruzzinoamuchina"
    entities:

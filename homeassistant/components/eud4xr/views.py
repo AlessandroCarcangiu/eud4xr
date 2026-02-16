@@ -34,7 +34,8 @@ from .const import (
     API_GET_RealObjects_Capabilities,
     API_AVAILABLE_ECA_SCRIPTS,
     AUTOMATION_PATH,
-    ENTITY_REGISTRY
+    ENTITY_REGISTRY,
+    API_LIST_OBJECTS
 )
 from .eca_classes import ECAPosition
 from .entity import ECAEntity, EUD4XRIOTDevice
@@ -226,6 +227,20 @@ class VirtualObjectsView(HomeAssistantView):
                     objects.append(new_group)
 
         return self.json({"objects": objects if objects else objects_all})
+
+
+class ListObjectsView(HomeAssistantView):
+    url = f"/api/eud4xr/{API_LIST_OBJECTS}"
+    name = f"api:{API_LIST_OBJECTS}"
+    methods = ["GET"]
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request):
+        real_objects = await get_devices_data(self.hass, only_objects=True)
+        virtual_objects = await get_virtual_entities(self.hass, only_objects=True)
+        return self.json(real_objects+virtual_objects)
 
 
 class ObjectsView(HomeAssistantView):
