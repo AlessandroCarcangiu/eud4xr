@@ -482,6 +482,8 @@ class TaskExpressionView(HomeAssistantView):
             return self.json_message("Payload JSON non valido", 400)
         cmd = data.get("do")
         name = data.get("name")
+        if name:
+            name.replace(" ", "_")
         sequence = data.get("sequence")
         choice = data.get("choice")
         order = data.get("order")
