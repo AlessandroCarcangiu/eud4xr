@@ -483,7 +483,7 @@ class TaskExpressionView(HomeAssistantView):
         cmd = data.get("do")
         name = data.get("name")
         if name:
-            name.replace(" ", "_")
+            name = name.replace(" ", "_").replace("-","_").replace("'","_")
         sequence = data.get("sequence")
         choice = data.get("choice")
         order = data.get("order")
