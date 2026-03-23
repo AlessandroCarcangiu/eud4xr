@@ -1,16 +1,18 @@
-from datetime import datetime
+# ruff: noqa
+
+import asyncio
 import logging
-
-import voluptuous as vol
+import time
 import uuid
+import voluptuous as vol
 import yaml
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_registry as er
+
 
 from .const import (
     AUTOMATION_PATH,
-    IS_DEBUG,
     CONF_SERVICE_ADD_UPDATE_AUTOMATION_DATA,
     CONF_SERVICE_REMOVE_AUTOMATION_ID,
 )
@@ -25,6 +27,24 @@ RECEIVED_AUTOMATION_SCHEMA = vol.Schema(
 REMOVE_AUTOMATION_SCHEMA = vol.Schema(
     {vol.Required(CONF_SERVICE_REMOVE_AUTOMATION_ID): cv.string}
 )
+
+
+async def wait_for_automation_states(
+    hass: HomeAssistant, expected_ids: list[str], timeout: float = 50.0
+):
+    start = time.monotonic()
+    while time.monotonic() - start < timeout:
+        automations = hass.states.async_all("automation")
+        found_ids = {
+            a.attributes.get("id") for a in automations if a.attributes.get("id")
+        }
+        if all(i in found_ids for i in expected_ids):
+            return automations
+        print("dormo")
+        await asyncio.sleep(0.1)
+    raise TimeoutError(
+        f"Timeout: le automazioni {expected_ids} non sono apparse in hass.states"
+    )
 
 
 def get_automations(hass: HomeAssistant, as_list: bool = False) -> dict | list:
@@ -53,6 +73,7 @@ async def async_get_automation(hass: HomeAssistant, id: str) -> dict:
         return automations[id]
     raise Exception(f"Automation with {id} does not exist")
 
+
 async def async_list_automations(hass: HomeAssistant) -> list:
     automation_entities = await hass.async_add_executor_job(get_automations, hass, True)
     if automation_entities is None:
@@ -66,21 +87,21 @@ async def async_add_update_automation(hass: HomeAssistant, data: list) -> None:
         # convert input string into yaml
         automations_data = list()
         if isinstance(data, dict):
-            automations_data.append(automations_data)
+            automations_data.append(data)
         else:
             automations_data = [yaml.safe_load(d) for d in data]
         # append or update automations
         for automation_data in automations_data:
             automation_id = automation_data.get("id")
             if not automation_id:
-                automation_id = str(uuid.uuid4()) #datetime.now().strftime("%Y%m%d%H%M%S")
+                automation_id = str(
+                    uuid.uuid4()
+                )  # datetime.now().strftime("%Y%m%d%H%M%S")
                 automation_data["id"] = automation_id
             existing_automations[automation_id] = automation_data
         # update and reload automation.yaml file
         await update_automation_and_reload(hass, existing_automations)
-
-        hass.bus.async_fire("event_automation_reloaded")
-        
+        hass.bus.async_fire("event_automation_updated")
         _LOGGER.info("Automations successfully updated or added")
 
     except yaml.YAMLError as e:

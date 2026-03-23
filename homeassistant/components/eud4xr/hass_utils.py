@@ -1,9 +1,14 @@
+# ruff: noqa
+
 import inspect
+import logging
+
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
-from .const import IS_DEBUG
+
 from .sensor import get_classes_subclassing
 
+_LOGGER = logging.getLogger(__name__)
 
 def find_group(hass: HomeAssistant, group_id: str) -> State:
     group = hass.states.get(f"group.{group_id}")
@@ -25,7 +30,9 @@ def get_entity_state_by_id(hass: HomeAssistant, entity_id: str) -> State:
     raise Exception(f"Sensor {entity_id} does not exist")
 
 
-def get_entity_id_by_game_object_and_property(hass: HomeAssistant, game_object_name: str, property: str) -> str:
+def get_entity_id_by_game_object_and_property(
+    hass: HomeAssistant, game_object_name: str, property: str
+) -> str:
     # get group
     group = find_group(hass, game_object_name)
     if not group:
@@ -33,13 +40,15 @@ def get_entity_id_by_game_object_and_property(hass: HomeAssistant, game_object_n
     # search the entity that has property
     for entity_id in group.attributes.get("entity_id", []):
         entity_state = hass.states.get(entity_id)
-        if hasattr(entity_state, 'attributes'):
+        if hasattr(entity_state, "attributes"):
             if property in entity_state.attributes:
                 return entity_id
     raise Exception(f"Group {game_object_name} does not have an attribute {property}")
 
 
-def get_entity_id_by_game_object_and_verb(hass: HomeAssistant, game_object_name: str, verb: str) -> str:
+def get_entity_id_by_game_object_and_verb(
+    hass: HomeAssistant, game_object_name: str, verb: str
+) -> str:
     group = find_group(hass, game_object_name)
 
     for entity_id in group.attributes.get("entity_id", []):
@@ -54,13 +63,15 @@ def get_entity_id_by_game_object_and_verb(hass: HomeAssistant, game_object_name:
 
 
 def get_entity_instance_by_entity_id(hass: HomeAssistant, entity_id: str) -> any:
-    entity_instance = hass.data['entity_components']['sensor'].get_entity(entity_id)
+    entity_instance = hass.data["entity_components"]["sensor"].get_entity(entity_id)
     if entity_instance:
         return entity_instance
     raise Exception(f"Entity {entity_id} does not exists")
 
 
-def get_entity_id_by_game_object_and_eca_script(hass: HomeAssistant, game_object_name: str, eca_script: str) -> str:
+def get_entity_id_by_game_object_and_eca_script(
+    hass: HomeAssistant, game_object_name: str, eca_script: str
+) -> str:
     group = find_group(hass, game_object_name)
 
     for entity_id in group.attributes.get("entity_id", []):
@@ -71,9 +82,14 @@ def get_entity_id_by_game_object_and_eca_script(hass: HomeAssistant, game_object
 
 
 def get_entity_instance_and_method_signature_by_structured_language(
-        hass: HomeAssistant, game_object_name: str, verb: str, variable: str = None, modifier: str = None) -> str:
+    hass: HomeAssistant,
+    game_object_name: str,
+    verb: str,
+    variable: str = None,
+    modifier: str = None,
+) -> str:
     verb = verb.replace("_", " ")
-
+    _LOGGER.info(f"[get_entity_instance_and_method_signature_by_structured_language] - {game_object_name} - {verb} - {variable} - {modifier}")
     # get group
     group = find_group(hass, game_object_name)
     if not group:
@@ -84,7 +100,7 @@ def get_entity_instance_and_method_signature_by_structured_language(
         async_methods = [
             (name, member)
             for name, member in inspect.getmembers(entity_instance)
-            if name.startswith('async_')
+            if name.startswith("async_")
         ]
         for name, method in async_methods:
             d_kwargs = getattr(method, "kwargs", {})
@@ -92,9 +108,12 @@ def get_entity_instance_and_method_signature_by_structured_language(
                 v = d_kwargs["verb"]
                 var = d_kwargs.get("variable", None)
                 m = d_kwargs.get("modifier", None)
-                if (not var and v == verb) or (v==verb and var==variable and m == modifier):
+                if (not var and v == verb) or (
+                    v == verb and var == variable and m == modifier
+                ):
                     return entity_instance, name, method, inspect.signature(method)
     return None, None, None, None
+
 
 
 def get_method_by_eca_script_name(eca_script: str, verb: str) -> any:
@@ -104,7 +123,7 @@ def get_method_by_eca_script_name(eca_script: str, verb: str) -> any:
 
 def convert_subject_to_unity(hass: HomeAssistant, entity_id: str) -> str:
     entity_state = get_entity_state_by_id(hass, entity_id)
-    return entity_state.attributes.get('friendly_name')
+    return entity_state.attributes.get("friendly_name")
 
 
 def get_sensor_state_by_entity_id(hass: HomeAssistant, entity_id: str) -> str:
@@ -118,7 +137,6 @@ def get_sensor_state_by_entity_id(hass: HomeAssistant, entity_id: str) -> str:
     if group:
         for entity_id in group.attributes.get("entity_id", []):
             pass
-
 
 
 def find_sensor(hass, sensor_id: str):
@@ -155,7 +173,10 @@ def getattr_case_insensitive(obj, attr_name):
     for attribute in attributes:
         if attribute.lower() == attr_name.lower():
             return getattr(obj, attribute)
-    raise AttributeError(f"'{type(obj).__name__}' object has no attribute '{attr_name}' (case-insensitive)")
+    raise AttributeError(
+        f"'{type(obj).__name__}' object has no attribute '{attr_name}' (case-insensitive)"
+    )
+
 
 # TODO (handling multiple results)
 def find_sensor_and_service(hass, subject: str, verb: str) -> tuple:
@@ -176,23 +197,30 @@ def find_sensor_and_service(hass, subject: str, verb: str) -> tuple:
                 return sensor, service, inspect.signature(service)
     return None, None, None
 
+
 def get_first_valid_parameter(signature) -> tuple:
     param = next(
-        (param for name, param in signature.parameters.items() if name not in ('self', 'cls')),
-        None
+        (
+            param
+            for name, param in signature.parameters.items()
+            if name not in ("self", "cls")
+        ),
+        None,
     )
     param_name = None
     param_type = None
     if param is not None:
         param_name = param.name
-        param_type = param.annotation if param.annotation != inspect.Parameter.empty else None
+        param_type = (
+            param.annotation if param.annotation != inspect.Parameter.empty else None
+        )
     return param_name, param_type
 
 
 def get_unity_sensor_name(hass, sensor_id) -> str:
-    _, state  = find_sensor(hass, sensor_id)
+    _, state = find_sensor(hass, sensor_id)
     if state:
-        return state.attributes.get('friendly_name')
+        return state.attributes.get("friendly_name")
     raise Exception(f"Sensor {sensor_id} not found")
 
 

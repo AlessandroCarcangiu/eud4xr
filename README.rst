@@ -15,26 +15,28 @@ Make sure both servers are running.
 
 NB this repository includes a configuration.yaml file that recreates a simple virtual scene containing eca scripts.
 
-- How to make the Home Assistant server communicate with the Unity application?
-   If you're launching the Unity application in playmode, to start communication with the Home Assistant server follow these steps:
-   1) start NGROK to publicly expose the port used by the server launched by the Unity application, typically port 8080.
-      To do this, download NGROK and create a new account. Here you can decide whether to create a new domain, so that ngrok
-      always uses the same url as tunnel, or use a new different url every time it is started.
+- **How to make the Home Assistant server communicate with the Unity application?**
+  If you launch the application directly on your device, you only need to make sure that the Home Assistant server URL and the bearer token are passed to the `HomeAssistantClient` instance in the Unity application.
 
-      If you decide to create a new domain, from the NGROK terminal launch this command:
-      ngrok http 8080 --host-header="localhost:8080" --domain="your_domain_address"
-      Example: ngrok http 8080 --host-header="localhost:8080" --domain="fly-powerful-slug.ngrok-free.app"
+  If you are launching the Unity application in Play Mode, in addition to the above, follow these steps to start communication with the Home Assistant server:
+      1) start NGROK to publicly expose the port used by the server launched by the Unity application, typically port 8080.
+         To do this, download NGROK and create a new account. Here you can decide whether to create a new domain, so that ngrok
+         always uses the same url as tunnel, or use a new different url every time it is started.
 
-      Otherwise: ngrok http 8080 --host-header="localhost:8080"
-      then copy the url that will act as tunnel.
+         If you decide to create a new domain, from the NGROK terminal launch this command:
+         ngrok http 8080 --host-header="localhost:8080" --domain="your_domain_address"
+         Example: ngrok http 8080 --host-header="localhost:8080" --domain="fly-powerful-slug.ngrok-free.app"
 
-      Alternative: find a way to communicate with the docker container running the Home Assistant server.
+         Otherwise: ngrok http 8080 --host-header="localhost:8080"
+         then copy the url that will act as tunnel.
 
-   2) Once NGROK is started, in the configuration.yaml replace the value associated with the 'server_unity_url' key, inside the 'eud4xr' section,
-      with your domain, e.g. "fly-powerful-slug.ngrok-free.app", or with the url that NGROK has automatically assigned to you.
+         Alternative: find a way to communicate with the docker container running the Home Assistant server.
 
-   3) Start Home Assistant.
+      2) Once NGROK is started, in the configuration.yaml replace the value associated with the 'server_unity_url' key, inside the 'eud4xr' section,
+         with your domain, e.g. "fly-powerful-slug.ngrok-free.app", or with the url that NGROK has automatically assigned to you.
 
-   4) Start Unity.
+      3) Start Home Assistant.
 
-   NB it's important that Unity is started only after Home Assistant, to allow the registration of all pairs (game object-eca script) present in the virtual scene.
+      4) Start Unity.
+
+      NB it's important that Unity is started only after Home Assistant, to allow the registration of all pairs (game object-eca script) present in the virtual scene.

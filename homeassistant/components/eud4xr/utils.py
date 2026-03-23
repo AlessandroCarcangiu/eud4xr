@@ -1,26 +1,28 @@
-import inspect
-import textwrap
-import voluptuous as vol
+# ruff: noqa
+
 from collections import deque
 from functools import wraps
+import inspect
 from numbers import Number
-from typing import Tuple
-from homeassistant.helpers import config_validation as cv, entity_registry as er
+
+import voluptuous as vol
+
+from homeassistant.helpers import config_validation as cv
+
 from .config_validation import get_unity_entity
-from .eca_classes import (
-    ECAPosition,
-    ECARotation,
-    ECAScale,
-    ECABoolean,
-    ECABooleanEnum
-)
+from .eca_classes import ECABoolean, ECABooleanEnum, ECAPosition, ECARotation, ECAScale
 from .entity import ECAEntity
 
 
-def eca_script_action(verb: str, variable: str = "", modifier: str = "", is_passive: bool = False):
+def eca_script_action(
+    verb: str, variable: str = "", modifier: str = "", is_passive: bool = False
+):
     def decorator(func):
-        setattr(func, "kwargs", {"verb": verb, "variable":variable, "modifier": modifier})
+        setattr(
+            func, "kwargs", {"verb": verb, "variable": variable, "modifier": modifier}
+        )
         setattr(func, "is_passive", is_passive)
+
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
             result = await func(self, *args, **kwargs)
@@ -28,50 +30,82 @@ def eca_script_action(verb: str, variable: str = "", modifier: str = "", is_pass
                 verb=verb,
                 variable=variable,
                 modifier=modifier,
+                is_passive=is_passive,
                 **kwargs,
             )
             self.on_action(
                 verb=verb,
                 variable=variable,
                 modifier=modifier,
+                is_passive=is_passive,
                 **kwargs,
             )
             return result
+
         wrapper._is_eca_script_action = True
+        wrapper.is_passive = is_passive
         return wrapper
+
     return decorator
 
 
-def update_deque(circular_list: deque):
+def update_deque(circular_list: deque, object_name: str, is_to_add: bool) -> None:
+    # remove game object name from circular list
+    if object_name in circular_list:
+        circular_list.remove(object_name)
+    # add game object to circular list if is_to_add is True (values is a string)
+    if is_to_add:
+        circular_list.append(object_name)
+
+
+def decorator_update_deque(circular_list: deque):
     def decorator(func):
         @wraps(func)
         def wrapper(self, value: any):
             game_object_name = self.game_object.split("@")[0]
-            if game_object_name in circular_list:
-                circular_list.remove(game_object_name.lower())
-            if bool(ECABoolean(ECABooleanEnum.get_value_by_str(value))):
-                circular_list.append(game_object_name.lower())
+            is_to_add = bool(ECABoolean(ECABooleanEnum.get_value_by_str(value)))
+            update_deque(circular_list, game_object_name, is_to_add)
+            # # remove game object name from circular list
+            # if game_object_name in circular_list:
+            #     circular_list.remove(game_object_name.lower())
+            # # add game object name if value is True (values is a string)
+            # if bool(ECABoolean(ECABooleanEnum.get_value_by_str(value))):
+            #     circular_list.append(game_object_name.lower())
             return func(self, value)
+
         return wrapper
+
+    return decorator
+
+
+def describe(text: str):
+    def decorator(obj):
+        if isinstance(obj, property):
+            obj.fget._label = text
+            return obj
+        setattr(obj, "_label", text)
+        return obj
     return decorator
 
 
 class Service:
-
-    def __init__(self, method: any, eca_action: dict, params: dict, description: str) -> None:
+    def __init__(
+        self, method: any, eca_action: dict, params: dict, description: str, object_name: str = None
+    ) -> None:
         self.method = method
         self.eca_action = eca_action
         self.params = params
         self.description = description
+        self.object_name = object_name
 
     def to_dict(self):
         kwargs = getattr(self.method, "kwargs")
         # first solution
-        #return {
-            # "eca_action": self.eca_action,
-            # "params": self.params,
-            #"description": self.description
-        #}
+        # return {
+        # "eca_action": self.eca_action,
+        # "params": self.params,
+        # "description": self.description
+        # }
 
         # second solution
         # data = {
@@ -92,32 +126,60 @@ class Service:
         # }
 
         # third solution
-        data = {}
+        param_type = None
         if self.params:
-            data["Requested Parameter"] = self.params[list(self.params.keys())[0]]
+            param_type = self.params[list(self.params.keys())[0]]
 
         json_structure = {
-            "subject": "{{l'oggetto che compie l'azione}}",
-            "verb": kwargs["verb"]
+            #"subject": self.object_name, #if not self.method.is_passive else f"un oggetto con la componente {param_type.__name__ if inspect.isclass(param_type) else param_type}", #f"oggetto di tipo {data['requested_parameter']}."che agisce su {self.object_name}",
+            #"verb": kwargs["verb"],
         }
+
+        subj = ""
+        if self.method.is_passive:
+            subj = "un oggetto con la componente " + str(param_type.__name__) if inspect.isclass(param_type) else str(param_type)
+        else:
+            subj = self.object_name
+        json_structure["subject"] = subj
+
+        json_structure["verb"] = kwargs["verb"]
+
         for i in ["variable", "modifier"]:
-            if i in kwargs and kwargs[i]:
+            if kwargs.get(i):
                 json_structure[i] = kwargs[i]
         if "variable" in json_structure:
-            json_structure["value"] = "{{un valore in input da assegnare, aggiungere o sottrare}}"
+            json_structure["value"] = (
+                f"valore di tipo {param_type.__name__ if inspect.isclass(param_type) else param_type} input da assegnare, aggiungere o sottrare"
+            )
         elif self.params:
-                json_structure["obj"] = "{{un valore, o un altro oggetto, coinvolti nell'azione}}"
+            if not self.method.is_passive and inspect.isclass(param_type) and issubclass(param_type, ECAEntity):
+                json_structure["obj"] = f"un oggetto con la componente {param_type.__name__}"
+            elif not self.method.is_passive and inspect.isclass(param_type):
+                json_structure["obj"] = f"un valore di tipo {param_type.__name__}"
+            elif not self.method.is_passive:
+                json_structure["obj"] = f"un valore di tipo {param_type}"
+            else:
+                json_structure["obj"] = self.object_name
 
-        return {
-            "Service's name": kwargs["verb"],
-            **data,
-            "When to use me?": self.description,
-            "JSON format": json_structure
+        data = {
+            "verb": kwargs["verb"],
+            "description": self.description,
+            "format": json_structure,
         }
+        if param_type and inspect.isclass(param_type) and issubclass(param_type, ECAEntity):
+            data["arg_type"] = param_type.__name__
+        return data
 
 
 class MappedClass:
-    def __init__(self, cls: callable, properties: list, description_services: list, services: list[Service], description: str) -> None:
+    def __init__(
+        self,
+        cls: callable,
+        properties: list,
+        description_services: list,
+        services: list[Service],
+        description: str,
+    ) -> None:
         self._cls = cls
         self._properties = properties
         self._description = description
@@ -150,7 +212,7 @@ class MappedClass:
     def to_dict(self) -> dict:
         return {
             "What are my capabilities?": self.description,
-            #"properties": self.properties,
+            # "properties": self.properties,
             "Supported Services": self.services,
         }
 
@@ -187,7 +249,9 @@ class MappedClasses:
         # get class' services
         description_services, list_services = cls.__mapping_methods(clazz, hass)
         docstring = inspect.getdoc(clazz)
-        return MappedClass(clazz, properties, description_services, list_services, docstring)
+        return MappedClass(
+            clazz, properties, description_services, list_services, docstring
+        )
 
     @classmethod
     def __mapping_parameter(cls, name: str, param, hass) -> any:
@@ -223,7 +287,7 @@ class MappedClasses:
         return str
 
     @classmethod
-    def __mapping_methods(cls, clazz, hass) -> Tuple[list, list]:
+    def __mapping_methods(cls, clazz, hass) -> tuple[list, list]:
         list_methods = list()
         list_services = list()
 
@@ -256,13 +320,10 @@ class MappedClasses:
             # services
             list_services.append(
                 Service(
-                    method = method,
-
+                    method=method,
                     eca_action=f"eud4xr.{name.replace('async_','')}",
-
                     params=service_params,
-
-                    description=inspect.getdoc(method)
+                    description=inspect.getdoc(method),
                 ).to_dict()
             )
 
@@ -272,6 +333,10 @@ class MappedClasses:
     def __mapping_properties(cls, clazz: callable):
         init_params = list()
         signature = inspect.signature(clazz.__init__)
-        for param_name, _ in list(filter(lambda x: x[0] not in ["self", "kwargs"], signature.parameters.items())):
+        for param_name, _ in list(
+            filter(
+                lambda x: x[0] not in ["self", "kwargs"], signature.parameters.items()
+            )
+        ):
             init_params.append(param_name)
         return init_params

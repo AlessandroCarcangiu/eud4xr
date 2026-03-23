@@ -1,3 +1,5 @@
+# ruff: noqa
+
 from enum import Enum
 
 import voluptuous as vol
@@ -55,11 +57,7 @@ class ECAPosition:
         return "{" + f"'x': {self.x}, 'y': {self.y}, 'z': {self.z}" + "}"
 
     def to_value(self) -> dict:
-        return {
-            "x": self.x,
-            "y": self.y,
-            "z": self.z
-        }
+        return {"x": self.x, "y": self.y, "z": self.z}
 
     @classmethod
     def from_dict(cls, data):
@@ -101,6 +99,49 @@ class ECAColor:
 class ECAScale(ECAPosition):
     pass
 
+
+class Vector3(ECAPosition):
+
+    @staticmethod
+    def validate(value):
+        if not isinstance(value, dict):
+            raise vol.Invalid("Expected a dictionary")
+        if not isinstance(value, dict):
+            raise Exception(
+                "Invalid type for 'position': expected object with x, y, z"
+            )
+
+        #TODO The json below is accepted. Should we stricly check for ONLY the keys x, y, z?
+        # 'position': {
+        #   'x': -0.209391519,
+        #   'y': 1.95605624,
+        #   'z': -2.98058629,
+        #   'normalized': {
+        #       'x': -0.0586323962,
+        #       'y': 0.5477216,
+        #       'z': -0.8346036,
+        #       'normalized': {
+        #           'x': -0.0586324, 'y': 0.5477217, 'z': -0.834603667, 'magnitude': 1.0, 'sqrMagnitude': 1.00000012
+        #       },
+        #       'magnitude': 0.99999994,
+        #       'sqrMagnitude': 0.99999994
+        #   },
+        #   'magnitude': 3.57125974,
+        #   'sqrMagnitude': 12.7538958
+        # }
+        if not all(k in value for k in ("x", "y", "z")):
+            raise Exception(
+                "Missing one or more keys in 'position': x, y, z required"
+            )
+
+        if not all(isinstance(value[k], (int, float)) for k in ("x", "y", "z")):
+            raise Exception(
+                "Invalid type in 'position': x, y, z must be numbers"
+            )
+        x = value.get("x")
+        y = value.get("y")
+        z = value.get("z")
+        return Vector3(x, y, z)
 
 # class ECAPath:
 

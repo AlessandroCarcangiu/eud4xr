@@ -1,27 +1,30 @@
+# ruff: noqa
+
 import inspect
+
 from homeassistant.core import HomeAssistant
-from ..const import (
-    DOMAIN,
-    IS_DEBUG
-)
+from ..entity import ECAEntity
 from ..hass_utils import (
-    find_group,
-    find_sensor,
-    get_entity_state_by_id,
+    convert_subject_to_unity,
+    get_entity_id_by_game_object_and_eca_script,
+    get_entity_id_by_game_object_and_verb,
     get_entity_instance_and_method_signature_by_structured_language,
-    get_method_by_eca_script_name,
     get_entity_instance_by_entity_id,
     get_first_entity_by_group,
-    convert_subject_to_unity,
-    get_entity_id_by_game_object_and_verb,
-    get_entity_id_by_game_object_and_eca_script
 )
-from ..sensor import ECAObject, get_classes_subclassing
+from ..sensor import get_classes_subclassing
 
 
 class ECAAction:
-
-    def __init__(self, verb: str, subject: str, obj: object=None, variable: object=None, modifier: str=None, value: str=None) -> None:
+    def __init__(
+        self,
+        verb: str,
+        subject: str,
+        obj: object = None,
+        variable: object = None,
+        modifier: str = None,
+        value: str = None,
+    ) -> None:
         self.verb = verb
         self.subject = subject
         self.obj = obj
@@ -41,7 +44,7 @@ class ECAAction:
             "obj": self.obj,
             "variable": self.variable,
             "modifier": self.modifier,
-            "value": self.value
+            "value": self.value,
         }
         for k in list(data.keys()):
             if data[k] is None:
@@ -49,7 +52,7 @@ class ECAAction:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ECAAction':
+    def from_dict(cls, data: dict) -> "ECAAction":
         return cls(
             verb=data.get("verb"),
             subject=data.get("subject"),
@@ -60,38 +63,59 @@ class ECAAction:
         )
 
     @classmethod
-    def from_yaml(cls, hass: HomeAssistant, data: dict, is_trigger: bool = False) -> 'ECAAction':
-        '''
-            It converts eca actions from hass format to natural language:
-                verb: {verb in natural language},
-                subject: {game_object_name@eca_script},
-                obj:
-                variable: {variable},
-                modifier: {modifier}
-                value
-        '''
+    def from_yaml(
+        cls, hass: HomeAssistant, data: dict, is_trigger: bool = False
+    ) -> "ECAAction":
+        """It converts eca actions from hass format to natural language:
+        verb: {verb in natural language},
+        subject: {game_object_name@eca_script},
+        obj:
+        variable: {variable},
+        modifier: {modifier}
+        value
+        """
         # an eca action expressed as trigger is an event very similar to the ECARules4All's action definition (it contains verb, subject, ecc.)
         # consequently, we just extract the event_data and send it to Unity
         if is_trigger:
             # trigger's subject and param does not have reference to the sensor
-            kwargs = data[0]["event_data"] if isinstance(data, list) else data["event_data"]
+            kwargs = (
+                data[0]["event_data"] if isinstance(data, list) else data["event_data"]
+            )
             method = None
 
             try:
                 # active action - get subject and service
-                _, _, method, sig = get_entity_instance_and_method_signature_by_structured_language(
-                    hass, kwargs.get("subject"), kwargs.get("verb"), kwargs.get("variable"), kwargs.get("modifier"))
+                _, _, method, sig = (
+                    get_entity_instance_and_method_signature_by_structured_language(
+                        hass,
+                        kwargs.get("subject"),
+                        kwargs.get("verb"),
+                        kwargs.get("variable"),
+                        kwargs.get("modifier"),
+                    )
+                )
 
-                entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['subject'], kwargs['verb'])
+                entity_id = get_entity_id_by_game_object_and_verb(
+                    hass, kwargs["subject"], kwargs["verb"]
+                )
                 kwargs["subject"] = convert_subject_to_unity(hass, entity_id)
             except:
                 # passive action
-                #passive_entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['variable'], kwargs['verb'])
-                #_, sig = cls.get_service_method(hass, passive_entity_id, kwargs["verb"])
-                _, _, _, sig = get_entity_instance_and_method_signature_by_structured_language(
-                    hass, kwargs.get("obj"), kwargs.get("verb"), kwargs.get("variable"), kwargs.get("modifier"))
-                param = next (p for n, p in sig.parameters.items() if n != "self")
-                entity_id = get_entity_id_by_game_object_and_eca_script(hass, kwargs['subject'], param.annotation.__name__.lower())
+                # passive_entity_id = get_entity_id_by_game_object_and_verb(hass, kwargs['variable'], kwargs['verb'])
+                # _, sig = cls.get_service_method(hass, passive_entity_id, kwargs["verb"])
+                _, _, _, sig = (
+                    get_entity_instance_and_method_signature_by_structured_language(
+                        hass,
+                        kwargs.get("obj"),
+                        kwargs.get("verb"),
+                        kwargs.get("variable"),
+                        kwargs.get("modifier"),
+                    )
+                )
+                param = next(p for n, p in sig.parameters.items() if n != "self")
+                entity_id = get_entity_id_by_game_object_and_eca_script(
+                    hass, kwargs["subject"], param.annotation.__name__.lower()
+                )
                 kwargs["subject"] = entity_id
 
             # if method:
@@ -125,10 +149,16 @@ class ECAAction:
                     v = None
                     for param_name, param in sig.parameters.items():
                         if param_name != "self":
-                            v = kwargs["value"] if kwargs.get("variable", None) else kwargs["obj"]  #data["data"][param_name]
+                            v = (
+                                kwargs["value"]
+                                if kwargs.get("variable", None)
+                                else kwargs["obj"]
+                            )  # data["data"][param_name]
                             param_type = param.annotation.__name__.lower()
                             if param_type in get_classes_subclassing(to_string=True):
-                                v = get_entity_id_by_game_object_and_eca_script(hass, v, param.annotation.__name__.lower())
+                                v = get_entity_id_by_game_object_and_eca_script(
+                                    hass, v, param.annotation.__name__.lower()
+                                )
                     if v:
                         if kwargs.get("variable", None):
                             kwargs["value"] = v
@@ -137,13 +167,11 @@ class ECAAction:
             else:
                 try:
                     kwargs["obj"] = cls.convert_variable_to_unity(hass, kwargs["obj"])
-                except Exception as e:
+                except Exception:
                     pass
             ###
 
-            return cls(
-                **kwargs
-            )
+            return cls(**kwargs)
         # an eca action expressed in the service form requires different operation in order to obtain
         # its representation in ECARules4All
         subject_name = data["data"]["entity_id"]
@@ -159,7 +187,7 @@ class ECAAction:
             is_passive = getattr(method, "is_passive")
             # passive action
             if is_passive:
-                param_name = next(k for k,v in sig.parameters.items() if k != "self")
+                param_name = next(k for k, v in sig.parameters.items() if k != "self")
                 v = subject
                 verb = other_params["verb"]
                 subject = convert_subject_to_unity(hass, data["data"][param_name])
@@ -176,13 +204,13 @@ class ECAAction:
                     for param_name, param in sig.parameters.items():
                         if param_name != "self":
                             v = data["data"][param_name]
+                            if issubclass(param.annotation, ECAEntity):
+                                game_object, eca_script = v.split(".")[1].split("_")
+                                v = get_entity_id_by_game_object_and_eca_script(hass, game_object, eca_script)
         else:
             verb = service_name.replace("_", " ")
         # define kwargs
-        kwargs = {
-            "subject":subject,
-            "verb": verb
-        }
+        kwargs = {"subject": subject, "verb": verb}
         if variable:
             kwargs["variable"] = variable
         if modifier:
@@ -195,14 +223,18 @@ class ECAAction:
         return cls(**kwargs)
 
     @staticmethod
-    def convert_variable_to_unity(hass: HomeAssistant, variable_name: str, variable_type: callable = None) -> str:
+    def convert_variable_to_unity(
+        hass: HomeAssistant, variable_name: str, variable_type: callable = None
+    ) -> str:
         # get the first entity of other group
         entity = get_first_entity_by_group(hass, variable_name)
         unity_name = convert_subject_to_unity(hass, entity)
         if not variable_type:
             variable_name = unity_name
         else:
-            variable_name = f"{unity_name.split("@")[0]}@{variable_type.annotation.__name__}"
+            variable_name = (
+                f"{unity_name.split("@")[0]}@{variable_type.annotation.__name__}"
+            )
         return variable_name
 
     @staticmethod

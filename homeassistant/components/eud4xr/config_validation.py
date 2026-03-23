@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
